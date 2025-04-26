@@ -20,7 +20,7 @@ You can find reference documentation and user guides for VaultCourier here. The 
 ## Security
 
 This library is currently under-development. Please try it out and give us feedback! Please do not use it in production.
-If you believe you have identified a vulnerability in VaultCourier, please responsibly disclose by contacting us at contact@beamsplitter.co.
+If you believe you have identified a vulnerability in VaultCourier or any of its related repositories please do not post this in a public forum, do not create a GitHub Issue. Instead please responsibly disclose by contacting us at contact@beamsplitter.co.
 
 ## License
 

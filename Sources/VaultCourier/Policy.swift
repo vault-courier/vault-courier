@@ -27,8 +27,9 @@ extension VaultClient {
         switch response {
             case .noContent:
                 logger.info("Policy written successfully!")
-            case .undocumented(statusCode: let statusCode):
+            case .undocumented(let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 }

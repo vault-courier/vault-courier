@@ -15,10 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 import OpenAPIRuntime
-import OpenAPIAsyncHTTPClient
-import AsyncHTTPClient
 import Logging
-import PklSwift
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 import protocol Foundation.LocalizedError
@@ -228,15 +225,13 @@ public actor VaultClient {
                         return
                 }
             case .badRequest(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Bad request")
-                    throw VaultClientError.permissionDenied()
-                }
-                logger.debug("Bad request: \(errors)")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.permissionDenied()
             case .undocumented(let statusCode, _):
                 logger.debug(.init(stringLiteral: "unwrapToken failed with \(statusCode): "))
+                throw VaultClientError.permissionDenied()
         }
-        throw VaultClientError.permissionDenied()
     }
 
     public func login() async throws {
@@ -255,13 +250,10 @@ public actor VaultClient {
                 case .ok(let content):
                     let json = try content.body.json
                     self.authState = .authorized(token: json.auth.clientToken)
-                    logger.info("client authorized")
+                    logger.info("login authorized")
                 case .badRequest(let content):
-                    guard let body = try? content.body.json, let errors = body.errors else {
-                        logger.debug("Bad request")
-                        throw VaultClientError.permissionDenied()
-                    }
-                    logger.debug("Bad request: \(errors)")
+                    let errors = (try? content.body.json.errors) ?? []
+                    logger.debug("Bad request: \(errors.joined(separator: ", ")).")
                     throw VaultClientError.permissionDenied()
                 case .undocumented(statusCode: let statusCode, _):
                     logger.debug(.init(stringLiteral: "login failed with \(statusCode): "))

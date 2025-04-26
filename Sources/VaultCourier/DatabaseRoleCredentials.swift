@@ -36,29 +36,25 @@ extension VaultClient {
 
         let response = try await client.databaseReadStaticRoleCredentials(
             path: .init(enginePath: enginePath, roleName: staticRole),
-            headers: .init(xVaultToken: sessionToken))
+            headers: .init(xVaultToken: sessionToken)
+        )
 
         switch response {
             case .ok(let content):
                 let json = try content.body.json
                 return StaticRoleCredentialsResponse(component: json)
             case .badRequest(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Bad request.")
-                    return nil
-                }
-                logger.debug("Bad request: \(errors).")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                return nil
             case .internalServerError(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Internal Server error")
-                    return nil
-                }
-                logger.debug("Internal server error: \(errors.joined()).")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
+                return nil
             case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                return nil
         }
-
-        return nil
     }
 
     public func databaseCredentials(
@@ -70,28 +66,24 @@ extension VaultClient {
 
         let response = try await client.databaseReadRoleCredentials(
             path: .init(enginePath: enginePath, roleName: dynamicRole),
-            headers: .init(xVaultToken: sessionToken))
+            headers: .init(xVaultToken: sessionToken)
+        )
 
         switch response {
             case .ok(let content):
                 let json = try content.body.json
                 return RoleCredentialsResponse(component: json)
             case .badRequest(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Bad request.")
-                    return nil
-                }
-                logger.debug("Bad request: \(errors).")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                return nil
             case .internalServerError(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Internal Server error")
-                    return nil
-                }
-                logger.debug("Internal server error: \(errors.joined()).")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
+                return nil
             case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                return nil
         }
-
-        return nil
     }
 }

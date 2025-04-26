@@ -22,17 +22,8 @@ extension VaultClient {
     ) async throws {
         let sessionToken = try sessionToken()
 
-        let configuration: OpenAPIRuntime.OpenAPIObjectContainer? = if let config = mountConfig.config {
-            try .init(unvalidatedValue: config)
-        } else {
-            nil
-        }
-        
-        let options: OpenAPIRuntime.OpenAPIObjectContainer? = if let options = mountConfig.options {
-            try .init(unvalidatedValue: options)
-        } else {
-            nil
-        }
+        let configuration = try mountConfig.config.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
+        let options = try mountConfig.options.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
         
         let response = try await client.mountsEnableSecretsEngine(
             path: .init(path: mountConfig.path),
@@ -43,7 +34,8 @@ extension VaultClient {
                 local: mountConfig.local,
                 options: options,
                 sealWrap: mountConfig.sealWrap,
-                _type: mountConfig.mountType))
+                _type: mountConfig.mountType)
+            )
         )
         
         switch response {

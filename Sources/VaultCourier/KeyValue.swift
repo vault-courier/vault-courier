@@ -58,11 +58,8 @@ extension VaultClient {
                 let json = try content.body.json
                 return .init(payload: json)
             case .badRequest(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Bad request.")
-                    return nil
-                }
-                logger.debug("Bad request: \(errors).")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
                 return nil
             case .undocumented(let statusCode, let payload):
                 if let buffer = try await payload.body?.collect(upTo: 1024, using: .init()) {
@@ -84,7 +81,8 @@ extension VaultClient {
         let sessionToken = try sessionToken()
 
         let response = try await client.readKvSecrets(
-            .init(path: .init(kvPath: enginePath, secretKey: key), headers: .init(xVaultToken: sessionToken))
+            path: .init(kvPath: enginePath, secretKey: key),
+            headers: .init(xVaultToken: sessionToken)
         )
 
         switch response {
@@ -93,16 +91,13 @@ extension VaultClient {
                 let data = try JSONEncoder().encode(json.data.data)
                 return try JSONDecoder().decode(T.self, from: data)
             case .badRequest(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Bad request")
-                    return nil
-                }
-                logger.debug("Bad request: \(errors)")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                return nil
             case .undocumented(statusCode: let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
+                return nil
         }
-
-        return nil
     }
 
     public func readKeyValueSecretData(
@@ -122,14 +117,12 @@ extension VaultClient {
                 let data = try JSONEncoder().encode(json.data.data)
                 return data
             case .badRequest(let content):
-                guard let body = try? content.body.json, let errors = body.errors else {
-                    logger.debug("Bad request")
-                    return nil
-                }
-                logger.debug("Bad request: \(errors)")
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                return nil
             case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                return nil
         }
-        return nil
     }
 }
