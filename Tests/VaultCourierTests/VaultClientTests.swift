@@ -96,7 +96,7 @@ struct VaultClientTests {
                 apiURL: localApiURL,
                 readerSchema: "vault",
                 appRolePath: "/path/to/approle",
-                backgroundActivityLogger: .init(label: "vault-client")
+                backgroundActivityLogger: .init(label: "vault-courier-test")
         )
         let vaultClient = VaultClient(configuration: config,
                                       client: client,

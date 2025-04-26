@@ -51,6 +51,17 @@ extension IntegrationTests {
         var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
         var authToken: VaultClient.Authentication { .token("integration_token") }
 
+        func setupClient() async throws -> VaultClient {
+            let vaultClient = VaultClient(configuration: configuration,
+                                          client: Client(
+                                            serverURL: localApiURL,
+                                            transport: AsyncHTTPClientTransport()
+                                          ),
+                                          authentication: authToken)
+            try await vaultClient.authenticate()
+            return vaultClient
+        }
+
         @Test
         func write_and_read_kv_secret() async throws {
             struct Secret: Codable {
@@ -59,13 +70,7 @@ extension IntegrationTests {
             let key = "dev-secret"
             let secret = Secret(apiKey: "abcde12345")
 
-            let vaultClient = VaultClient(configuration: configuration,
-                                          client: Client(
-                                            serverURL: localApiURL,
-                                            transport: AsyncHTTPClientTransport()
-                                          ),
-                                          authentication: authToken)
-            try await vaultClient.authenticate()
+            let vaultClient = try await setupClient()
 
             // MUT
             let response = try await vaultClient.writeKeyValue(secret: secret, key: key)

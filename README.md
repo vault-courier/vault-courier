@@ -3,12 +3,12 @@
 
 Swift client for interacting with Hashicorp Vault and OpenBao.
 
-[Hashicorp Vault](https://developer.hashicorp.com/vault) and [OpenBao](https://openbao.org) are both tools for securely storing, auditing and managing access to secrets, such as API tokens, database credentials, and certificates. VaultCourier is a swift package that can interact with Hashicorp Vault and OpenBao to retrieve and provision secrets. It is built with [swift-openapi](https://github.com/apple/swift-openapi-generator) and [pkl](https://pkl-lang.org).
+[Hashicorp Vault](https://developer.hashicorp.com/vault) and [OpenBao](https://openbao.org) are both tools for securely storing, auditing and managing access to secrets, such as API tokens, database credentials, and certificates. VaultCourier is a [swift](https://www.swift.org) package that can interact with Hashicorp Vault and OpenBao to retrieve and provision secrets. It is built with [swift-openapi](https://github.com/apple/swift-openapi-generator) and [pkl](https://pkl-lang.org).
 
 ### Features
 
 - Arbitrary storage of Key/Value secrets
-- Generation of static and dynamic credentials; Database Engine with PostgreSQL support.
+- Generation of static and dynamic credentials; database engine with PostgreSQL support.
 - AppRole Authentication
 - Token Authentication
 - Pkl Resource Reader.
