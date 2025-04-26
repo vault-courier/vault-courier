@@ -1,4 +1,7 @@
 version: 1
 builder:
   configs:
-    - documentation_targets: [VaultCourier]
+    - documentation_targets:
+      - VaultCourier
+metadata:
+  authors: "Javier Cuesta"
