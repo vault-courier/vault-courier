@@ -24,4 +24,4 @@ If you believe you have identified a vulnerability in VaultCourier or any of its
 
 ## License
 
-VaultCourier is available under the [Apache 2.0 license](LICENSE).
+VaultCourier is available under the [Apache 2.0 license](LICENSE.txt).
