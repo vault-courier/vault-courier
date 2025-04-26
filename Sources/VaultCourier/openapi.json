@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Vault Client",
+    "title": "Vault Courier",
     "version": "0.0.1",
     "description": "API client for Hashicorp Vault and OpenBao",
     "license": {

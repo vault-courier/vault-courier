@@ -20,7 +20,7 @@ Swift client for interacting with Hashicorp Vault and OpenBao.
 
 ## Usage
 
-VaultCourier can be used to retrieve the secrets that your App needs. This can be done with the API client itself or via reading a pkl configuration file. In addition, Vault administrators can use the VaultCourier to provision and manage secrets access. The later includes rotation of secrets. Below you can find example code, or you can follow one of the working with a swift vault client tutorials.
+VaultCourier can be used to retrieve the secrets that your application needs. This can be done using the API client itself or by reading a pkl configuration file with a `vault` or custom schema. In addition, Vault administrators can use the VaultCourier to provision and manage access to secrets. The latter includes the rotation of secrets. Check out the essentials section for concrete examples of usage
 
 ## Topics
 
