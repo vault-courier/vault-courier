@@ -1041,6 +1041,58 @@
         }
       ]
     },
+    "/{engine_path}/reset/{connection_name}": {
+      "description": "This endpoint closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.",
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the connection to reset",
+          "name": "connection_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/reload/{plugin_name}": {
+      "description": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name. This can be useful to restart a specific plugin after it's been upgraded in the plugin catalog.",
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the plugin for which all connections should be reset.",
+          "name": "plugin_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
     "/{engine_path}/rotate-root/{connection_name}": {
       "description": "This endpoint is used to rotate the \"root\" user credentials stored for the database connection. This user must have permissions to update its own password.",
       "post": {
@@ -1307,7 +1359,7 @@
       ]
     },
     "/{engine_path}/roles/{role_name}": {
-      "description": "This endpoint creates or updates a role definition.",
+      "description": "This endpoint creates or updates a dynamic role definition.",
       "get": {
         "tags": [
           "secrets",
@@ -1355,7 +1407,7 @@
           "database"
         ],
         "summary": "Creates or updates a role definition",
-        "description": "Creates or updates a role definition. This endpoint distinguishes between create and update ACL capabilities.",
+        "description": "Creates or updates a dynamic role definition. This endpoint distinguishes between create and update ACL capabilities.",
         "operationId": "database-create-role",
         "requestBody": {
           "content": {
@@ -1399,7 +1451,7 @@
           "database"
         ],
         "summary": "Deletes a role definition",
-        "description": "This endpoint deletes the static role definition. The user, having been defined externally, must be cleaned up manually.",
+        "description": "This endpoint deletes the dynamic role definition. The user, having been defined externally, must be cleaned up manually.",
         "operationId": "database-delete-role",
         "responses": {
           "204": {

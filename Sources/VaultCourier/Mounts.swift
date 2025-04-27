@@ -119,6 +119,7 @@ extension VaultClient {
                 throw VaultClientError.internalServerError(errors)
             case .undocumented(let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 
