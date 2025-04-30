@@ -40,51 +40,14 @@ extension Tag {
 
 @Suite(
     .tags(.integration),
-    .enabled(if: enableIntegrationTests())
+    .enabled(if: enableIntegrationTests()),
+    .setupVaultClient()
 )
 enum IntegrationTests {}
 
 extension IntegrationTests {
-    @Suite
-    struct AsyncHttpClientTransport {
-        let localApiURL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
-        var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
-        var authToken: VaultClient.Authentication { .token("integration_token") }
-
-        func setupClient() async throws -> VaultClient {
-            let vaultClient = VaultClient(configuration: configuration,
-                                          client: Client(
-                                            serverURL: localApiURL,
-                                            transport: AsyncHTTPClientTransport()
-                                          ),
-                                          authentication: authToken)
-            try await vaultClient.authenticate()
-            return vaultClient
-        }
-
-        @Test
-        func write_and_read_kv_secret() async throws {
-            struct Secret: Codable {
-                var apiKey: String
-            }
-            let key = "dev-secret"
-            let secret = Secret(apiKey: "abcde12345")
-
-            let vaultClient = try await setupClient()
-
-            // MUT
-            let response = try await vaultClient.writeKeyValue(secret: secret, key: key)
-            #expect(response?.data.version == 1)
-
-            guard let readResponse: Secret = try await vaultClient.readKeyValueSecret(key: key)
-            else {
-                Issue.record("Failed to read kv secret")
-                return
-            }
-
-            #expect(readResponse.apiKey == secret.apiKey)
-        }
-    }
+    @Suite struct KeyValue {}
+    @Suite(.serialized) struct Database {}
 }
 
 public func enableIntegrationTests() -> Bool {

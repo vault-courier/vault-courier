@@ -24,6 +24,8 @@ import protocol Foundation.LocalizedError
 
 public struct MockClient: APIProtocol {
 
+    public init() {}
+
     // MARK: Write KV Secret
     public typealias WriteKvSecretsSignature = @Sendable (Operations.WriteKvSecrets.Input) async throws -> Operations.WriteKvSecrets.Output
     public var writeKvSecretsAction: WriteKvSecretsSignature?
@@ -60,6 +62,18 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
+    // MARK: Read Database Connection
+    public typealias ReadDatabaseConfigurationSignature = @Sendable (Operations.ReadDatabaseConfiguration.Input) async throws -> Operations.ReadDatabaseConfiguration.Output
+    public var readDatabaseConfigurationAction: ReadDatabaseConfigurationSignature?
+    public func readDatabaseConfiguration(
+        _ input: Operations.ReadDatabaseConfiguration.Input
+    ) async throws -> Operations.ReadDatabaseConfiguration.Output {
+        guard let block = readDatabaseConfigurationAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
     // MARK: Delete Database Connection
     public typealias DeleteDatabaseConnectionSignature = @Sendable (Operations.DeleteDatabaseConnection.Input) async throws -> Operations.DeleteDatabaseConnection.Output
     public var deleteDatabaseConnectionAction: DeleteDatabaseConnectionSignature?
@@ -67,6 +81,30 @@ public struct MockClient: APIProtocol {
         _ input: Operations.DeleteDatabaseConnection.Input
     ) async throws -> Operations.DeleteDatabaseConnection.Output {
         guard let block = deleteDatabaseConnectionAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    // MARK: Reset Database Connection
+    public typealias DatabaseResetSignature = @Sendable (Operations.DatabaseReset.Input) async throws -> Operations.DatabaseReset.Output
+    public var databaseResetAction: DatabaseResetSignature?
+    public func databaseReset(
+        _ input: Operations.DatabaseReset.Input
+    ) async throws -> Operations.DatabaseReset.Output {
+        guard let block = databaseResetAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    // MARK: Reload Database Plugin
+    public typealias ReloadDatabasePluginSignature = @Sendable (Operations.ReloadDatabasePlugin.Input) async throws -> Operations.ReloadDatabasePlugin.Output
+    public var reloadDatabasePluginAction: ReloadDatabasePluginSignature?
+    public func reloadDatabasePlugin(
+        _ input: Operations.ReloadDatabasePlugin.Input
+    ) async throws -> Operations.ReloadDatabasePlugin.Output {
+        guard let block = reloadDatabasePluginAction
         else { throw UnspecifiedBlockError() }
 
         return try await block(input)

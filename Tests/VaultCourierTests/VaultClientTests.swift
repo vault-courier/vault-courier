@@ -16,22 +16,16 @@
 
 import Testing
 
-import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
 import struct Foundation.URL
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
 #endif
-import PklSwift
 
 @testable import VaultCourier
 
 @Suite
 struct VaultClientTests {
-
     let localApiURL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
 
     var configuration: VaultClient.Configuration {
@@ -163,6 +157,5 @@ struct VaultClientTests {
         try await vaultClient.authenticate()
         try await vaultClient.writeKeyValue(secret: secret, key: "dev-secret")
     }
-
 }
 
