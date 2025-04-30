@@ -24,6 +24,23 @@ public struct EnableSecretMountConfig: Sendable {
     public var local: Bool?
     public var sealWrap: Bool?
     public var externalEntropyAccess: Bool?
+
+    public init(mountType: String,
+                path: String,
+                description: String? = nil,
+                config: [String : String]? = nil,
+                options: [String : String]? = nil,
+                local: Bool? = nil, sealWrap: Bool? = nil,
+                externalEntropyAccess: Bool? = nil) {
+        self.mountType = mountType
+        self.path = path
+        self.description = description
+        self.config = config
+        self.options = options
+        self.local = local
+        self.sealWrap = sealWrap
+        self.externalEntropyAccess = externalEntropyAccess
+    }
 }
 
 extension EnableSecretMountConfig {
