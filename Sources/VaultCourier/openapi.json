@@ -949,6 +949,47 @@
     },
     "/{engine_path}/config/{connection_name}": {
       "description": "This endpoint configures the connection string used to communicate with the desired database. In addition to the parameters listed here, each Database plugin has additional, database plugin specific, parameters for this endpoint. Please read the HTTP API for the plugin you'd wish to configure to see the full list of additional parameters.",
+      "get": {
+        "tags": [
+          "secrets",
+          "database"
+        ],
+        "summary": "This endpoint returns the configuration settings for a connection.",
+        "description": "Read database connection configuration",
+        "operationId": "read-database-configuration",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadDatabaseConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "secrets",
@@ -973,6 +1014,16 @@
           },
           "400": {
             "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
@@ -1030,6 +1081,126 @@
         {
           "description": "Specifies the name for this database connection. This is specified as part of the URL.",
           "name": "connection_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/reset/{connection_name}": {
+      "description": "This endpoint closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.",
+      "post": {
+        "tags": [
+          "secrets",
+          "database"
+        ],
+        "summary": "This endpoint closes a connection",
+        "description": "This endpoint closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.",
+        "operationId": "database-reset",
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the connection to reset",
+          "name": "connection_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/reload/{plugin_name}": {
+      "description": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name. This can be useful to restart a specific plugin after it's been upgraded in the plugin catalog.",
+      "post": {
+        "tags": [
+          "secrets",
+          "database"
+        ],
+        "summary": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name",
+        "description": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name. This can be useful to restart a specific plugin after it's been upgraded in the plugin catalog.",
+        "operationId": "reload-database-plugin",
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the plugin for which all connections should be reset.",
+          "name": "plugin_name",
           "in": "path",
           "required": true,
           "schema": {
@@ -1307,7 +1478,7 @@
       ]
     },
     "/{engine_path}/roles/{role_name}": {
-      "description": "This endpoint creates or updates a role definition.",
+      "description": "This endpoint creates or updates a dynamic role definition.",
       "get": {
         "tags": [
           "secrets",
@@ -1355,7 +1526,7 @@
           "database"
         ],
         "summary": "Creates or updates a role definition",
-        "description": "Creates or updates a role definition. This endpoint distinguishes between create and update ACL capabilities.",
+        "description": "Creates or updates a dynamic role definition. This endpoint distinguishes between create and update ACL capabilities.",
         "operationId": "database-create-role",
         "requestBody": {
           "content": {
@@ -1399,7 +1570,7 @@
           "database"
         ],
         "summary": "Deletes a role definition",
-        "description": "This endpoint deletes the static role definition. The user, having been defined externally, must be cleaned up manually.",
+        "description": "This endpoint deletes the dynamic role definition. The user, having been defined externally, must be cleaned up manually.",
         "operationId": "database-delete-role",
         "responses": {
           "204": {
@@ -2242,7 +2413,7 @@
                 "type": "string"
               },
               "rotation_period": {
-                "type": "string"
+                "type": "integer"
               },
               "rotation_window": {
                 "type": "integer"
@@ -2267,7 +2438,6 @@
         },
         "required": [
           "request_id",
-          "mount_type",
           "renewable",
           "data"
         ]
@@ -2551,6 +2721,82 @@
           "connection_url"
         ]
       },
+      "ReadDatabaseConfigResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "the id of the request associated with this response"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "mount_type": {
+            "type": "string",
+            "description": "Only present in hashicorp-vault"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "allowed_roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "connection_details": {
+                "type": "object",
+                "properties": {
+                  "connection_url": {
+                    "type": "string"
+                  },
+                  "password_authentication": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "connection_url",
+                  "password_authentication",
+                  "username"
+                ]
+              },
+              "password_policy": {
+                "type": "string"
+              },
+              "plugin_name": {
+                "type": "string"
+              },
+              "plugin_version": {
+                "type": "string"
+              },
+              "root_credentials_rotate_statements": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "allowed_roles",
+              "connection_details"
+            ]
+          }
+        },
+        "required": [
+          "request_id",
+          "renewable",
+          "data"
+        ]
+      },
       "ReadRoleCredentialsResponse": {
         "type": "object",
         "properties": {
@@ -2594,7 +2840,6 @@
         },
         "required": [
           "request_id",
-          "mount_type",
           "renewable",
           "data"
         ]

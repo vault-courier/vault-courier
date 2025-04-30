@@ -28,7 +28,7 @@ public struct StaticRoleCredentialsResponse: Sendable {
 }
 
 public enum Rotation: Sendable {
-    case period(String)
+    case period(Int)
     case scheduled(ScheduledRotation)
 }
 

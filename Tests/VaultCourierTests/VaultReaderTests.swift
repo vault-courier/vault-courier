@@ -44,16 +44,18 @@ extension IntegrationTests {
 
         @Test
         func vault_reader_regex_url_for_custom_kv_engine_path() async throws {
-            var client = MockClient()
             let secret = "api_key"
             let value = "abcde12345"
+
+            var client = MockClient()
             client.readKvSecretsAction = { input in
                 return .ok(.init(body: .json(.init(data: .init(data: try .init(unvalidatedValue: [secret:value]))))))
             }
 
+            let schema = "vault"
             let config = VaultClient.Configuration(
                     apiURL: localApiURL,
-                    readerSchema: "vault",
+                    readerSchema: schema,
                     kvMountPath: "/path/to/secrets",
                     backgroundActivityLogger: .init(label: "vault-client")
             )
@@ -62,7 +64,7 @@ extension IntegrationTests {
                                           authentication: .token("vault_token"))
             try await vaultClient.authenticate()
             let output = try await vaultClient.readConfiguration(text:"""
-            appKeys = read("vault:/path/to/secrets/key?query=api_key").text
+            appKeys = read("\(schema):/path/to/secrets/key?query=api_key").text
             """)
             // Note: Pkl adds `\#n"` at the end of the file
             let expected = #"appKeys = "{\"\#(secret)\":\"\#(value)\"}"\#n"#
