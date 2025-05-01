@@ -17,7 +17,7 @@ import PackageDescription
 
 let package = Package(
     name: "vault-courier",
-    platforms: [.macOS(.v15), .iOS(.v18), .visionOS(.v2), .tvOS(.v18), .watchOS(.v11)],
+    platforms: [.macOS(.v15)],
     products: [
         .library(name: "VaultCourier", targets: ["VaultCourier"]),
     ],
