@@ -51,7 +51,7 @@ extension VaultClient {
                               privateKey: configuration.privateKey,
                               usernameTemplate: configuration.usernameTemplate,
                               disableEscaping: configuration.disableEscaping,
-                              passwordAuthentication: configuration.passwordAuthentication,
+                              passwordAuthentication: configuration.passwordAuthentication.rawValue,
                               rootRotationStatements: configuration.rootRotationStatements))
         )
 

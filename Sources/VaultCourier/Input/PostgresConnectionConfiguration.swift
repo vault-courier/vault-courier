@@ -31,7 +31,7 @@ public struct PostgresConnectionConfiguration: Sendable, Decodable {
     public var privateKey: String?
     public var usernameTemplate: String?
     public var disableEscaping: Bool?
-    public var passwordAuthentication: String?
+    public var passwordAuthentication: PostgresAuthMethod
     public var rootRotationStatements: [String]?
 
     public init(connection: String,
@@ -49,7 +49,7 @@ public struct PostgresConnectionConfiguration: Sendable, Decodable {
                 privateKey: String? = nil,
                 usernameTemplate: String? = nil,
                 disableEscaping: Bool? = nil,
-                passwordAuthentication: String? = nil,
+                passwordAuthentication: PostgresAuthMethod? = nil,
                 rootRotationStatements: [String]? = nil) {
         self.connection = connection
         self.pluginName = pluginName
@@ -66,7 +66,7 @@ public struct PostgresConnectionConfiguration: Sendable, Decodable {
         self.privateKey = privateKey
         self.usernameTemplate = usernameTemplate
         self.disableEscaping = disableEscaping
-        self.passwordAuthentication = passwordAuthentication
+        self.passwordAuthentication = passwordAuthentication ?? .password
         self.rootRotationStatements = rootRotationStatements
     }
 
@@ -91,6 +91,11 @@ public struct PostgresConnectionConfiguration: Sendable, Decodable {
     }
 }
 
+public enum PostgresAuthMethod: String, Decodable, Sendable {
+    case password
+    case scramSHA256 = "scram-sha-256"
+}
+
 extension PostgresConnectionConfiguration {
     init?(_ config: PostgresDatabaseConnection.Module) {
         self.connection = config.connection
@@ -98,16 +103,8 @@ extension PostgresConnectionConfiguration {
         self.verifyConnection = config.verify_connection
         self.allowedRoles = config.allowed_roles
         self.connectionUrl = config.connection_url
-        self.maxOpenConnections = if let configValue = config.max_open_connections {
-            Int(configValue)
-        } else {
-            nil
-        }
-        self.maxIdleConnections = if let configValue = config.max_idle_connections {
-            Int(configValue)
-        } else {
-            nil
-        }
+        self.maxOpenConnections = config.max_open_connections.flatMap(Int.init(_:))
+        self.maxIdleConnections = config.max_idle_connections.flatMap(Int.init(_:))
         self.maxConnectionLifetime = config.max_connection_lifetime
         self.username = config.username
         self.password = config.password
@@ -116,7 +113,9 @@ extension PostgresConnectionConfiguration {
         self.privateKey = config.private_key
         self.usernameTemplate = config.username_template
         self.disableEscaping = config.disable_escaping
-        self.passwordAuthentication = config.password_authentication
+        guard let passwordAuth = PostgresAuthMethod(rawValue: config.password_authentication)
+        else { return nil }
+        self.passwordAuthentication = passwordAuth
         self.rootRotationStatements = config.root_rotation_statements
     }
 }
