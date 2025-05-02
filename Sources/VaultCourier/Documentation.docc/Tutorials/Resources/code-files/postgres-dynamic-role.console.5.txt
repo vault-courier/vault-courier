@@ -1,0 +1,8 @@
+$ docker exec -i \
+  learn-postgres \
+  psql -U vault_root -d postgres -c "SELECT usename, valuntil FROM pg_user;"
+
+                     usename                      |        valuntil
+--------------------------------------------------+------------------------
+ vault_root                                       |
+ v-token-read_onl-ZpVqYDTawMrYRN7pCIZx-1746217006 | 2025-06-03 20:08:21+00
