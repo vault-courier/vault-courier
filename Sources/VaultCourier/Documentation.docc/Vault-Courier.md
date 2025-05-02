@@ -27,3 +27,7 @@ VaultCourier can be used to retrieve the secrets that your application needs. Th
 ### Essentials
 - <doc:Checking-out-an-example-project>
 
+### Tutorials
+
+- <doc:tutorials/Vault-Courier>
+

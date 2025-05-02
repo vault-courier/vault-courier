@@ -1,0 +1,5 @@
+$ mkdir DynamicRoleCredentials
+
+$ swift package --package-path DynamicRoleCredentials init --type tool
+
+$ open DynamicRoleCredentials/Package.swift
