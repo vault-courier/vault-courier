@@ -1,0 +1,3 @@
+% mkdir VaultDynamicRole
+
+% swift package --package-path VaultDynamicRole init --type tool

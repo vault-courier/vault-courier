@@ -27,7 +27,7 @@ public struct DatabaseConnectionResponse: Sendable {
     public let renewable: Bool?
     public let allowedRoles: [String]
     public let connectionURL: URL?
-    public let authMethod: String
+    public let authMethod: PostgresAuthMethod?
     public let username: String
     public let plugin: Plugin?
     public let passwordPolicy: String?
@@ -48,7 +48,7 @@ extension DatabaseConnectionResponse {
         self.renewable = component.renewable
         self.allowedRoles = component.data.allowedRoles
         self.connectionURL = URL(string: component.data.connectionDetails.connectionUrl)
-        self.authMethod = component.data.connectionDetails.passwordAuthentication
+        self.authMethod = .init(rawValue: component.data.connectionDetails.passwordAuthentication)
         self.username = component.data.connectionDetails.username
         let pluginVersion = component.data.pluginVersion
         let pluginName = component.data.pluginName

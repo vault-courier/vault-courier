@@ -27,7 +27,7 @@ struct DatabaseEngineTrait: SuiteTrait, TestScoping {
                                                      connectionUrl: connectionURL,
                                                      username: vaultUsername,
                                                      password: vaultPassword,
-                                                     passwordAuthentication: "scram-sha-256")
+                                                     passwordAuthentication: .scramSHA256)
         return config
     }
 
