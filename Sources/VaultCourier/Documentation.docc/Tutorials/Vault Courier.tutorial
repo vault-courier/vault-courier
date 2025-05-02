@@ -1,0 +1,12 @@
+@Tutorials(name: "VaultCourier") {
+    @Intro(title: "Manage secrets with VaultCourier") {
+        Learn how to use *Vault Courier* to retrieve, provision and manage secrets that your application needs.
+    }
+    
+    @Chapter(name: "Database Mount") {
+        - Static secrets
+        - Dynamic secrets
+        
+        @TutorialReference(tutorial: "doc:Understand-dynamic-roles")
+    }
+}

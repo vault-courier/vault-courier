@@ -21,5 +21,6 @@ Each of the following packages shows an end-to-end working example.
 
 ## Integrations
 
+- [configure-pg-connection-example](https://github.com/vault-courier/vault-courier-examples/tree/main/configure-pg-connection-example) - A CLI client that enables the vault's database mount and creates a connection between Vault/OpenBao and a [Postgres](https://www.postgresql.org) database.
 - TODO: postgres-static-role-example - A CLI client that creates a static role in a [Postgres](https://www.postgresql.org) database.
 - TODO: postgres-dynamic-role-example - A CLI client that creates a dynamic role in a [Postgres](https://www.postgresql.org) database.

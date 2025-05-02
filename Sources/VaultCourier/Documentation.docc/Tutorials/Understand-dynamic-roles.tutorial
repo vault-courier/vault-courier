@@ -1,0 +1,146 @@
+@Tutorial(time: 30) {
+    @Intro(title: "Understand Dynamic Roles") {
+        
+    In addition to providing static secrets via the KV secrets engine, both HashiCorp Vault and OpenBao support the generation of dynamic secrets. For simplicity, we'll refer to either system as "Vault", since the functionality is equivalent and the specific implementation is not relevant here.
+
+    Dynamic secrets are created only when accessed, which significantly reduces the risk of exposure. Vault's built-in revocation mechanisms ensure that these secrets are automatically revoked after use, minimizing the time they exist and further enhancing security.
+
+    For example, consider the _Imaginary Service Company_ (ISC), where development teams need to securely connect their web services and applications to a PostgreSQL database. If each team manually manages its own secrets, two key issues can arise: secrets might be shared across services—posing a security risk if compromised—or managing a large number of unique secrets can become operationally complex.
+
+To address this, ISC can use Vault's dynamic secrets, which are generated on demand and automatically revoked after use, reducing both risk and management overhead.
+
+It's the responsibility of the operations team to configure these dynamic secrets for the development teams. They'll set up the database secrets engine, connect it to the PostgreSQL instance, and verify Vault's ability to issue and revoke credentials dynamically. We'll use **VaultCourier** to implement and explore these tasks.
+
+    }
+
+    @Section(title: "Set up the lab") {
+        We start by setting up our tutorial lab with a PostgreSQL database and the respective roles. 
+        In the next section, we will connect the Vault with this database.
+        
+        @Steps {
+            @Step {
+                Open a terminal and start a Vault dev server with the literal string `education` as the root token value.
+                
+                You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.
+                
+                @Code(name: "Terminal Tab 1", file: postgres-dynamic-role.console.0.txt, reset: true)
+            }
+            
+            @Step {
+                Open a **new terminal** and start a PostgreSQL database with docker with a root user named `vault_root` and password `root_password`.
+                
+                **Note**: In production, it's important to create a _dedicated superuser role_ for Vault, separate from the general admin role. This allows you to rotate the Vault user's password after setup to avoid relying on the initial credentials — but once rotated, only Vault knows the new password.
+                Failing to separate these roles can result in the root admin being locked out of the database.
+                
+                @Code(name: "Terminal Tab 2", file: postgres-dynamic-role.console.1.0.txt)
+            }
+            
+            @Step {
+                Create the database role whose credentials Vault is going to manage.
+                
+                @Code(name: "Terminal Tab 2", file: postgres-dynamic-role.console.1.1.txt)
+            }
+            
+            @Step {
+                Grant the ability to read all tables to this postgres role.
+                
+                @Code(name: "Terminal Tab 2", file: postgres-dynamic-role.console.1.2.txt)
+            }
+        }
+    }
+    
+    @Section(title: "Creating a database connection with Vault") {
+        At the end of this section, we will have a brand new command line tool for configuring a connection between Vault and a postgres database. This is a step that is usually left for operations developers.
+        
+        @Steps {
+            @Step {
+                Create a new directory.
+                
+                @Code(name: "Terminal Tab 2", file: postgres-dynamic-role.console.2.0.txt, reset: true)
+            }
+            
+            @Step {
+                Create a new package using the Swift package manager CLI.
+                
+                @Code(name: "Terminal Tab 2", file: postgres-dynamic-role.console.2.1.txt)
+            }
+            
+            @Step {
+                Open the newly created package
+                
+                @Code(name: "Terminal Tab 2", file: postgres-dynamic-role.console.2.2.txt)
+            }
+            
+            @Step {
+                Specify the minimum platforms the package supports.
+                
+                @Code(name: "Package.swift", file: postgres-dynamic-role.2.0.1.swift, previousFile: postgres-dynamic-role.2.0.0.swift)
+            }
+            
+            @Step {
+                Then, we'll add `VaultCourier` and a Swift-OpenAPI transport dependency. Here we've selected the `AsyncHTTPClientTransport` transport dependency, but a `URLSessionTransport` would have been a good option as well.
+                
+                @Code(name: "Package.swift", file: postgres-dynamic-role.2.0.2.swift, previousFile: postgres-dynamic-role.2.0.1.swift)
+            }
+            
+            @Step {
+                Navigate to `Sources/VaultDynamic.swift`, which is the entry point for our program.
+                
+                We'll make changes to this file to make the main function asynchronous and to accept two optional arguments: the `engine-path` which is the location of the database mount in Vault, and `connection-name`, the name of the connection we create.
+                
+                @Code(name: "VaultDynamicRole.swift", file: postgres-dynamic-role.2.1.1.swift, previousFile: postgres-dynamic-role.2.1.0.swift)
+            }
+            
+            @Step {
+                Next, we will import `VaultCourier` and `OpenAPIAsyncHTTPClient`, and add a function to create a `VaultClient` instance. Note that the vault client is initialized with the token method set to "education" as our vault dev instance.  
+                
+                @Code(name: "VaultDynamicRole.swift", file: postgres-dynamic-role.2.1.2.swift, previousFile: postgres-dynamic-role.2.1.1.swift)
+            }
+            
+            @Step {
+                Add a function that creates a `PostgresConnectionConfiguration`.
+                
+                This function uses the values defined in the previous section. In particular, only the vault role `read_only` is able to access this connection.  
+                
+                @Code(name: "VaultDynamicRole.swift", file: postgres-dynamic-role.2.1.3.swift, previousFile: postgres-dynamic-role.2.1.2.swift)
+            }
+            
+            @Step {
+                Currently our main method just prints “Hello, world!” to the console. We will now call our VaultClient factory function and authenticate. 
+                
+                @Code(name: "VaultDynamicRole.swift", file: postgres-dynamic-role.2.1.4.swift, previousFile: postgres-dynamic-role.2.1.3.swift)
+            }
+            
+            @Step {
+                Enable the database mount with the `engine-path` argument using VaultClient's method `enableSecretEngine(mountConfig:)` 
+                
+                @Code(name: "VaultDynamicRole.swift", file: postgres-dynamic-role.2.1.5.swift, previousFile: postgres-dynamic-role.2.1.4.swift)
+            }
+            
+            @Step {
+                Configure Vault/OpenBao database secrets engine with the connection credentials for the PostgreSQL database. 
+                
+                @Code(name: "VaultDynamicRole.swift", file: postgres-dynamic-role.2.1.6.swift, previousFile: postgres-dynamic-role.2.1.5.swift)
+            }
+            
+            @Step {
+                Call `databaseConnection(name:,enginePath:)` with the VaultClient to read and compare the written settings.
+                
+                We have added a `CustomDebugStringConvertible` conformance to the response to visualize the output better.
+                
+                @Code(name: "VaultDynamicRole.swift", file: postgres-dynamic-role.2.1.7.swift, previousFile: postgres-dynamic-role.2.1.6.swift)
+            }
+            
+            @Step {
+                Build the app and run. If you are using Xcode you can pass the arguments in the Scheme. In the terminal you can run the commands in the listing
+                
+                @Code(name: "Terminal", file: postgres-dynamic-role.console.3.txt, reset: true) {
+                    @Image(source: "postgres-dynamic-role.configure.connection.output.png", alt: "Output of VaultDynamicRole cli tool")
+                }
+            }
+        }
+    }
+    
+
+
+}
