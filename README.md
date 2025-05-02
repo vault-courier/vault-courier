@@ -18,7 +18,7 @@ Swift client for interacting with Hashicorp Vault and OpenBao.
 
 ## Documentation
 
-You can find reference documentation and user guides for VaultCourier here. The [vault-courier-examples](https://github.com/vault-courier/vault-courier-examples) repository has a number of examples of different uses of the library.
+You can find reference documentation and user guides for VaultCourier [here](https://swiftpackageindex.com/vault-courier/vault-courier/main/documentation/vault-courier). The [vault-courier-examples](https://github.com/vault-courier/vault-courier-examples) repository has a number of examples of different uses of the library.
 
 ## Security
 
