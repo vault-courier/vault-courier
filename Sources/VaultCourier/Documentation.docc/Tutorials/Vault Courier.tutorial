@@ -9,4 +9,18 @@
         
         @TutorialReference(tutorial: "doc:Understand-dynamic-roles")
     }
+    
+    @Resources {
+        Explore more resources for learning about VaultCourier.
+
+
+        @SampleCode(destination: "https://github.com/vault-courier/vault-courier-examples") {
+            Download and explore sample code projects to get to know VaultCourier.
+
+
+            - [Configure Vault-Database Connection](https://github.com/vault-courier/vault-courier-examples/tree/main/configure-pg-connection-example)
+            - [Create Dynamic Role: generate dynamic credentials](https://github.com/vault-courier/vault-courier-examples/tree/main/create-dynamic-role-example)
+            - [Create Static Role](https://github.com/vault-courier/vault-courier-examples/tree/main/create-static-role-example)
+        }
+    }
 }
