@@ -37,6 +37,26 @@ public struct ScheduledRotation: Sendable {
     public let window: Int?
 }
 
+extension ScheduledRotation: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        guard let window else {
+            return schedule
+        }
+        return "\(schedule), window: \(window)"
+    }
+}
+
+extension Rotation: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        switch self {
+            case .period(let period):
+                return ".period(\(period))"
+            case .scheduled(let scheduled):
+                return ".scheduled(\(scheduled))"
+        }
+    }
+}
+
 extension StaticRoleCredentialsResponse {
     init(component: Components.Schemas.ReadStaticRoleCredentialsResponse) {
         self.requestId = component.requestId
