@@ -16,7 +16,7 @@ import struct Foundation.URL
 @main
 struct VaultDynamicRole: AsyncParsableCommand {
     @Option(name: .shortAndLong)
-    var enginePath: String = "sql_database"
+    var enginePath: String = "database"
 
     @Option(name: .shortAndLong)
     var connectionName: String = "pg_connection"
@@ -61,7 +61,7 @@ struct VaultDynamicRole: AsyncParsableCommand {
         let vaultPassword = "root_password"
         let config = PostgresConnectionConfiguration(connection: name,
                                                      pluginName: "postgresql-database-plugin",
-                                                     allowedRoles: ["read_only"],
+                                                     allowedRoles: ["dynamic_role", "static_role"],
                                                      connectionUrl: connectionURL,
                                                      username: vaultUsername,
                                                      password: vaultPassword,

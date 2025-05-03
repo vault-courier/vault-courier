@@ -1,1 +1,1 @@
-$ mkdir DynamicRoleCredentials
+% mkdir DynamicRoleCredentials

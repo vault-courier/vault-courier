@@ -14,16 +14,24 @@ import struct Foundation.URL
 #endif
 
 @main
-struct VaultDynamicRole: AsyncParsableCommand {
+struct StaticRoleCredentials: AsyncParsableCommand {
     @Option(name: .shortAndLong)
     var enginePath: String = "database"
 
     @Option(name: .shortAndLong)
     var connectionName: String = "pg_connection"
 
+    var roleName: String = "static_role"
+
     mutating func run() async throws {
         let vaultClient = try Self.makeVaultClient()
         try await vaultClient.authenticate()
+
+        try await vaultClient.create(staticRole: .init(vaultRoleName: roleName,
+                                                       databaseUsername: "static_role_username",
+                                                       databaseConnectionName: connectionName,
+                                                       rotationPeriod: "28d"),
+                                     enginePath: enginePath)
     }
 
     static func makeVaultClient() throws -> VaultClient {
@@ -40,23 +48,5 @@ struct VaultDynamicRole: AsyncParsableCommand {
             client: client,
             authentication: .token("education")
         )
-    }
-
-    static func postgresConnectionConfiguration(_ name: String) -> PostgresConnectionConfiguration {
-        let host = "127.0.0.1"
-        let port = 5432
-        let databaseName = "postgres"
-        let sslMode = "disable"
-        let connectionURL = "postgresql://{{username}}:{{password}}@\(host):\(port)/\(databaseName)?sslmode=\(sslMode)"
-        let vaultUsername = "vault_root"
-        let vaultPassword = "root_password"
-        let config = PostgresConnectionConfiguration(connection: name,
-                                                     pluginName: "postgresql-database-plugin",
-                                                     allowedRoles: ["read_only"],
-                                                     connectionUrl: connectionURL,
-                                                     username: vaultUsername,
-                                                     password: vaultPassword,
-                                                     passwordAuthentication: "scram-sha-256")
-        return config
     }
 }

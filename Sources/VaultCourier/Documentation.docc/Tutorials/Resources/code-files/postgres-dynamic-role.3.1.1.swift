@@ -16,13 +16,12 @@ import struct Foundation.URL
 @main
 struct DynamicRoleCredentials: AsyncParsableCommand {
     @Option(name: .shortAndLong)
-    var enginePath: String = "sql_database"
+    var enginePath: String = "database"
 
     @Option(name: .shortAndLong)
     var connectionName: String = "pg_connection"
 
-    @Option(name: .shortAndLong)
-    var roleName: String = "read_only"
+    var roleName: String = "dynamic_role"
 
     mutating func run() async throws {
         let vaultClient = try Self.makeVaultClient()

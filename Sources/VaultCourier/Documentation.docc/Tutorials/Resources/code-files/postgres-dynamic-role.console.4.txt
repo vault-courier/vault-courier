@@ -1,8 +1,8 @@
-$ swift build
+% swift build
 
-$ $(swift build --show-bin-path)/DynamicRoleCredentials -e "path/to/database/mount" -c "my_connection" -r "read_only"
+% $(swift build --show-bin-path)/DynamicRoleCredentials -e "path/to/database/mount" -c "my_connection"
 
-lease_id           path/to/database/mount/creds/read_only/v9KhYqTatkW23eFIFKxmy0lt
+lease_id           path/to/database/mount/creds/dynamic_role/v9KhYqTatkW23eFIFKxmy0lt
 lease_duration     3600
 lease_renewable    true
 password           -cG-CE1DXs3hq86P8LT5

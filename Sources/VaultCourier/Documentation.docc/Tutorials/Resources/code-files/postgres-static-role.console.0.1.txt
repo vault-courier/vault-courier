@@ -1,0 +1,6 @@
+% mkdir StaticRoleCredentials
+
+% swift package --package-path StaticRoleCredentials init --type tool
+
+% open StaticRoleCredentials/Package.swift
+

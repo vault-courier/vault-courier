@@ -1,0 +1,7 @@
+docker exec -i \
+    learn-postgres \
+    psql -U vault_root -d postgres -c "CREATE ROLE \"static_role_username\" LOGIN PASSWORD 'my_password';"
+
+docker exec -i \
+  learn-postgres \
+  psql -U vault_root -d postgres -c "GRANT \"read_only\" TO \"static_role_username\";"

@@ -14,30 +14,14 @@ import struct Foundation.URL
 #endif
 
 @main
-struct VaultDynamicRole: AsyncParsableCommand {
+struct StaticRoleCredentials: ParsableCommand {
     @Option(name: .shortAndLong)
     var enginePath: String = "database"
 
     @Option(name: .shortAndLong)
     var connectionName: String = "pg_connection"
 
-    mutating func run() async throws {
+    mutating func run() throws {
         print("Hello, world!")
-    }
-
-    static func makeVaultClient() throws -> VaultClient {
-        let vaultURL = URL(string: "http://127.0.0.1:8200/v1")!
-        let config = VaultClient.Configuration(apiURL: vaultURL)
-
-        let client = Client(
-            serverURL: vaultURL,
-            transport: AsyncHTTPClientTransport()
-        )
-
-        return VaultClient(
-            configuration: config,
-            client: client,
-            authentication: .token("education")
-        )
     }
 }

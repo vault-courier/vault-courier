@@ -1,6 +1,6 @@
-$ docker pull postgres:latest
+% docker pull postgres:latest
 
-$ docker run \
+% docker run \
     --detach \
     --name learn-postgres \
     -e POSTGRES_USER=vault_root \
