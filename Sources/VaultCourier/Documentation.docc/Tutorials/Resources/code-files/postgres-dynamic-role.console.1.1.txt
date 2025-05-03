@@ -1,6 +1,6 @@
-$ docker pull postgres:latest
+% docker pull postgres:latest
 
-$ docker run \
+% docker run \
     --detach \
     --name learn-postgres \
     -e POSTGRES_USER=vault_root \
@@ -10,6 +10,6 @@ $ docker run \
     --rm \
     postgres
 
-$ docker exec -i \
+% docker exec -i \
     learn-postgres \
     psql -U vault_root -d postgres -c "CREATE ROLE \"read_only\" NOINHERIT;"

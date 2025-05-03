@@ -16,7 +16,7 @@ import struct Foundation.URL
 @main
 struct VaultDynamicRole: AsyncParsableCommand {
     @Option(name: .shortAndLong)
-    var enginePath: String = "sql_database"
+    var enginePath: String = "database"
 
     @Option(name: .shortAndLong)
     var connectionName: String = "pg_connection"

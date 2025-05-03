@@ -1,3 +1,3 @@
-$ swift build
+% swift build
 
-$ $(swift build --show-bin-path)/VaultDynamicRole -e "path/to/database/mount" -c "my_connection"
+% $(swift build --show-bin-path)/VaultDynamicRole -e "path/to/database/mount" -c "my_connection"

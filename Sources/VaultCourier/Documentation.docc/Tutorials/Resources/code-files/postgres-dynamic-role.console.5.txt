@@ -1,4 +1,4 @@
-$ docker exec -i \
+% docker exec -i \
   learn-postgres \
   psql -U vault_root -d postgres -c "SELECT usename, valuntil FROM pg_user;"
 
