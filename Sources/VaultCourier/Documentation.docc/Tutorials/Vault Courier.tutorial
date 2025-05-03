@@ -4,8 +4,7 @@
     }
     
     @Chapter(name: "Database Mount") {
-        - Static secrets
-        - Dynamic secrets
+        Understand about the differences between dynamic and static secrets, and the use of the database mount.
         
         @TutorialReference(tutorial: "doc:Understand-dynamic-roles")
     }
