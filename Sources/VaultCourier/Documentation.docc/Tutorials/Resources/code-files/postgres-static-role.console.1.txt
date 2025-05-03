@@ -1,0 +1,9 @@
+% swift build
+
+% $(swift build --show-bin-path)/StaticRoleCredentials -e "path/to/database/mount" -c "my_connection"
+
+lease_renewable    false
+password           lED5Xpook-5CQ0iFYOpA
+username           static_role_username
+rotation           Optional(VaultCourier.Rotation.period(86400))
+
