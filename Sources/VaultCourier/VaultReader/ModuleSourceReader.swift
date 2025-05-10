@@ -25,14 +25,10 @@ extension VaultClient {
         filepath: String
     ) async throws -> String {
         do {
-            // `withEvaluatorManager` is executing on VaultClient
-            // Closure inherits VaultClient isolation
-            // We explicitly set withEvaluatorManager to be isolated to the VaultClient
             let output = try await withEvaluatorManager(isolation: self) { manager in
                 let readerOptions = EvaluatorOptions.preconfigured
                     .withResourceReader(self)
 
-                // Executing on VaultClient actor
                 return try await manager.withEvaluator(options: readerOptions) { evaluator in
                     return try await evaluator.evaluateOutputText(source: .path(filepath))
                 }
@@ -49,14 +45,10 @@ extension VaultClient {
         text: String
     ) async throws -> String {
         do {
-            // `withEvaluatorManager` is executing on VaultClient
-            // Closure inherits VaultClient isolation
-            // We explicitly set withEvaluatorManager to be isolated to the VaultClient
             let output = try await withEvaluatorManager(isolation: self) { manager in
                 let readerOptions = EvaluatorOptions.preconfigured
                     .withResourceReader(self)
 
-                // Executing on VaultClient actor
                 return try await manager.withEvaluator(options: readerOptions) { evaluator in
                     return try await evaluator.evaluateOutputText(source: .text(text))
                 }
@@ -102,14 +94,10 @@ extension VaultClient {
     ) async throws -> T
     where T: Decodable & Sendable {
         do {
-            // `withEvaluatorManager` is executing on VaultClient
-            // Closure inherits VaultClient isolation
-            // We explicitly set withEvaluatorManager to be isolated to the VaultClient
             let output = try await withEvaluatorManager(isolation: self) { manager in
                 let readerOptions = EvaluatorOptions.preconfigured
                     .withResourceReader(self)
 
-                // Executing on VaultClient actor
                 return try await manager.withEvaluator(options: readerOptions) { evaluator in
                     return try await evaluator.evaluateExpression(source: source, expression: expression, as: type)
                 }
