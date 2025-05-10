@@ -42,20 +42,3 @@ public struct EnableSecretMountConfig: Sendable {
         self.externalEntropyAccess = externalEntropyAccess
     }
 }
-
-extension EnableSecretMountConfig {
-    public init(_ module: MountConfiguration.Module) {
-        self.mountType = module.type
-        self.path = module.path
-        let config: [String:String]? = if let config = module.config  {
-            .init(uniqueKeysWithValues: zip(config.keys.map({ $0.rawValue}), config.values))
-        } else {
-            nil
-        }
-        self.config = config
-        self.local = module.local
-        self.options = module.options
-        self.sealWrap = module.seal_wrap
-        self.externalEntropyAccess = module.external_entropy_access
-    }
-}
