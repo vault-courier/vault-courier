@@ -179,4 +179,76 @@ extension VaultClient {
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
+
+    public func appRoleId(name: String) async throws -> AppRoleIdResponse {
+        let sessionToken = try sessionToken()
+        let mountPath = self.mounts.appRole.relativePath.removeSlash()
+
+        let response = try await client.authReadRoleId(
+            path: .init(enginePath: mountPath, roleName: name),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return AppRoleIdResponse(component: json)
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    public func generateAppSecretId(
+        capabilities: GenerateAppRoleToken
+    ) async throws -> AppRoleSecretIdResponse {
+        let sessionToken = try sessionToken()
+        let appRolePath = self.mounts.appRole.relativePath.removeSlash()
+
+        let headers: Operations.AuthApproleSecretId.Input.Headers = if let wrapTTL = capabilities.wrapTTL {
+            .init(xVaultToken: sessionToken, xVaultWrapTTL: wrapTTL)
+        } else {
+            .init(xVaultToken: sessionToken)
+        }
+
+        let response = try await client.authApproleSecretId(
+            path: .init(enginePath: appRolePath, roleName: capabilities.roleName),
+            headers: headers,
+            body: .json(.init(
+                tokenBoundCidrs: capabilities.tokenBoundCIDRS,
+                cidrList: capabilities.cidrList,
+                metadata: capabilities.metadata,
+                numUses: capabilities.tokenNumberOfUses,
+                ttl: capabilities.tokenTTL))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                if let json = json.value1 {
+                    switch json {
+                        case .GenerateAppRoleSecretIdResponse(let component):
+                            return .secretId(.init(component: component))
+                        case .WrapAppRoleSecretIdResponse(let component):
+                            return .wrapped(.init(component: component))
+                    }
+                } else if let json = json.value2 {
+                    logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(json.value.description)"))
+                    throw VaultClientError.decodingFailed()
+                } else {
+                    preconditionFailure("Unreachable path \(#function)")
+                }
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
 }

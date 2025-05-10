@@ -14,26 +14,29 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-public struct GenerateAppSecretIdResponse: Sendable {
-    public let requestId: String?
+
+public struct AppRoleIdResponse: Sendable {
     public let leaseId: String?
     public let leaseDuration: Int?
     public let renewable: Bool?
-    public let secretId: String
-    public let secretIdAccessor: String
-    public let secretIdTtl: Int
-    public let secretIdNumUses: Int
+    public let roleId: String
+
+    public init(leaseId: String?,
+                leaseDuration: Int?,
+                renewable: Bool?,
+                roleId: String) {
+        self.leaseId = leaseId
+        self.leaseDuration = leaseDuration
+        self.renewable = renewable
+        self.roleId = roleId
+    }
 }
 
-extension GenerateAppSecretIdResponse {
-    init(component: Components.Schemas.GenerateAppRoleSecretIdResponse) {
-        self.requestId = component.requestId
+extension AppRoleIdResponse {
+    init(component: Components.Schemas.ReadAppRoleIdResponse) {
         self.leaseId = component.leaseId
         self.leaseDuration = component.leaseDuration
         self.renewable = component.renewable
-        self.secretId = component.data.secretId
-        self.secretIdAccessor = component.data.secretIdAccessor
-        self.secretIdTtl = component.data.secretIdTtl
-        self.secretIdNumUses = component.data.secretIdNumUses
+        self.roleId = component.data.roleId
     }
 }
