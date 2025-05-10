@@ -79,21 +79,3 @@ public struct CreateDatabaseRole: Sendable {
         self.credentialConfig = credentialConfig
     }
 }
-
-
-
-extension CreateDatabaseRole {
-    init(_ module: PostgresRole.Module) {
-        self.vaultRoleName = module.name
-        self.databaseConnectionName = module.db_connection_name
-        self.defaultTTL = module.default_ttl
-        self.maxTTL = module.max_ttl
-        self.creationStatements = module.creation_statements
-        self.revocationStatements = module.revocation_statements
-        self.rollbackStatements = module.rollback_statements
-        self.renewStatements = module.renew_statements
-        self.rotationStatements = module.rotation_statements
-        self.credentialType = module.credential_type?.rawValue
-        self.credentialConfig = module.credential_config
-    }
-}

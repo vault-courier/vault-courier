@@ -63,17 +63,3 @@ public struct CreateDatabaseStaticRole: Sendable {
         self.credentialConfig = credentialConfig
     }
 }
-
-extension CreateDatabaseStaticRole {
-    init(_ module: PostgresStaticRole.Module) {
-        self.vaultRoleName = module.vault_role_name
-        self.databaseUsername = module.db_username
-        self.databaseConnectionName = module.db_connection_name
-        self.rotationPeriod = module.rotation_period
-        self.rotationSchedule = module.rotation_schedule
-        self.rotationWindow = module.rotation_window
-        self.rotationStatements = module.rotation_statements
-        self.credentialType = module.credential_type?.rawValue
-        self.credentialConfig = module.credential_config
-    }
-}
