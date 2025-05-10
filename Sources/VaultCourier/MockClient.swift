@@ -370,6 +370,28 @@ public struct MockClient: APIProtocol {
 
         return try await block(input)
     }
+
+    public typealias DisableAuthMethodSignature = @Sendable (Operations.AuthDisableMethod.Input) async throws -> Operations.AuthDisableMethod.Output
+    public var disableAuthMethodAction: DisableAuthMethodSignature?
+    public func authDisableMethod(
+        _ input: Operations.AuthDisableMethod.Input
+    ) async throws -> Operations.AuthDisableMethod.Output {
+        guard let block = disableAuthMethodAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias ReadAuthMethodSignature = @Sendable (Operations.AuthReadMethod.Input) async throws -> Operations.AuthReadMethod.Output
+    public var readAuthMethodAction: ReadAuthMethodSignature?
+    public func authReadMethod(
+        _ input: Operations.AuthReadMethod.Input
+    ) async throws -> Operations.AuthReadMethod.Output {
+        guard let block = readAuthMethodAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
 }
 
 public struct UnspecifiedBlockError: Swift.Error, LocalizedError, CustomStringConvertible {

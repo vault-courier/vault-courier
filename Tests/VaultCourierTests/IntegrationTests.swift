@@ -48,6 +48,7 @@ enum IntegrationTests {}
 extension IntegrationTests {
     @Suite struct KeyValue {}
     @Suite(.serialized) struct Database {}
+    @Suite struct AppRole {}
 }
 
 public func enableIntegrationTests() -> Bool {
