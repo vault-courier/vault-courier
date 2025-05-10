@@ -211,19 +211,17 @@ public actor VaultClient {
         )
         switch response {
             case .ok(let content):
-                switch content.body {
-                    case .json(let jsonResponse):
-                        guard let secretId = jsonResponse.data?.secretId,
-                              !secretId.isEmpty else {
-                            logger.debug("Missing or empty secretID in response")
-                            throw VaultClientError.decodingFailed()
-                        }
-
-                        logger.info("Unwrap Successful!")
-                        let roleID = credentials.roleID
-                        self.authState = .unwrapped(.init(roleID: roleID, secretID: secretId))
-                        return
+                let json = try content.body.json
+                guard let secretId = json.data?.secretId,
+                      !secretId.isEmpty else {
+                    logger.debug("Missing or empty secretID in response")
+                    throw VaultClientError.decodingFailed()
                 }
+
+                logger.info("Unwrap Successful!")
+                let roleID = credentials.roleID
+                self.authState = .unwrapped(.init(roleID: roleID, secretID: secretId))
+                return
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -239,27 +237,7 @@ public actor VaultClient {
         case .wrapped:
             throw VaultClientError.invalidState(authState.description)
         case .unwrapped(let appRoleCredentials):
-            let appRolePath = mounts.appRole.relativePath
-
-            let response = try await client.authApproleLogin(
-                path: .init(enginePath: appRolePath),
-                body: .json(.init(roleId: appRoleCredentials.roleID, secretId: appRoleCredentials.secretID))
-            )
-
-            switch response {
-                case .ok(let content):
-                    let json = try content.body.json
-                    self.authState = .authorized(token: json.auth.clientToken)
-                    logger.info("login authorized")
-                case .badRequest(let content):
-                    let errors = (try? content.body.json.errors) ?? []
-                    logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                    throw VaultClientError.permissionDenied()
-                case .undocumented(statusCode: let statusCode, _):
-                    logger.debug(.init(stringLiteral: "login failed with \(statusCode): "))
-                    throw VaultClientError.permissionDenied()
-            }
-
+            try await appRoleLogin(credentials: appRoleCredentials)
         case .authorized:
             return
         }
@@ -270,5 +248,28 @@ public actor VaultClient {
             throw VaultClientError.clientIsNotLoggedIn()
         }
         return sessionToken
+    }
+
+    func appRoleLogin(credentials: AppRoleCredentials) async throws {
+        let appRolePath = mounts.appRole.relativePath.removeSlash()
+
+        let response = try await client.authApproleLogin(
+            path: .init(enginePath: appRolePath),
+            body: .json(.init(roleId: credentials.roleID, secretId: credentials.secretID))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                self.authState = .authorized(token: json.auth.clientToken)
+                logger.info("login authorized")
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.permissionDenied()
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "login failed with \(statusCode): "))
+                throw VaultClientError.permissionDenied()
+        }
     }
 }

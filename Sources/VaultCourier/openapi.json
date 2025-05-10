@@ -450,10 +450,17 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/GenerateAppRoleSecretIdResponse"
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/GenerateAppRoleSecretIdResponse"
+                        },
+                        {
+                          "$ref": "#/components/schemas/WrapAppRoleSecretIdResponse"
+                        }
+                      ]
                     },
                     {
-                      "$ref": "#/components/schemas/WrapAppRoleSecretIdResponse"
+                      "type": "object"
                     }
                   ]
                 }

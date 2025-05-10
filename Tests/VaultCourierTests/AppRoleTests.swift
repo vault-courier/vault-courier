@@ -49,6 +49,19 @@ extension IntegrationTests.AppRole {
 
         #expect(appRole.tokenType == CreateAppRole.TokenType.batch.rawValue)
 
+        let roleIdResponse = try await vaultClient.appRoleId(name: appRoleName)
+
+        let generateAppSecretIdResponse = try await vaultClient.generateAppSecretId(
+            capabilities: .init(roleName: appRoleName)
+        )
+
+        guard case let .secretId(secretIdResponse) = generateAppSecretIdResponse else {
+            Issue.record("Receive unexpected response \(generateAppSecretIdResponse)")
+            return
+        }
+
+        #expect(secretIdResponse.secretIdNumUses == 0)
+
         try await vaultClient.deleteAppRole(name: appRoleName)
 
         try await vaultClient.disableAuthMethod(path)

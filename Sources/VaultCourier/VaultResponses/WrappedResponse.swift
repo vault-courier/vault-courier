@@ -14,26 +14,31 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-public struct GenerateAppSecretIdResponse: Sendable {
+
+public struct WrappedResponse: Sendable {
     public let requestId: String?
     public let leaseId: String?
     public let leaseDuration: Int?
     public let renewable: Bool?
-    public let secretId: String
-    public let secretIdAccessor: String
-    public let secretIdTtl: Int
-    public let secretIdNumUses: Int
+    public let token: String
+    public let accessor: String
+    public let ttl: Int
+    public let createdAt: String
+    public let creationPath: String
+    public let wrappedAccessor: String
 }
 
-extension GenerateAppSecretIdResponse {
-    init(component: Components.Schemas.GenerateAppRoleSecretIdResponse) {
-        self.requestId = component.requestId
+extension WrappedResponse {
+    init(component: Components.Schemas.WrapAppRoleSecretIdResponse) {
+        self.requestId = nil
         self.leaseId = component.leaseId
         self.leaseDuration = component.leaseDuration
         self.renewable = component.renewable
-        self.secretId = component.data.secretId
-        self.secretIdAccessor = component.data.secretIdAccessor
-        self.secretIdTtl = component.data.secretIdTtl
-        self.secretIdNumUses = component.data.secretIdNumUses
+        self.token = component.wrapInfo.token
+        self.accessor = component.wrapInfo.accessor
+        self.ttl = component.wrapInfo.ttl
+        self.createdAt = component.wrapInfo.creationTime
+        self.creationPath = component.wrapInfo.creationPath
+        self.wrappedAccessor = component.wrapInfo.wrappedAccessor
     }
 }
