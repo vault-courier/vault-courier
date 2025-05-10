@@ -25,7 +25,7 @@ import protocol Foundation.LocalizedError
 
 extension VaultClient {
     /// Enables authentication mount. Example AppRole, GitHub, Token...
-    func enableAuthMethod(configuration: EnableAuthMethodConfig) async throws {
+    public func enableAuthMethod(configuration: EnableAuthMethodConfig) async throws {
         let sessionToken = try sessionToken()
 
         let requestConfig = try configuration.config.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
@@ -55,7 +55,7 @@ extension VaultClient {
         }
     }
 
-    func readAuthMethodConfiguration(_ path: String) async throws -> ReadAuthMethodResponse {
+    public func readAuthMethodConfiguration(_ path: String) async throws -> ReadAuthMethodResponse {
         let sessionToken = try sessionToken()
 
         let response = try await client.authReadMethod(
@@ -77,7 +77,7 @@ extension VaultClient {
         }
     }
 
-    func disableAuthMethod(_ path: String) async throws {
+    public func disableAuthMethod(_ path: String) async throws {
         let sessionToken = try sessionToken()
 
         let response = try await client.authDisableMethod(
