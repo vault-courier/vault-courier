@@ -18,7 +18,6 @@ import Testing
 
 @testable import VaultCourier
 
-
 extension IntegrationTests.Database {
     static let connectionName = "postgres_db"
     static let enginePath = "my-postgres-db"

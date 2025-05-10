@@ -15,30 +15,28 @@
 //===----------------------------------------------------------------------===//
 
 
-public struct EnableSecretMountConfig: Sendable {
-    public var mountType: String
-    public var path: String
-    public var description: String?
-    public var config: [String: String]?
-    public var options: [String: String]?
-    public var local: Bool?
-    public var sealWrap: Bool?
-    public var externalEntropyAccess: Bool?
+public struct EnableAuthMethodConfig: Sendable {
+    public let path: String
+    public let type: String
+    public let description: String?
+    public let config: [String: String]?
+    public let options: [String: String]?
+    public let local: Bool?
+    public let sealWrap: Bool?
 
-    public init(mountType: String,
-                path: String,
+    public init(path: String,
+                type: String,
                 description: String? = nil,
                 config: [String : String]? = nil,
                 options: [String : String]? = nil,
-                local: Bool? = nil, sealWrap: Bool? = nil,
-                externalEntropyAccess: Bool? = nil) {
-        self.mountType = mountType
+                local: Bool = false,
+                sealWrap: Bool = false) {
         self.path = path
+        self.type = type
         self.description = description
         self.config = config
         self.options = options
         self.local = local
         self.sealWrap = sealWrap
-        self.externalEntropyAccess = externalEntropyAccess
     }
 }

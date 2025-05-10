@@ -84,7 +84,7 @@
         },
         "responses": {
           "204": {
-            "description": "OK"
+            "description": "NoContent"
           }
         }
       },
@@ -123,7 +123,7 @@
         },
         "responses": {
           "204": {
-            "description": "OK"
+            "description": "NoContent"
           },
           "400": {
             "description": "BadRequest",
@@ -154,6 +154,36 @@
     },
     "/sys/auth/{path}": {
       "description": "Enable a new credential backend with a name.",
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Reads auth method.",
+        "description": "This endpoints returns the configuration of the auth method at the given path. This endpoint requires sudo capability on the final path, but the same functionality can be achieved without sudo via `sys/mounts/auth/[auth-path]`.",
+        "operationId": "auth-read-method",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadAuthMethodResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "system"
@@ -173,7 +203,30 @@
         },
         "responses": {
           "204": {
-            "description": "OK"
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Disables the auth method at the given auth path.",
+        "description": "This endpoint disables the auth method at the given auth path. This endpoint requires sudo capability in addition to any path-specific capabilities.",
+        "operationId": "auth-disable-method",
+        "responses": {
+          "204": {
+            "description": "NoContent"
           },
           "400": {
             "description": "BadRequest",
@@ -1902,6 +1955,60 @@
             "description": "The type of the backend. Example: \"userpass\""
           }
         }
+      },
+      "ReadAuthMethodResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "the id of the request associated with this response"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessor": {
+                "type": "string"
+              },
+              "external_entropy_access": {
+                "type": "boolean"
+              },
+              "local": {
+                "type": "boolean"
+              },
+              "config": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Configuration for this mount, such as plugin_name."
+              },
+              "options": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "The options to pass into the backend"
+              },
+              "seal_wrap": {
+                "type": "boolean",
+                "description": "Whether to turn on seal wrapping for the mount."
+              },
+              "description": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "The type of the backend. Example: \"userpass\""
+              }
+            },
+            "required": [
+              "type",
+              "config"
+            ]
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ]
       },
       "AuthMethodResponse": {
         "type": "object",

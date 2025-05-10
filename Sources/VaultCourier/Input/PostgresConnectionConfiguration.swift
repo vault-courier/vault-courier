@@ -97,27 +97,3 @@ public enum PostgresAuthMethod: String, Decodable, Sendable, CustomDebugStringCo
 
     public var debugDescription: String { rawValue }
 }
-
-extension PostgresConnectionConfiguration {
-    init?(_ config: PostgresDatabaseConnection.Module) {
-        self.connection = config.connection
-        self.pluginName = config.plugin_name
-        self.verifyConnection = config.verify_connection
-        self.allowedRoles = config.allowed_roles ?? []
-        self.connectionUrl = config.connection_url
-        self.maxOpenConnections = config.max_open_connections.flatMap(Int.init(_:))
-        self.maxIdleConnections = config.max_idle_connections.flatMap(Int.init(_:))
-        self.maxConnectionLifetime = config.max_connection_lifetime
-        self.username = config.username
-        self.password = config.password
-        self.tlsCa =  config.tls_ca
-        self.tlsCertificate = config.tls_certificate
-        self.privateKey = config.private_key
-        self.usernameTemplate = config.username_template
-        self.disableEscaping = config.disable_escaping
-        guard let passwordAuth = PostgresAuthMethod(rawValue: config.password_authentication)
-        else { return nil }
-        self.passwordAuthentication = passwordAuth
-        self.rootRotationStatements = config.root_rotation_statements ?? []
-    }
-}
