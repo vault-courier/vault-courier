@@ -97,4 +97,86 @@ extension VaultClient {
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
+
+    public func createAppRole(_ appRole: CreateAppRole) async throws {
+        let sessionToken = try sessionToken()
+        let mountPath = self.mounts.appRole.relativePath.removeSlash()
+
+        let response = try await client.authCreateApprole(
+            path: .init(enginePath: mountPath, roleName: appRole.name),
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(
+                bindSecretId: appRole.bindSecretId,
+                secretIdBoundCidrs: appRole.secretIdBoundCIDRS,
+                secretIdNumUses: appRole.secretIdNumberOfUses,
+                secretIdTtl: appRole.secretIdTTL,
+                localSecretIds: appRole.localSecretIds,
+                tokenTtl: appRole.tokenTTL,
+                tokenMaxTtl: appRole.tokenMaxTTL,
+                tokenPolicies: appRole.tokenPolicies,
+                tokenBoundCidrs: appRole.tokenBoundCIDRS,
+                tokenNoDefaultPolicy: appRole.tokenNoDefaultPolicy,
+                tokenNumUses: appRole.tokenNumberOfUses,
+                tokenPeriod: appRole.tokenPeriod,
+                tokenType: appRole.tokenType.rawValue))
+        )
+
+        switch response {
+            case .noContent:
+                logger.info("approle \(appRole.name) created.")
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    public func readAppRole(name: String) async throws -> ReadAppRoleResponse {
+        let sessionToken = try sessionToken()
+        let mountPath = self.mounts.appRole.relativePath.removeSlash()
+
+        let response = try await client.authReadApprole(
+            path: .init(enginePath: mountPath, roleName: name),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                let role = ReadAppRoleResponse(component: json)
+                return role
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    public func deleteAppRole(name: String) async throws {
+        let sessionToken = try sessionToken()
+        let mountPath = self.mounts.appRole.relativePath.removeSlash()
+
+        let response = try await client.authDeleteApprole(
+            path: .init(enginePath: mountPath, roleName: name),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .noContent:
+                logger.info("App role deleted successfully.")
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
 }
