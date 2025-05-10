@@ -2128,6 +2128,9 @@
               },
               "bind_secret_id": {
                 "type": "boolean"
+              },
+              "token_type": {
+                "type": "string"
               }
             },
             "required": [

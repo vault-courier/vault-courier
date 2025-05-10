@@ -32,4 +32,25 @@ extension IntegrationTests.AppRole {
 
         try await vaultClient.disableAuthMethod(path)
     }
+
+    @Test
+    func crud_approle() async throws {
+        let vaultClient = VaultClient.current
+
+        let path = "approle"
+        try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
+
+        let appRoleName = "batch_role"
+        try await vaultClient.createAppRole(.init(name: appRoleName,
+                                                  tokenPolicies: [],
+                                                  tokenType: .batch))
+
+        let appRole = try await vaultClient.readAppRole(name: appRoleName)
+
+        #expect(appRole.tokenType == CreateAppRole.TokenType.batch.rawValue)
+
+        try await vaultClient.deleteAppRole(name: appRoleName)
+
+        try await vaultClient.disableAuthMethod(path)
+    }
 }
