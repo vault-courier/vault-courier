@@ -16,12 +16,25 @@
 
 
 public struct EnableAuthMethodConfig: Sendable {
+    /// The path where this auth method should be enabled
     public let path: String
+
+    /// The type of the backend. Example: \"userpass\"
     public let type: String
+
+    /// User-friendly description for this credential backend.
     public let description: String?
+
+    /// Configuration for this mount, such as `plugin_name`.
     public let config: [String: String]?
+
+    /// The options to pass into the backend. See Auth method docs.
     public let options: [String: String]?
+
+    /// Mark the mount as a local mount, which is not replicated and is unaffected by replication.
     public let local: Bool?
+
+    /// Whether to turn on seal wrapping for the mount.
     public let sealWrap: Bool?
 
     public init(path: String,

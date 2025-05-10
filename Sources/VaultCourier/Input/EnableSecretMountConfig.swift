@@ -17,12 +17,26 @@
 
 public struct EnableSecretMountConfig: Sendable {
     public var mountType: String
+
+    /// The path where the secret mount should be enabled
     public var path: String
+
+    /// User-friendly description for this mount.
     public var description: String?
+
+    /// Configuration for this mount, such as `default_lease_ttl` and `max_lease_ttl`.
     public var config: [String: String]?
+
+    /// The options to pass into the backend. See specific backend documentation.
     public var options: [String: String]?
+
+    /// Mark the mount as a local mount, which is not replicated and is unaffected by replication.
     public var local: Bool?
+
+    /// Whether to turn on seal wrapping for the mount.
     public var sealWrap: Bool?
+
+    /// Whether to give the mount access to Vault's external entropy.
     public var externalEntropyAccess: Bool?
 
     public init(mountType: String,
