@@ -30,7 +30,7 @@ public struct CreateAppRole: Sendable {
     public var tokenNoDefaultPolicy: Bool?
     public var tokenNumberOfUses: Int?
     public var tokenPeriod: String?
-    public var tokenType: TokenType
+    public var tokenType: TokenType?
 
     public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case batch = "batch"
@@ -51,7 +51,7 @@ public struct CreateAppRole: Sendable {
                 tokenNoDefaultPolicy: Bool? = nil,
                 tokenNumberOfUses: Int? = nil,
                 tokenPeriod: String? = nil,
-                tokenType: TokenType) {
+                tokenType: TokenType?) {
         self.name = name
         self.bindSecretId = bindSecretId
         self.secretIdBoundCIDRS = secretIdBoundCIDRS

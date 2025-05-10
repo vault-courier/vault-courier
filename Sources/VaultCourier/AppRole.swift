@@ -118,7 +118,7 @@ extension VaultClient {
                 tokenNoDefaultPolicy: appRole.tokenNoDefaultPolicy,
                 tokenNumUses: appRole.tokenNumberOfUses,
                 tokenPeriod: appRole.tokenPeriod,
-                tokenType: appRole.tokenType.rawValue))
+                tokenType: appRole.tokenType?.rawValue))
         )
 
         switch response {
