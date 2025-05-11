@@ -1,0 +1,16 @@
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.4#/VaultPolicy.pkl"
+
+import "kvMount.pkl"
+
+name = "my_app"
+
+local kvPath = kvMount.path
+
+policy {
+  // Read KeyValue Secrets
+  ["\(kvPath)/data/*"] {
+    capabilities {
+      "read"
+    }
+  }
+}
