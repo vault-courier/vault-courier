@@ -29,7 +29,7 @@ import PklSwift
 
 @testable import VaultCourier
 
-extension IntegrationTests {
+extension IntegrationTests.Pkl {
     @Suite(
         .tags(.pkl, .integration),
         .enabled(if: isPklEnabled()),

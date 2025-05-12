@@ -49,6 +49,7 @@ extension IntegrationTests {
     @Suite struct KeyValue {}
     @Suite(.serialized) struct Database {}
     @Suite struct AppRole {}
+    @Suite struct Pkl {}
 }
 
 public func enableIntegrationTests() -> Bool {
