@@ -1,0 +1,13 @@
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.4#/Payloads/PostgresStaticRole.pkl"
+
+vault_role_name = "test_static_role"
+
+db_username = "test_static_role_username"
+
+db_connection_name = "postgres_db"
+
+rotation = new RotationPeriod {
+  period = "28d"
+}
+
+credential = new PasswordCredential {}
