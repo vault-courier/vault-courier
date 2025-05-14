@@ -31,16 +31,16 @@ extension VaultAppRole {
         public var secret_id_num_uses: Int?
 
         /// Duration in either an integer number of seconds (3600) or an integer time unit (60m) after which by default any SecretID expires. A value of zero will allow the SecretID to not expire. However, this option may be overridden by the request's `ttl` field when generating a SecretID.
-        public var secret_id_ttl: String?
+        public var secret_id_ttl: Duration?
 
         /// If set, the secret IDs generated using this role will be cluster local. This can only be set during role creation and once set, it can't be reset later.
         public var local_secret_ids: Bool?
 
         /// The incremental lifetime for generated tokens. This current value of this will be referenced at renewal time.
-        public var token_ttl: String?
+        public var token_ttl: Duration?
 
         /// The maximum lifetime for generated tokens. This current value of this will be referenced at renewal time.
-        public var token_max_ttl: String?
+        public var token_max_ttl: Duration?
 
         /// List of token policies to encode onto generated tokens. Depending on the auth method, this list may be supplemented by user/group/other values.
         public var token_policies: [String]
@@ -58,7 +58,7 @@ extension VaultAppRole {
         public var token_num_uses: Int?
 
         /// The maximum allowed period value when a periodic token is requested from this role.
-        public var token_period: String?
+        public var token_period: Duration?
 
         /// The type of token that should be generated. Can be service, batch, or default to use the mount's tuned default (which unless changed will be service tokens). For token store roles, there are two additional possibilities: `default-service` and `default-batch` which specify the type to return unless the client requests a different type at generation time. For machine based authentication cases, you should use batch type tokens.
         public var token_type: TokenType
@@ -69,16 +69,16 @@ extension VaultAppRole {
             bind_secret_id: Bool?,
             secret_id_bound_cidrs: [String]?,
             secret_id_num_uses: Int?,
-            secret_id_ttl: String?,
+            secret_id_ttl: Duration?,
             local_secret_ids: Bool?,
-            token_ttl: String?,
-            token_max_ttl: String?,
+            token_ttl: Duration?,
+            token_max_ttl: Duration?,
             token_policies: [String],
             token_bound_cidrs: [String]?,
             token_explicit_max_ttl: String?,
             token_no_default_policy: Bool?,
             token_num_uses: Int?,
-            token_period: String?,
+            token_period: Duration?,
             token_type: TokenType
         ) {
             self.approle_path = approle_path

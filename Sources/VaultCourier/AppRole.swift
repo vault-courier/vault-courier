@@ -109,15 +109,15 @@ extension VaultClient {
                 bindSecretId: appRole.bindSecretId,
                 secretIdBoundCidrs: appRole.secretIdBoundCIDRS,
                 secretIdNumUses: appRole.secretIdNumberOfUses,
-                secretIdTtl: appRole.secretIdTTL,
+                secretIdTtl: appRole.secretIdTTL?.formatted(.vaultSeconds),
                 localSecretIds: appRole.localSecretIds,
-                tokenTtl: appRole.tokenTTL,
-                tokenMaxTtl: appRole.tokenMaxTTL,
+                tokenTtl: appRole.tokenTTL?.formatted(.vaultSeconds),
+                tokenMaxTtl: appRole.tokenMaxTTL?.formatted(.vaultSeconds),
                 tokenPolicies: appRole.tokenPolicies,
                 tokenBoundCidrs: appRole.tokenBoundCIDRS,
                 tokenNoDefaultPolicy: appRole.tokenNoDefaultPolicy,
                 tokenNumUses: appRole.tokenNumberOfUses,
-                tokenPeriod: appRole.tokenPeriod,
+                tokenPeriod: appRole.tokenPeriod?.formatted(.vaultSeconds),
                 tokenType: appRole.tokenType.rawValue))
         )
 

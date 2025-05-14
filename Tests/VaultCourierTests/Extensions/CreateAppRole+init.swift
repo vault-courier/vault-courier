@@ -20,18 +20,18 @@ extension CreateAppRole {
   init(_ module: VaultAppRole.Module) {
       self.init(
         name: module.role_name,
-        bindSecretId: module.bind_secret_id,
+        bindSecretId: module.bind_secret_id ?? true,
         secretIdBoundCIDRS: module.secret_id_bound_cidrs,
         secretIdNumberOfUses: module.secret_id_num_uses,
-        secretIdTTL: module.secret_id_ttl,
+        secretIdTTL: module.secret_id_ttl?.toSwiftDuration(),
         localSecretIds: module.local_secret_ids,
         tokenPolicies: module.token_policies,
         tokenBoundCIDRS: module.token_bound_cidrs,
-        tokenTTL: module.token_ttl,
-        tokenMaxTTL: module.token_max_ttl,
-        tokenNoDefaultPolicy: module.token_no_default_policy,
+        tokenTTL: module.token_ttl?.toSwiftDuration(),
+        tokenMaxTTL: module.token_max_ttl?.toSwiftDuration(),
+        tokenNoDefaultPolicy: module.token_no_default_policy ?? false,
         tokenNumberOfUses: module.token_num_uses,
-        tokenPeriod: module.token_period,
+        tokenPeriod: module.token_period?.toSwiftDuration(),
         tokenType: .init(rawValue: module.token_type.rawValue) ?? .default
       )
   }
