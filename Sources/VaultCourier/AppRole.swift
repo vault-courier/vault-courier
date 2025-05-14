@@ -223,7 +223,7 @@ extension VaultClient {
                 cidrList: capabilities.cidrList,
                 metadata: capabilities.metadata,
                 numUses: capabilities.tokenNumberOfUses,
-                ttl: capabilities.tokenTTL))
+                ttl: capabilities.tokenTTL?.formatted(.vaultSeconds)))
         )
 
         switch response {

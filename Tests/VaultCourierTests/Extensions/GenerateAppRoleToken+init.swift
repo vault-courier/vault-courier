@@ -40,7 +40,7 @@ extension GenerateAppRoleToken {
                   cidrList: cidrList,
                   tokenNumberOfUses: tokenNumberOfUses,
                   tokenBoundCIDRS: tokenBoundCIDRS,
-                  tokenTTL: tokenTTL,
+                  tokenTTL: tokenTTL?.toSwiftDuration(),
                   wrapTTL: wrapTTL)
     }
 }

@@ -24,7 +24,7 @@ extension AppRoleToken {
 
         /// Duration in seconds (3600) or an integer time unit (60m) after which this SecretID expires. A value of zero will allow the SecretID to not expire.
         /// Overrides `secret_id_ttl` role option when supplied. May not be longer than role's `secret_id_ttl`.
-        public var ttl: String?
+        public var ttl: Duration?
 
         /// The maximum uses for the given token. This can be used to create a one-time-token or limited use token. The value of 0 has no limit to the number of uses.
         public var num_uses: Int?
@@ -37,7 +37,7 @@ extension AppRoleToken {
             meta: [String: String]?,
             cidr_list: [String]?,
             token_bound_cidrs: [String]?,
-            ttl: String?,
+            ttl: Duration?,
             num_uses: Int?,
             wrap_ttl: String?
         ) {
