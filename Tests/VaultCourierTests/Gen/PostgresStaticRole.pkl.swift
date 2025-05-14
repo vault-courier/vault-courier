@@ -27,7 +27,7 @@ extension PostgresStaticRole {
 
         /// Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds.
         /// Uses duration format strings. Mutually exclusive with `rotation_schedule`.
-        public var rotation_period: String?
+        public var rotation_period: Duration?
 
         /// A cron-style string that will define the schedule on which rotations should occur. This should be
         /// a "standard" cron-style string made of five fields of which each entry defines the minute, hour,
@@ -39,7 +39,7 @@ extension PostgresStaticRole {
         /// If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until
         /// the next scheduled rotation. The minimum is 1 hour. Uses duration format strings. Optional when `rotation_schedule`
         /// is set and disallowed when `rotation_period` is set.
-        public var rotation_window: String?
+        public var rotation_window: Duration?
 
         /// Specifies the database statements to be executed to rotate the password for the configured database user.
         /// Not every plugin type will support this functionality. See the plugin's API page for more information on
@@ -58,9 +58,9 @@ extension PostgresStaticRole {
             vault_role_name: String,
             db_username: String,
             db_connection_name: String,
-            rotation_period: String?,
+            rotation_period: Duration?,
             rotation_schedule: String?,
-            rotation_window: String?,
+            rotation_window: Duration?,
             rotation_statements: [String]?,
             credential_type: CredentialType?,
             credential_config: [String: String]?
@@ -80,9 +80,9 @@ extension PostgresStaticRole {
     public struct RotationPeriod: PklRegisteredType, Decodable, Hashable {
         public static let registeredIdentifier: String = "PostgresStaticRole#RotationPeriod"
 
-        public var period: String
+        public var period: Duration
 
-        public init(period: String) {
+        public init(period: Duration) {
             self.period = period
         }
     }
@@ -92,9 +92,9 @@ extension PostgresStaticRole {
 
         public var schedule: String
 
-        public var window: String?
+        public var window: Duration?
 
-        public init(schedule: String, window: String?) {
+        public init(schedule: String, window: Duration?) {
             self.schedule = schedule
             self.window = window
         }

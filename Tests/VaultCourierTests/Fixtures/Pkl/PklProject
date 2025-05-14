@@ -9,6 +9,6 @@ package {
 
 dependencies {
   ["pkl.vault"] { 
-    uri = "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.4"
+    uri = "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.5"
   }
 }
