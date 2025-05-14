@@ -23,11 +23,11 @@ extension PostgresRole {
         public var db_connection_name: String
 
         /// Specifies the TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to system/engine default TTL time.
-        public var default_ttl: String?
+        public var default_ttl: Duration?
 
         /// Specifies the maximum TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to sys/mounts's default TTL time;
         /// this value is allowed to be less than the mount max TTL (or, if not set, the system max TTL), but it is not allowed to be longer. See also The TTL General Case.
-        public var max_ttl: String?
+        public var max_ttl: Duration?
 
         ///  Specifies the database statements executed to create and configure a user. Must be a semicolon-separated string, a base64-encoded semicolon-separated string,
         /// a serialized JSON string array, or a base64-encoded serialized JSON string array. The `{{name}}`, `{{password}}` and `{{expiration}}` values will be substituted. The generated password will be a random alphanumeric 20 character string.
@@ -60,8 +60,8 @@ extension PostgresRole {
         public init(
             name: String,
             db_connection_name: String,
-            default_ttl: String?,
-            max_ttl: String?,
+            default_ttl: Duration?,
+            max_ttl: Duration?,
             creation_statements: [String],
             revocation_statements: [String]?,
             rollback_statements: [String]?,

@@ -26,8 +26,8 @@ extension CreateDatabaseRole {
 
         self.init(vaultRoleName: module.name,
                   databaseConnectionName: module.db_connection_name,
-                  defaultTTL: module.default_ttl,
-                  maxTTL: module.max_ttl,
+                  defaultTTL: module.default_ttl?.toSwiftDuration(),
+                  maxTTL: module.max_ttl?.toSwiftDuration(),
                   creationStatements: module.creation_statements,
                   revocationStatements: module.revocation_statements,
                   rollbackStatements: module.rollback_statements,

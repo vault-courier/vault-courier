@@ -146,8 +146,8 @@ extension VaultClient {
                 headers: .init(xVaultToken: sessionToken),
                 body: .json(.init(
                     dbName: dynamicRole.databaseConnectionName,
-                    defaultTtl: dynamicRole.defaultTTL,
-                    maxTtl: dynamicRole.maxTTL,
+                    defaultTtl: dynamicRole.defaultTTL?.formatted(.vaultSeconds),
+                    maxTtl: dynamicRole.maxTTL?.formatted(.vaultSeconds),
                     creationStatements: dynamicRole.creationStatements,
                     revocationStatements: dynamicRole.revocationStatements,
                     rollbackStatements: dynamicRole.rollbackStatements,

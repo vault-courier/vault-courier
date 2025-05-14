@@ -22,12 +22,12 @@ public struct CreateDatabaseRole: Sendable {
     /// The name of the database connection to use for this role.
     public var databaseConnectionName: String
 
-    /// Specifies the TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to system/engine default TTL time.
-    public var defaultTTL: String?
+    /// Specifies the TTL for the leases associated with this role. Defaults to system/engine default TTL time.
+    public var defaultTTL: Duration?
 
-    /// Specifies the maximum TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to sys/mounts's default TTL time;
+    /// Specifies the maximum TTL for the leases associated with this role. Defaults to sys/mounts's default TTL time;
     /// this value is allowed to be less than the mount max TTL (or, if not set, the system max TTL), but it is not allowed to be longer. See also The TTL General Case.
-    public var maxTTL: String?
+    public var maxTTL: Duration?
 
     ///  Specifies the database statements executed to create and configure a user. Must be a semicolon-separated string, a base64-encoded semicolon-separated string,
     /// a serialized JSON string array, or a base64-encoded serialized JSON string array. The `{{name}}`, `{{password}}` and `{{expiration}}` values will be substituted. The generated password will be a random alphanumeric 20 character string.
@@ -57,8 +57,8 @@ public struct CreateDatabaseRole: Sendable {
 
     public init(vaultRoleName: String,
                 databaseConnectionName: String,
-                defaultTTL: String? = nil,
-                maxTTL: String? = nil,
+                defaultTTL: Duration? = nil,
+                maxTTL: Duration? = nil,
                 creationStatements: [String],
                 revocationStatements: [String]? = nil,
                 rollbackStatements: [String]? = nil,
