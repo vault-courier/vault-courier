@@ -32,9 +32,6 @@ import struct Foundation.Data
 
 extension Tag {
     @Tag static var integration: Self
-    @Tag static var vault: Self
-    @Tag static var bao: Self
-    @Tag static var postgres: Self
     @Tag static var pkl: Self
 }
 
