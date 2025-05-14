@@ -43,13 +43,16 @@ extension IntegrationTests.AppRole {
         let appRoleName = "batch_role"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
+                                                  tokenTTL: .seconds(60*60),
                                                   tokenType: .batch))
 
         let appRole = try await vaultClient.readAppRole(name: appRoleName)
 
         #expect(appRole.tokenType == CreateAppRole.TokenType.batch.rawValue)
 
-        let roleIdResponse = try await vaultClient.appRoleId(name: appRoleName)
+        await #expect(throws: Never.self) {
+            _ = try await vaultClient.appRoleId(name: appRoleName)
+        }
 
         let generateAppSecretIdResponse = try await vaultClient.generateAppSecretId(
             capabilities: .init(roleName: appRoleName)

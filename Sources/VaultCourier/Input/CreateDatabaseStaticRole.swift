@@ -14,7 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
 public struct CreateDatabaseStaticRole: Sendable {
     /// The corresponfing role in the database of `db_username`
     public var vaultRoleName: String
@@ -25,41 +24,72 @@ public struct CreateDatabaseStaticRole: Sendable {
     /// The name of the database connection to use for this role.
     public var databaseConnectionName: String
 
-    /// Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds. Uses duration format strings. Mutually exclusive with `rotation_schedule`.
-    public var rotationPeriod: String?
-
-    /// A cron-style string that will define the schedule on which rotations should occur. This should be a "standard" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of ``0 0 * * SAT`` will set rotations to occur on Saturday at 00:00. Mutually exclusive with `rotation_period`."
-    public var rotationSchedule: String?
-
-    /// Specifies the amount of time in which the rotation is allowed to occur starting from a given `rotation_schedule`. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour. Uses duration format strings. Optional when `rotation_schedule` is set and disallowed when` rotation_period` is set."
-    public var rotationWindow: String?
+    /// Strategy for credentials rotation
+    public var rotation: RotationStrategy
 
     /// Specifies the database statements to be executed to rotate the password for the configured database user. Not every plugin type will support this functionality. See the plugin's API page for more information on support and formatting for this parameter.
     public var rotationStatements: [String]?
 
-    /// Specifies the type of credential that will be generated for the role. Options include: password, rsa_private_key, client_certificate. See the plugin's API page for credential types supported by individual databases.
-    public var credentialType: String?
+    /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsa_private_key`, `client_certificate`. See the plugin's API page for credential types supported by individual databases.
+    public var credentialType: DatabaseCredentialMethod
 
-    /// Specifies the configuration for the given `credential_type`. See documentation for details
+    /// Specifies the configuration for the given `credentialType`. See documentation for details
     public var credentialConfig: [String: String]?
 
     public init(vaultRoleName: String,
                 databaseUsername: String,
                 databaseConnectionName: String,
-                rotationPeriod: String? = nil,
-                rotationSchedule: String? = nil,
-                rotationWindow: String? = nil,
+                rotation: RotationStrategy,
                 rotationStatements: [String]? = nil,
-                credentialType: String? = nil,
+                credentialType: DatabaseCredentialMethod = .password,
                 credentialConfig: [String : String]? = nil) {
         self.vaultRoleName = vaultRoleName
         self.databaseUsername = databaseUsername
         self.databaseConnectionName = databaseConnectionName
-        self.rotationPeriod = rotationPeriod
-        self.rotationSchedule = rotationSchedule
-        self.rotationWindow = rotationWindow
+        self.rotation = rotation
         self.rotationStatements = rotationStatements
         self.credentialType = credentialType
         self.credentialConfig = credentialConfig
+    }
+}
+
+public enum RotationStrategy: Sendable {
+    /// Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds. Uses duration format strings.
+    case period(Duration)
+
+    /// A cron-style string that will define the schedule on which rotations should occur.
+    case scheduled(ScheduledRotation)
+}
+
+public struct ScheduledRotation: Sendable {
+    /// This should be a "standard" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of ``0 0 * * SAT`` will set rotations to occur on Saturday at 00:00.
+    public let schedule: String
+
+    /// Specifies the amount of time in which the rotation is allowed to occur starting from a given `schedule`. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour. Uses duration format strings.
+    public let window: Duration?
+
+    public init(schedule: String, window: Duration?) {
+        self.schedule = schedule
+        self.window = window
+    }
+}
+
+extension ScheduledRotation: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        guard let window else {
+            return schedule
+        }
+        return "\(schedule), window: \(window)"
+    }
+}
+
+extension RotationStrategy: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        switch self {
+            case .period(let period):
+                return ".period(\(period))"
+            case .scheduled(let scheduled):
+                return ".scheduled(\(scheduled))"
+        }
     }
 }

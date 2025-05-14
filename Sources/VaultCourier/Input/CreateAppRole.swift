@@ -18,18 +18,43 @@
 public struct CreateAppRole: Sendable {
     /// Name of the app role
     public var name: String
-    public var bindSecretId: Bool?
+
+    /// Require `secret_id` to be presented when logging in using this AppRole.
+    public var bindSecretId: Bool
+
+    /// list of CIDR blocks; if set, specifies blocks of IP addresses which can perform the login operation.
     public var secretIdBoundCIDRS: [String]?
+
+    /// Number of times any particular SecretID can be used to fetch a token from this AppRole, after which the SecretID by default will expire. A value of `nil` will allow unlimited uses. However, this option may be overridden by the request's `num_uses` field when generating a SecretID.
     public var secretIdNumberOfUses: Int?
-    public var secretIdTTL: String?
+
+    /// Duration after which by default any SecretID expires. A value of `nil` will allow the SecretID to not expire. However, this option may be overridden by the request's `ttl` field when generating a SecretID.
+    public var secretIdTTL: Duration?
+
+    /// If set, the secret IDs generated using this role will be cluster local. This can only be set during role creation and once set, it can't be reset later.
     public var localSecretIds: Bool?
+
+    /// List of token policies to encode onto generated tokens. Depending on the auth method, this list may be supplemented by user/group/other values.
     public var tokenPolicies: [String]
+
+    /// List of CIDR blocks; if set, specifies blocks of IP addresses which can authenticate successfully, and ties the resulting token to these blocks as well.
     public var tokenBoundCIDRS: [String]?
-    public var tokenTTL: String?
-    public var tokenMaxTTL: String?
-    public var tokenNoDefaultPolicy: Bool?
+
+    /// The incremental lifetime for generated tokens. This current value of this will be referenced at renewal time.
+    public var tokenTTL: Duration?
+
+    /// The maximum lifetime for generated tokens. This current value of this will be referenced at renewal time.
+    public var tokenMaxTTL: Duration?
+
+    /// If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in `tokenPolicies`.
+    public var tokenNoDefaultPolicy: Bool
+
     public var tokenNumberOfUses: Int?
-    public var tokenPeriod: String?
+
+    /// The maximum allowed period value when a [periodic](https://developer.hashicorp.com/vault/docs/concepts/tokens#token-time-to-live-periodic-tokens-and-explicit-max-ttls) token is requested from this role.
+    public var tokenPeriod: Duration?
+
+    /// The type of token that should be generated. Can be service, batch, or default to use the mount's tuned default (which unless changed will be service tokens). For machine based authentication cases, you should use batch type tokens.
     public var tokenType: TokenType
 
     public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
@@ -39,18 +64,18 @@ public struct CreateAppRole: Sendable {
     }
 
     public init(name: String,
-                bindSecretId: Bool? = nil,
+                bindSecretId: Bool = true,
                 secretIdBoundCIDRS: [String]? = nil,
                 secretIdNumberOfUses: Int? = nil,
-                secretIdTTL: String? = nil,
+                secretIdTTL: Duration? = nil,
                 localSecretIds: Bool? = nil,
                 tokenPolicies: [String],
                 tokenBoundCIDRS: [String]? = nil,
-                tokenTTL: String? = nil,
-                tokenMaxTTL: String? = nil,
-                tokenNoDefaultPolicy: Bool? = nil,
+                tokenTTL: Duration? = nil,
+                tokenMaxTTL: Duration? = nil,
+                tokenNoDefaultPolicy: Bool = false,
                 tokenNumberOfUses: Int? = nil,
-                tokenPeriod: String? = nil,
+                tokenPeriod: Duration? = nil,
                 tokenType: TokenType) {
         self.name = name
         self.bindSecretId = bindSecretId

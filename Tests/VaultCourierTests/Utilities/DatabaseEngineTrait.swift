@@ -22,7 +22,6 @@ struct DatabaseEngineTrait: SuiteTrait, TestScoping {
         let vaultUsername = env("VAULT_DB_USERNAME") ?? "vault_user"
         let vaultPassword = env("VAULT_DB_PASSWORD") ?? "init_password"
         let config = PostgresConnectionConfiguration(connection: name,
-                                                     pluginName: "postgresql-database-plugin",
                                                      allowedRoles: ["*"],
                                                      connectionUrl: connectionURL,
                                                      username: vaultUsername,

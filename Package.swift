@@ -49,6 +49,9 @@ let package = Package(
                 "VaultCourier",
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+            ],
+            exclude: [
+                "Fixtures"
             ]
         ),
     ],
