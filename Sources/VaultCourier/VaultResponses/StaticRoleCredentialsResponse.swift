@@ -24,37 +24,7 @@ public struct StaticRoleCredentialsResponse: Sendable {
     public let ttl: Int
     /// Last Vault rotation
     public let updatedAt: String
-    public let rotation: Rotation?
-}
-
-public enum Rotation: Sendable {
-    case period(Int)
-    case scheduled(ScheduledRotation)
-}
-
-public struct ScheduledRotation: Sendable {
-    public let schedule: String
-    public let window: Int?
-}
-
-extension ScheduledRotation: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        guard let window else {
-            return schedule
-        }
-        return "\(schedule), window: \(window)"
-    }
-}
-
-extension Rotation: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        switch self {
-            case .period(let period):
-                return ".period(\(period))"
-            case .scheduled(let scheduled):
-                return ".scheduled(\(scheduled))"
-        }
-    }
+    public let rotation: RotationStrategy?
 }
 
 extension StaticRoleCredentialsResponse {
@@ -68,9 +38,14 @@ extension StaticRoleCredentialsResponse {
         self.ttl = component.data.ttl
         self.updatedAt = component.data.lastVaultRotation
         self.rotation = if let rotationPeriod = component.data.rotationPeriod {
-            .period(rotationPeriod)
+            .period(.seconds(rotationPeriod))
         } else if let schedule = component.data.rotationSchedule {
-            .scheduled(.init(schedule: schedule, window: component.data.rotationWindow))
+            if let window = component.data.rotationWindow {
+                .scheduled(.init(schedule: schedule,
+                                 window: .seconds(window)))
+            } else {
+                .scheduled(.init(schedule: schedule, window: nil))
+            }
         } else {
             nil
         }

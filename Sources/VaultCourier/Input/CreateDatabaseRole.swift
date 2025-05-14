@@ -50,7 +50,7 @@ public struct CreateDatabaseRole: Sendable {
     public var rotationStatements: [String]?
 
     /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsa_private_key`, `client_certificate`. See the plugin's API page for credential types supported by individual databases.
-    public var credentialType: String?
+    public var credentialType: DatabaseCredentialMethod
 
     /// Specifies the configuration for the given `credential_type`. See documentation for details
     public var credentialConfig: [String: String]?
@@ -64,7 +64,7 @@ public struct CreateDatabaseRole: Sendable {
                 rollbackStatements: [String]? = nil,
                 renewStatements: [String]? = nil,
                 rotation_statements: [String]? = nil,
-                credentialType: String? = nil,
+                credentialType: DatabaseCredentialMethod = .password,
                 credentialConfig: [String : String]? = nil) {
         self.vaultRoleName = vaultRoleName
         self.databaseConnectionName = databaseConnectionName
@@ -78,4 +78,10 @@ public struct CreateDatabaseRole: Sendable {
         self.credentialType = credentialType
         self.credentialConfig = credentialConfig
     }
+}
+
+public enum DatabaseCredentialMethod: String, Sendable {
+    case password
+    case rsaPrivateKey = "rsa_private_key"
+    case clientCertificate = "client_certificate"
 }

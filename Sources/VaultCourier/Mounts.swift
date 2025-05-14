@@ -59,17 +59,31 @@ extension VaultClient {
     ) async throws {
         let sessionToken = try sessionToken()
 
+        let rotationPeriod: String?
+        let rotationSchedule: String?
+        let rotationWindow: String?
+        switch staticRole.rotation {
+            case .period(let period):
+                rotationPeriod = period.formatted(.vaultSeconds)
+                rotationSchedule = nil
+                rotationWindow = nil
+            case .scheduled(let scheduled):
+                rotationPeriod = nil
+                rotationSchedule = scheduled.schedule
+                rotationWindow = scheduled.window?.formatted(.vaultSeconds)
+        }
+
         let response = try await client.databaseCreateStaticRole(
             .init(
                 path: .init(enginePath: enginePath, roleName: staticRole.vaultRoleName),
                 headers: .init(xVaultToken: sessionToken),
                 body: .json(.init(username: staticRole.databaseUsername,
                                   dbName: staticRole.databaseConnectionName,
-                                  rotationPeriod: staticRole.rotationPeriod,
-                                  rotationSchedule: staticRole.rotationSchedule,
-                                  rotationWindow: staticRole.rotationWindow,
+                                  rotationPeriod: rotationPeriod,
+                                  rotationSchedule: rotationSchedule,
+                                  rotationWindow: rotationWindow,
                                   rotationStatements: staticRole.rotationStatements,
-                                  credentialType: staticRole.credentialType,
+                                  credentialType: staticRole.credentialType.rawValue,
                                   credentialConfig: .init(unvalidatedValue: staticRole.credentialConfig ?? [:]))))
         )
 
@@ -139,7 +153,7 @@ extension VaultClient {
                     rollbackStatements: dynamicRole.rollbackStatements,
                     renewStatements: dynamicRole.renewStatements,
                     rotationStatements: dynamicRole.rotationStatements,
-                    credentialType: dynamicRole.credentialType,
+                    credentialType: dynamicRole.credentialType.rawValue,
                     credentialConfig: .init(unvalidatedValue: dynamicRole.credentialConfig ?? [:]))))
         )
 

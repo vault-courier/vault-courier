@@ -18,6 +18,12 @@ import VaultCourier
 
 extension CreateDatabaseRole {
     init(_ module: PostgresRole.Module) {
+        let credentialType: DatabaseCredentialMethod = if let credentialMethod = module.credential_type?.rawValue {
+            .init(rawValue: credentialMethod) ?? .password
+        } else {
+            .password
+        }
+
         self.init(vaultRoleName: module.name,
                   databaseConnectionName: module.db_connection_name,
                   defaultTTL: module.default_ttl,
@@ -27,7 +33,7 @@ extension CreateDatabaseRole {
                   rollbackStatements: module.rollback_statements,
                   renewStatements: module.renew_statements,
                   rotation_statements: module.rotation_statements,
-                  credentialType: module.credential_type?.rawValue,
+                  credentialType: credentialType,
                   credentialConfig: module.credential_config)
     }
 }

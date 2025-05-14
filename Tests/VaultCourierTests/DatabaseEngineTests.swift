@@ -32,7 +32,7 @@ extension IntegrationTests.Database {
             let staticRole = CreateDatabaseStaticRole(vaultRoleName: staticRoleName,
                                                       databaseUsername: databaseRoleName,
                                                       databaseConnectionName: connectionName,
-                                                      rotationPeriod: "28d")
+                                                      rotation: .period(.seconds(28 * 24 * 60 * 60)))
 
             // MUT
             try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
@@ -44,7 +44,7 @@ extension IntegrationTests.Database {
                 return
             }
             #expect(response.username == databaseRoleName)
-            #expect(period == 2419200)
+            #expect(period == .seconds(2419200))
 
             // MUT
             try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, enginePath: enginePath)
