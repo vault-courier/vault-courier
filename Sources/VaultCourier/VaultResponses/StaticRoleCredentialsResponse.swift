@@ -16,14 +16,25 @@
 
 public struct StaticRoleCredentialsResponse: Sendable {
     public let requestId: String
+
     public let leaseId: String?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
+    /// database username
     public let username: String
+
+    /// database password
     public let password: String
+
     public let ttl: Int
+
     /// Last Vault rotation
     public let updatedAt: String
+
+    /// Rotation strategy of credentials
     public let rotation: RotationStrategy?
 }
 

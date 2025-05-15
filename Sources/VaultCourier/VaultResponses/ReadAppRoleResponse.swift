@@ -17,15 +17,25 @@
 
 public struct ReadAppRoleResponse: Sendable {
     public let leaseId: String?
+
     public let tokenPolicies: [String]
+
     public let tokenTTL: Int?
+
     public let tokenMaxTTL: Int?
+
     public let secretIdTTL: Int?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
     public let secretIdNumberOfUses: Int?
+
     public let bindSecretId: Bool?
+
     public let secretIdBoundCidrs: [String]?
+
     public let tokenType: String?
 }
 

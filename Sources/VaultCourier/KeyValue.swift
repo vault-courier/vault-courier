@@ -29,6 +29,15 @@ import protocol Foundation.LocalizedError
 extension VaultClient {
     // MARK: Write
 
+    
+    /// Creates a new version of a secret at the specified location. If the value does not yet exist, the calling token must have an ACL policy granting the create capability.
+    /// If the value already exists, the calling token must have an ACL policy granting the update capability.
+    ///
+    /// - Parameters:
+    ///   - enginePath: path to key/value secret engine mount
+    ///   - secret: value of the secret
+    ///   - key: It's the path of the secret to update
+    /// - Returns: Metadata about the secret, like its current version and creation time
     @discardableResult
     public func writeKeyValue(
         enginePath: String? = nil,
@@ -73,6 +82,12 @@ extension VaultClient {
 
     // MARK: Read
 
+    
+    /// Retrieves the secret at the specified location.
+    /// - Parameters:
+    ///   - enginePath: path to key/value secret engine mount
+    ///   - key: It's the path to the secret relative to the secret mount `enginePath`
+    /// - Returns: value of the secret
     public func readKeyValueSecret<T: Decodable & Sendable>(
         enginePath: String? = nil,
         key: String
@@ -100,6 +115,11 @@ extension VaultClient {
         }
     }
 
+    /// Retrieves the secret at the specified location.
+    /// - Parameters:
+    ///   - enginePath: path to key/value secret engine mount
+    ///   - key: It's the path to the secret relative to the secret mount `enginePath`
+    /// - Returns: Data of the secret
     public func readKeyValueSecretData(
         enginePath: String? = nil,
         key: String

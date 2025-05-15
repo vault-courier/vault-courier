@@ -17,14 +17,24 @@
 
 public struct WrappedResponse: Sendable {
     public let requestId: String?
+
     public let leaseId: String?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
+    /// Wrapped token
     public let token: String
+
     public let accessor: String
+
     public let ttl: Int
+
     public let createdAt: String
+
     public let creationPath: String
+
     public let wrappedAccessor: String
 }
 

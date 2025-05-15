@@ -16,6 +16,8 @@
 
 
 public enum AppRoleSecretIdResponse: Sendable {
+
     case wrapped(WrappedResponse)
+
     case secretId(GenerateAppSecretIdResponse)
 }

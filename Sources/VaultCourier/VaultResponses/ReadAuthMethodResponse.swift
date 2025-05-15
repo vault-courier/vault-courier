@@ -14,20 +14,28 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+/// Response from reading authentication method configuration
 public struct ReadAuthMethodResponse: Sendable {
     public let requestId: String?
 
     /// Type of authentication method
     public let authMethod: String
 
+    /// Specifies if the auth method is local only. Local auth methods are not replicated nor (if a secondary) removed by replication. Local auth mounts also generate entities for tokens issued.
+    /// The entity will be replicated across clusters and the aliases generated on the local auth mount will be local to the cluster. Entities created by local auth mounts are still replicated to other clusters,
+    /// however it is possible to prevent data pertaining to the local auth mount, including related aliases, from being replicated by omitting them from the entity metadata.
     public let isLocal: Bool?
 
+    /// Whether to turn on seal wrapping for the mount.
     public let sealWrap: Bool?
 
+    /// Authentication method configuration
     public let config: AuthMethodConfig?
 
+    /// Specifies a human-friendly description of the auth method.
     public let description: String?
 
+    /// The options to pass into the backend
     public let options: [String: String]?
 
     public let externalEntropyAccess: Bool?
