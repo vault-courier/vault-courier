@@ -55,6 +55,7 @@ extension VaultClient {
         }
     }
 
+    /// This endpoints returns the configuration of the auth method
     public func readAuthMethodConfiguration(_ path: String) async throws -> ReadAuthMethodResponse {
         let sessionToken = try sessionToken()
 
@@ -77,6 +78,7 @@ extension VaultClient {
         }
     }
 
+    /// Disables authentication method at given path
     public func disableAuthMethod(_ path: String) async throws {
         let sessionToken = try sessionToken()
 
@@ -98,6 +100,7 @@ extension VaultClient {
         }
     }
 
+    /// Creates a new AppRole
     public func createAppRole(_ appRole: CreateAppRole) async throws {
         let sessionToken = try sessionToken()
         let mountPath = self.mounts.appRole.relativePath.removeSlash()
@@ -134,6 +137,8 @@ extension VaultClient {
         }
     }
 
+    /// Read AppRole
+    /// - Parameter name: role name
     public func readAppRole(name: String) async throws -> ReadAppRoleResponse {
         let sessionToken = try sessionToken()
         let mountPath = self.mounts.appRole.relativePath.removeSlash()
@@ -158,6 +163,9 @@ extension VaultClient {
         }
     }
 
+    
+    /// Delete existing AppRole
+    /// - Parameter name: role name
     public func deleteAppRole(name: String) async throws {
         let sessionToken = try sessionToken()
         let mountPath = self.mounts.appRole.relativePath.removeSlash()
@@ -180,6 +188,9 @@ extension VaultClient {
         }
     }
 
+    
+    /// Get AppRole ID
+    /// - Parameter name: role name
     public func appRoleId(name: String) async throws -> AppRoleIdResponse {
         let sessionToken = try sessionToken()
         let mountPath = self.mounts.appRole.relativePath.removeSlash()
@@ -203,6 +214,10 @@ extension VaultClient {
         }
     }
 
+    
+    /// Generate AppRole secretID
+    /// - Parameter capabilities: the properties this generated secretID must have
+    /// - Returns: Either a wrapped response token or the secretID
     public func generateAppSecretId(
         capabilities: GenerateAppRoleToken
     ) async throws -> AppRoleSecretIdResponse {

@@ -22,15 +22,31 @@ import struct Foundation.URL
 
 public struct DatabaseConnectionResponse: Sendable {
     public let requestId: String
+
     public let leaseId: String?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
+    /// List of the _vault_ roles allowed to use this connection. If contains a `*` any role can use this connection.
+    /// Currently, roles and connections are bounded if this parameter is different than `*`. This means credentials cannot be generated and accessed by a role which is not on the list.
     public let allowedRoles: [String]
+
+    /// Specifies the PostgreSQL DSN
     public let connectionURL: URL?
+
+    /// Postgres authentication method
     public let authMethod: PostgresAuthMethod?
+
+    /// Vault database ("Root") user.
     public let username: String
+
+    /// Plugin information
     public let plugin: Plugin?
+
     public let passwordPolicy: String?
+
     /// Root credential rotate statements
     public let rotateStatements: [String]
 

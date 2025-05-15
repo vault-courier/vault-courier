@@ -156,6 +156,9 @@ extension VaultClient {
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
+
+    /// Closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.
+    /// 
     /// - Note: This method resets the connection, but vault's database password is still the same
     public func resetDatabaseConnection(
         _ connectionName: String,

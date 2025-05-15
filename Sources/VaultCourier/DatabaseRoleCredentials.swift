@@ -27,6 +27,12 @@ import protocol Foundation.LocalizedError
 #endif
 
 extension VaultClient {
+
+    /// Reads database credentials for a static role
+    /// - Parameters:
+    ///   - staticRole: static role name
+    ///   - enginePath: path to database mount
+    /// - Returns: Static database credentials
     public func databaseCredentials(
         staticRole: String,
         enginePath: String? = nil
@@ -57,6 +63,12 @@ extension VaultClient {
         }
     }
 
+    
+    /// Read current credentials for a dynamic role
+    /// - Parameters:
+    ///   - dynamicRole: dynamic role name
+    ///   - enginePath: path to database mount
+    /// - Returns: Dynamic role credentials
     public func databaseCredentials(
         dynamicRole: String,
         enginePath: String? = nil

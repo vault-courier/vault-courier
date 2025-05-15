@@ -15,7 +15,16 @@
 //===----------------------------------------------------------------------===//
 
 extension VaultClient {
-    public func createPolicy(name: String, hclPolicy: String) async throws {
+    
+    /// Add a new or update an existing ACL policy.
+    ///
+    /// - Parameters:
+    ///   - name: name of the policy
+    ///   - hclPolicy: policy in hcl format
+    public func createPolicy(
+        name: String,
+        hclPolicy: String
+    ) async throws {
         let sessionToken = try sessionToken()
 
         let response = try await client.policiesWriteAclPolicy(.init(

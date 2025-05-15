@@ -16,12 +16,21 @@
 
 public struct RoleCredentialsResponse: Sendable {
     public let requestId: String
+
     public let leaseId: String?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
+    /// Username of generated dynamic role
     public let username: String
+
+    /// Password of generated dynamic role
     public let password: String
+
     public let ttl: Int?
+
     /// Last Vault rotation
     public let updatedAt: String?
 }

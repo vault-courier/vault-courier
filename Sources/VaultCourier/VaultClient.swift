@@ -29,16 +29,23 @@ import protocol Foundation.LocalizedError
 
 public actor VaultClient {
     public struct Configuration {
+        /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
         public let apiURL: URL
+
         /// Name of the schema for the Pkl resource reader. It defaults to `vault`.
         public let readerSchema: String
+
         /// Custom AppRole engine path in Vault. Defaults to `approle` when set to `nil`.
         public let appRolePath: String
+
         /// Custom mount path for the KeyValue v2 engine in Vault. Defaults to `secret` when set to `nil`.
         public let kvMountPath: String
+
         /// Custom mount path for the Database engine in Vault. Defaults to `database` when set to `nil`.
         public let databaseMountPath: String
+
         public let backgroundActivityLogger: Logging.Logger
+
         public var middlewares: [any ClientMiddleware]
 
         static let loggingDisabled = Logger(label: "vault-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
@@ -63,22 +70,29 @@ public actor VaultClient {
     /// Mount engine paths
     struct Mounts {
         public let kv: URL
+
         public let database: URL
+
         public let appRole: URL
     }
 
     let client: any APIProtocol
+
     let logger: Logging.Logger
+
     let mounts: Mounts
 
     /// Authentication state
     private var authState: AuthenticationState
+
     private var authMethod: AuthMethod
 
     /// Each URI begins with a scheme name that refers to a specification for
     /// assigning identifiers within that scheme.
     public let scheme: String
+
     public let isGlobbable: Bool = false
+
     public let hasHierarchicalUris: Bool = true
 
     public init(configuration: Configuration,

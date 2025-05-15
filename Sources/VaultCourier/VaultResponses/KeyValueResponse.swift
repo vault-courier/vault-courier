@@ -24,18 +24,29 @@ import struct Foundation.Data
 
 public struct KeyValueResponse<T: Decodable & Sendable>: Sendable {
     public let requestId: String?
+
     public let leaseId: String?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
+    /// Key-Value data
     public let data: T
+
     public let metadata: Metadata?
+
     public let mountType: String?
 
     public struct Metadata: Sendable {
         public let createdAt: String
+
         public let custom: [UInt8]?
+
         public let deletedAt: String?
+
         public let isDestroyed: Bool?
+
         public let version: Int
     }
 }
@@ -65,9 +76,13 @@ public extension KeyValueResponse {
 
 public struct WriteData: Codable, Sendable {
     public let createdTime: String?
+
     public let customMetadata: [String: String]?
+
     public let deletionTime: String?
+
     public let destroyed: Bool?
+
     public let version: Int?
 }
 

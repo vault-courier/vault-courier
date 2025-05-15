@@ -16,10 +16,15 @@
 
 public struct AppRoleLoginResponse: Sendable {
     let renewable: Bool
+
     let leaseDuration: Int
+
     let tokenPolicies: [String]
+
     let accessor: String
+
     let clientToken: String
+
     let leaseId: String?
 }
 

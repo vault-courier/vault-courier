@@ -17,8 +17,11 @@
 
 public struct AppRoleIdResponse: Sendable {
     public let leaseId: String?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
     public let roleId: String
 
     public init(leaseId: String?,

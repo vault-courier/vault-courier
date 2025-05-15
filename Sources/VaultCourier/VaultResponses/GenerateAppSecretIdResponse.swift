@@ -16,12 +16,20 @@
 
 public struct GenerateAppSecretIdResponse: Sendable {
     public let requestId: String?
+
     public let leaseId: String?
+
     public let leaseDuration: Int?
+
     public let renewable: Bool?
+
+    /// AppRole secret id
     public let secretId: String
+
     public let secretIdAccessor: String
+
     public let secretIdTtl: Int
+
     public let secretIdNumUses: Int
 }
 
