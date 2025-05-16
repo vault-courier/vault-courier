@@ -1794,7 +1794,7 @@
           },
           "policies": {
             "type": "array",
-            "description": "List of policies for the token",
+            "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
             "items": {
               "type": "string"
             }
@@ -1870,7 +1870,6 @@
         },
         "required": [
           "request_id",
-          "mount_type",
           "renewable",
           "auth"
         ]
