@@ -51,7 +51,7 @@ extension VaultToken {
         public var num_uses: Int?
 
         /// If specified, the token will be periodic; it will have no maximum TTL (unless an "explicit-max-ttl" is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
-        public var period: String?
+        public var period: Duration?
 
         /// Name of the entity alias to associate with during token creation. Only works in combination with role_name argument and used entity alias must be listed in allowed_entity_aliases.
         /// If this has been specified, the entity will not be inherited from the parent.
@@ -70,7 +70,7 @@ extension VaultToken {
             explicit_max_ttl: Duration?,
             display_name: String?,
             num_uses: Int?,
-            period: String?,
+            period: Duration?,
             entity_alias: String?
         ) {
             self.id = id

@@ -230,18 +230,6 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthApproleLoginSignature = @Sendable (Operations.AuthApproleLogin.Input) async throws -> Operations.AuthApproleLogin.Output
-    public var authApproleLoginAction: AuthApproleLoginSignature?
-    public func authApproleLogin(
-        _ input: Operations.AuthApproleLogin.Input
-    ) async throws -> Operations.AuthApproleLogin.Output {
-        guard let block = authApproleLoginAction
-        else { throw UnspecifiedBlockError() }
-
-        return try await block(input)
-    }
-
-
     public typealias EnableSecretsEngineSignature
         = @Sendable (Operations.MountsEnableSecretsEngine.Input) async throws -> Operations.MountsEnableSecretsEngine.Output
     public var enableSecretsEngineAction: EnableSecretsEngineSignature?
@@ -341,15 +329,18 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
-    // MARK: Unwrap
-    public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output
-    public var unwrapAction: UnwrapSignature?
-    public func unwrap(_ input: Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output {
-        guard let block = unwrapAction
+    public typealias AuthApproleLoginSignature = @Sendable (Operations.AuthApproleLogin.Input) async throws -> Operations.AuthApproleLogin.Output
+    public var authApproleLoginAction: AuthApproleLoginSignature?
+    public func authApproleLogin(
+        _ input: Operations.AuthApproleLogin.Input
+    ) async throws -> Operations.AuthApproleLogin.Output {
+        guard let block = authApproleLoginAction
         else { throw UnspecifiedBlockError() }
 
         return try await block(input)
     }
+
+    // MARK: TokenAuth
 
     public typealias TokenCreateSignature = @Sendable (Operations.TokenCreate.Input) async throws -> Operations.TokenCreate.Output
     public var tokenCreateAction: TokenCreateSignature?
@@ -360,7 +351,28 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
-    // MARK: Auth
+    public typealias TokenRenewSignature = @Sendable (Operations.TokenRenew.Input) async throws -> Operations.TokenRenew.Output
+    public var tokenRenewAction: TokenRenewSignature?
+    public func tokenRenew(
+        _ input: Operations.TokenRenew.Input
+    ) async throws -> Operations.TokenRenew.Output {
+        guard let block = tokenRenewAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    // MARK: Wrapping
+    public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output
+    public var unwrapAction: UnwrapSignature?
+    public func unwrap(_ input: Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output {
+        guard let block = unwrapAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    // MARK: SystemAuth
 
     public typealias EnableAuthSignature = @Sendable (Operations.AuthEnableMethod.Input) async throws -> Operations.AuthEnableMethod.Output
     public var enableAuthAction: EnableAuthSignature?

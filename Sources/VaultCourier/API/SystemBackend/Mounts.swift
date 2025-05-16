@@ -14,37 +14,34 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-extension VaultClient {
+import OpenAPIRuntime
 
-    public func createToken(
-        _ capabilities: CreateVaultToken,
-        wrappTTL: Duration? = nil
-    ) async throws -> VaultTokenResponse {
+extension VaultClient {
+    public func enableSecretEngine(
+        mountConfig: EnableSecretMountConfig
+    ) async throws {
         let sessionToken = try sessionToken()
 
-        let response = try await client.tokenCreate(
-            headers: .init(xVaultToken: sessionToken, xVaultWrapTTL: wrappTTL?.formatted(.vaultSeconds)),
+        let configuration = try mountConfig.config.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
+        let options = try mountConfig.options.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
+        
+        let response = try await client.mountsEnableSecretsEngine(
+            path: .init(path: mountConfig.path),
+            headers: .init(xVaultToken: sessionToken),
             body: .json(.init(
-                displayName: capabilities.displayName,
-                entityAlias: capabilities.entityAlias,
-                explicitMaxTtl: capabilities.tokenMaxTTL?.formatted(.vaultSeconds),
-                id: capabilities.id,
-                meta: .init(unvalidatedValue: capabilities.meta ?? [:]),
-                noDefaultPolicy: !capabilities.hasDefaultPolicy,
-                noParent: !capabilities.hasParent,
-                numUses: capabilities.tokenNumberOfUses,
-                period: capabilities.tokenPeriod,
-                policies: capabilities.policies,
-                renewable: capabilities.isRenewable,
-                ttl: capabilities.ttl?.formatted(.vaultSeconds),
-                _type: capabilities.type?.rawValue)
+                config: configuration,
+                externalEntropyAccess: mountConfig.externalEntropyAccess,
+                local: mountConfig.local,
+                options: options,
+                sealWrap: mountConfig.sealWrap,
+                _type: mountConfig.mountType)
             )
         )
-
+        
         switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return VaultTokenResponse(component: json)
+            case .noContent:
+                logger.info("\(mountConfig.mountType) engine enabled.")
+                return
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")

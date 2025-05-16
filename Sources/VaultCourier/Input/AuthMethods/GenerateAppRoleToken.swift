@@ -39,7 +39,7 @@ public struct GenerateAppRoleToken: Sendable {
     public let tokenTTL: Duration?
 
     /// Set to wrap-response the generated token with the given TTL.
-    public let wrapTTL: String?
+    public let wrapTTL: Duration?
 
     public init(roleName: String,
                 metadata: String? = nil,
@@ -47,7 +47,7 @@ public struct GenerateAppRoleToken: Sendable {
                 tokenNumberOfUses: Int? = nil,
                 tokenBoundCIDRS: [String]? = nil,
                 tokenTTL: Duration? = nil,
-                wrapTTL: String? = nil) {
+                wrapTTL: Duration? = nil) {
         self.roleName = roleName
         self.metadata = metadata
         self.cidrList = cidrList

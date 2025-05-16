@@ -55,15 +55,26 @@ extension IntegrationTests.Pkl {
         }
 
         @Test
-        func vault_duration_style_for_seconds() async throws {
-            let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
-            #expect(duration.formatted(.vaultSeconds) == "5400s")
+        func create_token_with_pkl_file() async throws {
+            let url = pklFixtureUrl(for: "Sample1/user_token.pkl")
+
+            await #expect(throws: Never.self) {
+                _ = try await VaultToken.loadFrom(source: .url(url))
+            }
         }
 
-        @Test
-        func vault_duration_style_for_hours() async throws {
-            let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
-            #expect(duration.formatted(.vaultHours) == "1.5h")
+        struct VaultDuration {
+            @Test
+            func vault_duration_style_for_seconds() async throws {
+                let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
+                #expect(duration.formatted(.vaultSeconds) == "5400s")
+            }
+
+            @Test
+            func vault_duration_style_for_hours() async throws {
+                let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
+                #expect(duration.formatted(.vaultHours) == "1.5h")
+            }
         }
     }
 }

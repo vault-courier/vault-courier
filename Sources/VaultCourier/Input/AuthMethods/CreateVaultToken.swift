@@ -65,7 +65,7 @@ public struct CreateVaultToken: Sendable {
     public var tokenNumberOfUses: Int?
 
     /// If specified, the token will be periodic; it will have no maximum TTL (unless an `tokenMaxTTL` is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
-    public var tokenPeriod: String?
+    public var tokenPeriod: Duration?
 
     /// Name of the entity alias to associate with during token creation. Only works in combination with `roleName` property. If this has been specified, the entity will not be inherited from the parent.
     public var entityAlias: String?
@@ -82,7 +82,7 @@ public struct CreateVaultToken: Sendable {
                 tokenMaxTTL: Duration? = nil,
                 displayName: String? = nil,
                 tokenNumberOfUses: Int? = nil,
-                tokenPeriod: String? = nil,
+                tokenPeriod: Duration? = nil,
                 entityAlias: String? = nil) {
         self.id = id
         self.roleName = roleName

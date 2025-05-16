@@ -30,7 +30,7 @@ extension CreateVaultToken {
                   tokenMaxTTL: module.explicit_max_ttl?.toSwiftDuration(),
                   displayName: module.display_name,
                   tokenNumberOfUses: module.num_uses,
-                  tokenPeriod: module.period,
+                  tokenPeriod: module.period?.toSwiftDuration(),
                   entityAlias: module.entity_alias)
     }
 }

@@ -40,4 +40,29 @@ extension IntegrationTests.KeyValue {
 
         #expect(readResponse.apiKey == secret.apiKey)
     }
+
+    @Test
+    func secrets_must_dictionaries_or_codable_objects() async throws {
+        let vaultClient = VaultClient.current
+
+        await #expect(throws: VaultClientError.self) {
+            // MUT
+            _ = try await vaultClient.writeKeyValue(secret: "secret", key: "key")
+        }
+
+        await #expect(throws: VaultClientError.self) {
+            // MUT
+            _ = try await vaultClient.writeKeyValue(secret: 42, key: "key")
+        }
+
+        await #expect(throws: VaultClientError.self) {
+            // MUT
+            _ = try await vaultClient.writeKeyValue(secret: 3.1416, key: "key")
+        }
+
+        await #expect(throws: VaultClientError.self) {
+            // MUT
+            _ = try await vaultClient.writeKeyValue(secret: true, key: "key")
+        }
+    }
 }

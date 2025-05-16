@@ -51,7 +51,7 @@ extension IntegrationTests {
 
 extension IntegrationTests.Auth {
     @Suite struct Token {}
-    @Suite struct AppRole {}
+    @Suite(.serialized) struct AppRole {}
 }
 
 public func enableIntegrationTests() -> Bool {
