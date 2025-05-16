@@ -33,7 +33,7 @@ extension IntegrationTests.Pkl {
 
         @Test
         func create_database_static_role_with_pkl_file() async throws {
-            let url = pklFixtureUrl(for: "test_static_role.pkl")
+            let url = pklFixtureUrl(for: "Sample1/static_role.pkl")
 
             await #expect(throws: Never.self) {
                 let config = try await PostgresStaticRole.loadFrom(source: .url(url))
@@ -42,6 +42,15 @@ extension IntegrationTests.Pkl {
                     Issue.record("Failed to init CreateDatabaseStaticRole from pkl-generated payload")
                     return
                 }
+            }
+        }
+
+        @Test
+        func create_approle_with_pkl_file() async throws {
+            let url = pklFixtureUrl(for: "Sample1/app_role.pkl")
+
+            await #expect(throws: Never.self) {
+                _ = try await VaultAppRole.loadFrom(source: .url(url))
             }
         }
 
