@@ -18,7 +18,7 @@ import Testing
 
 @testable import VaultCourier
 
-extension IntegrationTests.AppRole {
+extension IntegrationTests.Auth.AppRole {
     @Test
     func enable_approle_at_custom_path() async throws {
         let vaultClient = VaultClient.current
