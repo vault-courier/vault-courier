@@ -15,6 +15,14 @@
 //===----------------------------------------------------------------------===//
 
 extension VaultClient {
+
+    /// Creates a new token.
+    /// 
+    /// - Note: Certain options are only available when called by a root token.
+    /// - Parameters:
+    ///   - capabilities: type with the desired token properties
+    ///   - wrappTTL: Optional wrapped time to live of the token
+    /// - Returns: ``VaultTokenResponse``
     public func createToken(
         _ capabilities: CreateVaultToken,
         wrappTTL: Duration? = nil
@@ -54,6 +62,15 @@ extension VaultClient {
         }
     }
 
+    // MARK: Renew
+
+    /// Renews a lease associated with a token.
+    /// 
+    /// This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.
+    /// - Parameters:
+    ///   - token: Token to renew
+    ///   - increment: An optional requested increment duration. This increment may not be honored, for instance in the case of periodic tokens. If not supplied, Vault will use the default TTL
+    /// - Returns: ``VaultTokenResponse``
     public func renewToken(
         _ token: String,
         by increment: Duration? = nil
@@ -79,6 +96,12 @@ extension VaultClient {
         }
     }
 
+    /// Renews a lease associated with the calling token.
+    ///
+    /// This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.
+    /// - Parameters:
+    ///   - increment: An optional requested increment duration. This increment may not be honored, for instance in the case of periodic tokens. If not supplied, Vault will use the default TTL
+    /// - Returns: ``VaultTokenResponse``
     public func renewToken(
         by increment: Duration? = nil
     ) async throws -> VaultTokenResponse {
@@ -103,6 +126,13 @@ extension VaultClient {
         }
     }
 
+    /// Renews a lease associated with a token using its accessor.
+    /// 
+    /// This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.
+    /// - Parameters:
+    ///   - accessor: Accessor associated with the token to renew.
+    ///   - increment: An optional requested lease increment can be provided. This increment may be ignored by Vault.
+    /// - Returns: ``VaultTokenResponse``
     public func renewToken(
         accessor: String,
         by increment: Duration? = nil
@@ -112,6 +142,91 @@ extension VaultClient {
         let response = try await client.tokenRenewAccessor(
             headers: .init(xVaultToken: sessionToken),
             body: .json(.init(accessor: accessor, increment: increment?.formatted(.vaultSeconds)))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    // MARK: Revoke
+
+    /// Revokes a token and all child tokens.
+    /// 
+    /// When the token is revoked, all dynamic secrets generated with it are also revoked.
+    /// - Parameter token: Token to revoke.
+    /// - Returns: ``VaultTokenResponse``
+    public func revokeToken(
+        _ token: String
+    ) async throws -> VaultTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.tokenRevoke(
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(token: token))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    /// Revokes the current client's token and all child tokens.
+    /// 
+    /// When the token is revoked, all dynamic secrets generated with it are also revoked.
+    /// - Returns: ``VaultTokenResponse``
+    public func revokeCurrentToken() async throws -> VaultTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.tokenRevokeSelf(
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    /// Revoke the token associated with the accessor and all the child tokens.
+    /// 
+    /// This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.
+    /// - Parameter accessor: Accessor of the token
+    /// - Returns: ``VaultTokenResponse``
+    public func revokeToken(
+        accessor: String
+    ) async throws -> VaultTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.tokenRevokeAccessor(
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(accessor: accessor))
         )
 
         switch response {

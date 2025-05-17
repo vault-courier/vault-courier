@@ -384,6 +384,38 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
+    public typealias TokenRevokeAccessorSignature = @Sendable (Operations.TokenRevokeAccessor.Input) async throws -> Operations.TokenRevokeAccessor.Output
+    public var tokenRevokeAccessorAction: TokenRevokeAccessorSignature?
+    public func tokenRevokeAccessor(
+        _ input: Operations.TokenRevokeAccessor.Input
+    ) async throws -> Operations.TokenRevokeAccessor.Output {
+        guard let block = tokenRevokeAccessorAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRevokeSelfSignature = @Sendable (Operations.TokenRevokeSelf.Input) async throws -> Operations.TokenRevokeSelf.Output
+    public var tokenRevokeSelfAction: TokenRevokeSelfSignature?
+    public func tokenRevokeSelf(
+        _ input: Operations.TokenRevokeSelf.Input
+    ) async throws -> Operations.TokenRevokeSelf.Output {
+        guard let block = tokenRevokeSelfAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRevokeSignature = @Sendable (Operations.TokenRevoke.Input) async throws -> Operations.TokenRevoke.Output
+    public var tokenRevokeAction: TokenRevokeSignature?
+    public func tokenRevoke(
+        _ input: Operations.TokenRevoke.Input
+    ) async throws -> Operations.TokenRevoke.Output {
+        guard let block = tokenRevokeAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
 
     // MARK: Wrapping
     public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output

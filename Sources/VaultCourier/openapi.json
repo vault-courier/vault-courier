@@ -457,6 +457,146 @@
         }
       ]
     },
+    "/auth/token/revoke": {
+      "description": "Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+        "operationId": "token-revoke",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRevokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/revoke-self": {
+      "description": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+        "operationId": "token-revoke-self",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/revoke-accessor": {
+      "description": "Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.",
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.",
+        "operationId": "token-revoke-accessor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRevokeAccessorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
     "/auth/{engine_path}/role/{role_name}": {
       "description": "Creates a new role",
       "get": {
@@ -2566,6 +2706,30 @@
             "format": "duration",
             "description": "The desired increment in seconds to the token expiration",
             "default": "0"
+          }
+        },
+        "required": [
+          "accessor"
+        ]
+      },
+      "TokenRevokeRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token to renew (request body)"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "TokenRevokeAccessorRequest": {
+        "type": "object",
+        "properties": {
+          "accessor": {
+            "type": "string",
+            "description": "Accessor associated with the token to renew."
           }
         },
         "required": [
