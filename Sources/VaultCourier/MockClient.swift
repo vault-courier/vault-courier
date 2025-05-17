@@ -428,6 +428,39 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
+    public typealias UpdateTokenRoleSignature = @Sendable (Operations.UpdateTokenRole.Input) async throws -> Operations.UpdateTokenRole.Output
+    public var updateTokenRoleAction: UpdateTokenRoleSignature?
+    public func updateTokenRole(
+        _ input: Operations.UpdateTokenRole.Input
+    ) async throws -> Operations.UpdateTokenRole.Output {
+        guard let block = updateTokenRoleAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias ReadTokenRoleSignature = @Sendable (Operations.ReadTokenRole.Input) async throws -> Operations.ReadTokenRole.Output
+    public var readTokenRoleAction: ReadTokenRoleSignature?
+    public func readTokenRole(
+        _ input: Operations.ReadTokenRole.Input
+    ) async throws -> Operations.ReadTokenRole.Output {
+        guard let block = readTokenRoleAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias DeleteTokenRoleSignature = @Sendable (Operations.DeleteTokenRole.Input) async throws -> Operations.DeleteTokenRole.Output
+    public var deleteTokenRoleAction: DeleteTokenRoleSignature?
+    public func deleteTokenRole(
+        _ input: Operations.DeleteTokenRole.Input
+    ) async throws -> Operations.DeleteTokenRole.Output {
+        guard let block = deleteTokenRoleAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
     // MARK: Wrapping
     public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output
     public var unwrapAction: UnwrapSignature?

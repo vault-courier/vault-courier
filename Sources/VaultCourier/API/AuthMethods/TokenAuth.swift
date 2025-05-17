@@ -44,7 +44,7 @@ extension VaultClient {
                 policies: capabilities.policies,
                 renewable: capabilities.isRenewable,
                 ttl: capabilities.ttl?.formatted(.vaultSeconds),
-                _type: capabilities.type?.rawValue)
+                _type: .init(rawValue: capabilities.type?.rawValue ?? ""))
             )
         )
 
@@ -255,6 +255,69 @@ extension VaultClient {
             case .ok(let content):
                 let json = try content.body.json
                 return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    #warning("TODO: Write the ReadTokenRole")
+
+    public func updateTokenRole(
+        _ capabilities: UpdateTokenRole
+    ) async throws {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.updateTokenRole(
+            path: .init(roleName: capabilities.roleName),
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(
+                    allowedPolicies: capabilities.allowedPolicies,
+                    disallowedPolicies: capabilities.disallowedPolicies,
+                    allowedPoliciesGlob: capabilities.allowedPoliciesGlob,
+                    disallowedPoliciesGlob: capabilities.disallowedPoliciesGlob,
+                    orphan: capabilities.orphan,
+                    renewable: capabilities.isRenewable,
+                    pathSufix: capabilities.pathSufix,
+                    allowedEntityAliases: capabilities.allowedEntityAliases,
+                    tokenBoundCidrs: capabilities.tokenBoundCidrs,
+                    tokenExplicitMaxTtl: capabilities.tokenExplicitMaxTTL?.formatted(.vaultSeconds),
+                    tokenNoDefaultPolicy: capabilities.noDefaultPolicy,
+                    tokenNumUses: capabilities.tokenNumberOfUses,
+                    tokenPeriod: capabilities.tokenPeriod?.formatted(.vaultSeconds),
+                    tokenType: .init(rawValue: capabilities.tokenType?.rawValue ?? "")
+                )
+            )
+        )
+
+        switch response {
+            case .noContent:
+                logger.info("Token role updated successfully.")
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    public func deleteTokenRole(name: String) async throws {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.deleteTokenRole(
+            path: .init(roleName: name),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .noContent:
+                logger.info("Token role deleted successfully.")
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")

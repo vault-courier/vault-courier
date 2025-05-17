@@ -647,6 +647,110 @@
         }
       ]
     },
+    "/auth/token/roles/{role_name}": {
+      "description": "Fetches the named role configuration.",
+      "get": {
+        "tags": [
+          "auth",
+          "token"
+        ],
+        "summary": "Fetches the named role configuration.",
+        "description": "Fetches the named role configuration.",
+        "operationId": "read-token-role",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadAppRoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Creates (or replaces) the named role",
+        "description": "Creates (or replaces) the named role. Roles enforce specific behavior when creating tokens that allow token functionality that is otherwise not available or would require sudo/root privileges to access. Role parameters, when set, override any provided options to the create endpoints. The role name is also included in the token path, allowing all tokens created against a role to be revoked using the `/sys/leases/revoke-prefix` endpoint.",
+        "operationId": "update-token-role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Deletes the named token role.",
+        "description": "deletes the named token role.",
+        "operationId": "delete-token-role",
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "The name of the approle. Example: \"my-app-role\"",
+          "name": "role_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
     "/auth/{engine_path}/role/{role_name}": {
       "description": "Creates a new role",
       "get": {
@@ -2711,7 +2815,101 @@
           },
           "type": {
             "type": "string",
-            "description": "Token type"
+            "description": "Token type",
+            "enum": [
+              "batch",
+              "service",
+              "default",
+              "default-service",
+              "default-batch"
+            ]
+          }
+        }
+      },
+      "TokenUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "allowed_policies": {
+            "type": "array",
+            "description": "If set, tokens can be created with any subset of the policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy names. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disallowed_policies": {
+            "type": "array",
+            "description": "If set, successful token creation via this role will require that no policies in the given list are requested. The parameter is a comma-delimited string of policy names. Adding \"default\" to this list will prevent \"default\" from being added automatically to created tokens.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowed_policies_glob": {
+            "type": "array",
+            "description": "If set, tokens can be created with any subset of glob matched policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy name globs. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically. If combined with allowed_policies policies need to only match one of the two lists to be permitted. Note that unlike allowed_policies the policies listed in allowed_policies_glob will not be added to the token when no policies are specified in the call to `/auth/token/create/:role_name`.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disallowed_policies_glob": {
+            "type": "array",
+            "description": "If set, successful token creation via this role will require that no requested policies glob match any of policies in this list. The parameter is a comma-delimited string of policy name globs. Adding any glob that matches \"default\" to this list will prevent \"default\" from being added automatically to created tokens. If combined with disallowed_policies policies need to only match one of the two lists to be blocked.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "orphan": {
+            "type": "boolean",
+            "description": "If true, tokens created against this policy will be orphan tokens (they will have no parent). As such, they will not be automatically revoked by the revocation of any other token."
+          },
+          "renewable": {
+            "type": "boolean",
+            "description": "Allow token to be renewed past its initial TTL up to system/mount maximum TTL",
+            "default": true
+          },
+          "path_sufix": {
+            "type": "string",
+            "description": "If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios, such as keeping the same role name in the future but revoking all tokens created against it before some point in time. The suffix can be changed, allowing new callers to have the new suffix as part of their path, and then tokens with the old suffix can be revoked via `/sys/leases/revoke-prefix`."
+          },
+          "allowed_entity_aliases": {
+            "type": "array",
+            "description": "JSON list of allowed entity aliases. If set, specifies the entity aliases which are allowed to be used during token generation. This field supports globbing. Note that allowed_entity_aliases is not case sensitive.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_bound_cidrs": {
+            "type": "array",
+            "description": "List of CIDR blocks; if set, specifies blocks of IP addresses which can authenticate successfully, and ties the resulting token to these blocks as well.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_explicit_max_ttl": {
+            "type": "string",
+            "description": "If set, will encode an explicit max TTL onto the token. This is a hard cap even if token_ttl and token_max_ttl would otherwise allow a renewal."
+          },
+          "token_no_default_policy": {
+            "type": "boolean",
+            "description": "If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in token_policies"
+          },
+          "token_num_uses": {
+            "type": "integer",
+            "description": "Max number of uses for this token"
+          },
+          "token_period": {
+            "type": "string",
+            "description": "The maximum allowed period value when a periodic token is requested from this role."
+          },
+          "token_type": {
+            "type": "string",
+            "description": "The type of token that should be generated. Can be service, batch, or default to use the mount's tuned default (which unless changed will be service tokens). For token store roles, there are two additional possibilities: default-service and default-batch which specify the type to return unless the client requests a different type at generation time. For machine based authentication cases, you should use batch type tokens.",
+            "enum": [
+              "batch",
+              "service",
+              "default",
+              "default-service",
+              "default-batch"
+            ]
           }
         }
       },

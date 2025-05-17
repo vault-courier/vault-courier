@@ -50,4 +50,34 @@ extension IntegrationTests.Auth.Token {
             #expect(renewResponse.leaseDuration == renewTTL)
         }
     }
+
+    @Test
+    func create_token_role_and_update() async throws {
+        let vaultClient = VaultClient.current
+
+        let displayName = "dev_token"
+        let leaseDuration = 3600
+        let policies = ["web", "stage"]
+        let roleName = "nomad"
+        await #expect(throws: Never.self) {
+            let response = try await vaultClient.createToken(
+                .init(roleName: roleName,
+                      policies: policies,
+                      meta: ["user": "Juan"],
+                      hasParent: false,
+                      hasDefaultPolicy: true,
+                      ttl: .seconds(leaseDuration),
+                      type: .service,
+                      tokenMaxTTL: .seconds(60*60*4),
+                      displayName: displayName,
+                      tokenNumberOfUses: nil)
+            )
+
+            try await vaultClient.updateTokenRole(
+                .init(roleName: roleName,
+                      orphan: true,
+                      noDefaultPolicy: false)
+            )
+        }
+    }
 }
