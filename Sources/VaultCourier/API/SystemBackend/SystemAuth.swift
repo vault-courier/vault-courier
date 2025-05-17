@@ -17,7 +17,7 @@
 import OpenAPIRuntime
 
 extension VaultClient {
-    /// Enables authentication mount. Example AppRole, GitHub, Token...
+    /// Enables authentication mount. Example AppRole, Token...
     public func enableAuthMethod(configuration: EnableAuthMethodConfig) async throws {
         let sessionToken = try sessionToken()
 

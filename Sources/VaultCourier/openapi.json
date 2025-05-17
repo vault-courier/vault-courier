@@ -10,7 +10,8 @@
   },
   "servers": [
     {
-      "url": "http://127.0.0.1:8200/v1"
+      "url": "http://127.0.0.1:8200/v1",
+      "description": "Default server url"
     }
   ],
   "paths": {
@@ -280,7 +281,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenCreateResponse"
+                  "$ref": "#/components/schemas/VaultApiResponse"
                 }
               }
             }
@@ -330,7 +331,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenCreateResponse"
+                  "$ref": "#/components/schemas/VaultApiResponse"
                 }
               }
             }
@@ -2424,76 +2425,23 @@
           }
         }
       },
-      "TokenCreateResponse": {
-        "type": "object",
-        "properties": {
-          "request_id": {
-            "type": "string",
-            "description": "the id of the request associated with this response"
-          },
-          "renewable": {
-            "type": "boolean"
-          },
-          "mount_type": {
-            "type": "string"
-          },
-          "auth": {
-            "type": "object",
-            "properties": {
-              "client_token": {
-                "type": "string",
-                "description": "the token value"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "token_policies": {
-                "type": "array",
-                "description": "List of policies attached to the token",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "lease_duration": {
-                "type": "integer"
-              },
-              "token_type": {
-                "type": "string"
-              },
-              "orphan": {
-                "type": "boolean"
-              },
-              "num_uses": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "client_token",
-              "accessor",
-              "token_policies",
-              "lease_duration",
-              "token_type",
-              "orphan",
-              "num_uses"
-            ]
-          }
-        },
-        "required": [
-          "request_id",
-          "renewable",
-          "auth"
-        ]
-      },
       "TokenRenewRequest": {
         "type": "object",
         "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token to renew (request body)"
+          },
           "increment": {
             "type": "string",
             "format": "duration",
             "description": "The desired increment in seconds to the token expiration",
             "default": "0"
           }
-        }
+        },
+        "required": [
+          "token"
+        ]
       },
       "ReadStaticRoleResponse": {
         "type": "object",
@@ -3020,6 +2968,131 @@
           "renewable",
           "data"
         ]
+      },
+      "VaultApiResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "creation_time": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "creation_path": {
+                "type": "string"
+              },
+              "wrapped_accessor": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token",
+              "accessor",
+              "ttl",
+              "creation_time",
+              "creation_path",
+              "wrapped_accessor"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object",
+            "properties": {
+              "client_token": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "token_policies": {
+                "type": "array",
+                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Arbitrary key=value metadata to associate with the token",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "lease_duration": {
+                "type": "integer"
+              },
+              "renewable": {
+                "type": "boolean"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "token_type": {
+                "type": "string",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              },
+              "orphan": {
+                "type": "boolean"
+              },
+              "mfa_requirement": {
+                "type": "boolean"
+              },
+              "num_uses": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "client_token",
+              "accessor",
+              "token_policies",
+              "lease_duration",
+              "token_type",
+              "orphan",
+              "num_uses",
+              "renewable"
+            ]
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        }
       },
       "VaultErrorsResponse": {
         "type": "object",

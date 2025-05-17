@@ -14,11 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
 public struct VaultTokenResponse: Sendable {
     public let requestId: String?
-
-    public let mountType: String?
 
     /// The token value
     public let clientToken: String
@@ -27,28 +24,45 @@ public struct VaultTokenResponse: Sendable {
 
     public let tokenPolicies: [String]
 
+    /// The metadata associated to the created token
+    public let metadata: [String: String]
+
+    /// The time to live (TTL) period of the token
     public let leaseDuration: Int
 
-    public let renewable: Bool
+    public let isRenewable: Bool
 
-    public let tokenType: String
+    public let tokenType: TokenType
 
-    public let orphan: Bool
+    /// Specifies if the token created has a parent
+    public let isOrphan: Bool
 
+    /// A value of zero means unlimited number of uses
     public let numberOfUses: Int
 }
 
-extension VaultTokenResponse {
-    init(component: Components.Schemas.TokenCreateResponse) {
-        self.requestId = component.requestId
-        self.mountType = component.mountType
-        self.clientToken = component.auth.clientToken
-        self.accessor = component.auth.accessor
-        self.tokenPolicies = component.auth.tokenPolicies
-        self.leaseDuration = component.auth.leaseDuration
-        self.renewable = component.renewable
-        self.tokenType = component.auth.tokenType
-        self.orphan = component.auth.orphan
-        self.numberOfUses = component.auth.numUses
+extension Components.Schemas.VaultApiResponse {
+    var tokenResponse: VaultTokenResponse {
+        get throws {
+            guard let auth else {
+                throw VaultClientError.receivedUnexpectedResponse("missing auth information in response: \(String(describing: self))")
+            }
+
+            guard let tokenType = TokenType(rawValue: auth.tokenType.rawValue) else {
+                throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: auth.tokenType))")
+            }
+
+            return .init(
+                requestId: requestId,
+                clientToken: auth.clientToken,
+                accessor: auth.accessor,
+                tokenPolicies: auth.tokenPolicies,
+                metadata: auth.metadata?.additionalProperties ?? [:],
+                leaseDuration: auth.leaseDuration,
+                isRenewable: auth.renewable,
+                tokenType: tokenType,
+                isOrphan: auth.orphan,
+                numberOfUses: auth.numUses)
+        }
     }
 }

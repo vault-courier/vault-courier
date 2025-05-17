@@ -29,6 +29,11 @@ public struct VaultClientError: Error, Sendable {
         .init(message: "Decoding failed")
     }
 
+    static func receivedUnexpectedResponse(_ message: String? = nil,
+                                           file: String = #filePath) -> VaultClientError {
+        .init(message: "Received unexpected response. Do you mind filling a bug at https://github.com/vault-courier/vault-courier/issues ?")
+    }
+
     static func readingConfigurationFailed() -> VaultClientError {
         .init(message: "Reading module failed")
     }
