@@ -20,7 +20,7 @@ import Testing
 
 extension IntegrationTests.Auth.Token {
     @Test
-    func create_orphan_token() async throws {
+    func create_and_renew_token() async throws {
         let vaultClient = VaultClient.current
 
         let displayName = "admin_token"
@@ -39,10 +39,15 @@ extension IntegrationTests.Auth.Token {
                       tokenNumberOfUses: nil)
             )
 
-            #expect(response.orphan)
+            #expect(response.isOrphan)
             #expect(response.numberOfUses == 0)
             #expect(Set(response.tokenPolicies) == Set(["default"] + policies))
             #expect(response.leaseDuration == leaseDuration)
+
+            let renewTTL = 60
+            let renewResponse = try await vaultClient.renewToken(response.clientToken, by: .seconds(renewTTL))
+
+            #expect(renewResponse.leaseDuration == renewTTL)
         }
     }
 }
