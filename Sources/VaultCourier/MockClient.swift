@@ -417,6 +417,17 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
+    public typealias TokenRevokeOrphanSignature = @Sendable (Operations.TokenRevokeOrphan.Input) async throws -> Operations.TokenRevokeOrphan.Output
+    public var tokenRevokeOrphanAction: TokenRevokeOrphanSignature?
+    public func tokenRevokeOrphan(
+        _ input: Operations.TokenRevokeOrphan.Input
+    ) async throws -> Operations.TokenRevokeOrphan.Output {
+        guard let block = tokenRevokeOrphanAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
     // MARK: Wrapping
     public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output
     public var unwrapAction: UnwrapSignature?

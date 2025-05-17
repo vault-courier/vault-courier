@@ -597,6 +597,56 @@
         }
       ]
     },
+    "/auth/token/revoke-orphan": {
+      "description": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using /auth/token/revoke/. This is a root-protected endpoint.",
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using /auth/token/revoke/. This is a root-protected endpoint.",
+        "operationId": "token-revoke-orphan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRevokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
     "/auth/{engine_path}/role/{role_name}": {
       "description": "Creates a new role",
       "get": {
