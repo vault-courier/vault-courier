@@ -15,9 +15,18 @@
 //===----------------------------------------------------------------------===//
 
 public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
+    /// Leases created by batch tokens are constrained to the remaining TTL of the batch tokens and, if the batch token is not an orphan, are tracked by the parent.
+    /// They are revoked when the batch token's TTL expires, or when the batch token's parent is revoked (at which point the batch token is also denied access to Vault).
+    ///
+    /// As a corollary, batch tokens can be used across performance replication clusters, but only if they are orphan, since non-orphan tokens will not be able to ensure the validity of the parent token.
     case batch = "batch"
+
+    /// Leases created by service tokens (including child tokens' leases) are tracked along with the service token and revoked when the token expires.
     case service = "service"
+
     case `default` = "default"
+
     case defaultService = "default-service"
+    
     case defaultBatch = "default-batch"
 }
