@@ -18,7 +18,7 @@ import Testing
 
 @testable import VaultCourier
 
-extension IntegrationTests.AppRole {
+extension IntegrationTests.Auth.AppRole {
     @Test
     func enable_approle_at_custom_path() async throws {
         let vaultClient = VaultClient.current
@@ -48,7 +48,7 @@ extension IntegrationTests.AppRole {
 
         let appRole = try await vaultClient.readAppRole(name: appRoleName)
 
-        #expect(appRole.tokenType == CreateAppRole.TokenType.batch.rawValue)
+        #expect(appRole.tokenType == TokenType.batch.rawValue)
 
         await #expect(throws: Never.self) {
             _ = try await vaultClient.appRoleId(name: appRoleName)

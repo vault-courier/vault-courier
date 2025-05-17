@@ -16,8 +16,10 @@
 
 
 public struct AppRoleIdResponse: Sendable {
+    /// This is the ID used to manage the lease of the secret, such as revoke or renew.
     public let leaseId: String?
 
+    /// The lease duration is a Time To Live value: the time in seconds for which the lease is valid. A consumer of this secret must renew the lease within that time.
     public let leaseDuration: Int?
 
     public let renewable: Bool?

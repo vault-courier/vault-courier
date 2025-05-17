@@ -57,12 +57,6 @@ public struct CreateAppRole: Sendable {
     /// The type of token that should be generated. Can be service, batch, or default to use the mount's tuned default (which unless changed will be service tokens). For machine based authentication cases, you should use batch type tokens.
     public var tokenType: TokenType
 
-    public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
-        case batch = "batch"
-        case service = "service"
-        case `default` = "default"
-    }
-
     public init(name: String,
                 bindSecretId: Bool = true,
                 secretIdBoundCIDRS: [String]? = nil,

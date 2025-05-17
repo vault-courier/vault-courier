@@ -41,6 +41,6 @@ extension GenerateAppRoleToken {
                   tokenNumberOfUses: tokenNumberOfUses,
                   tokenBoundCIDRS: tokenBoundCIDRS,
                   tokenTTL: tokenTTL?.toSwiftDuration(),
-                  wrapTTL: wrapTTL)
+                  wrapTTL: wrapTTL?.toSwiftDuration())
     }
 }

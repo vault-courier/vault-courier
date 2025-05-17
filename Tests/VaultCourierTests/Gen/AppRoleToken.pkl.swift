@@ -30,7 +30,7 @@ extension AppRoleToken {
         public var num_uses: Int?
 
         /// Set to wrap-response the generated token with the given TTL.
-        public var wrap_ttl: String?
+        public var wrap_ttl: Duration?
 
         public init(
             role_name: String,
@@ -39,7 +39,7 @@ extension AppRoleToken {
             token_bound_cidrs: [String]?,
             ttl: Duration?,
             num_uses: Int?,
-            wrap_ttl: String?
+            wrap_ttl: Duration?
         ) {
             self.role_name = role_name
             self.meta = meta

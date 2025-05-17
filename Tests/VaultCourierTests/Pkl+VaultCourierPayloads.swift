@@ -33,7 +33,7 @@ extension IntegrationTests.Pkl {
 
         @Test
         func create_database_static_role_with_pkl_file() async throws {
-            let url = pklFixtureUrl(for: "test_static_role.pkl")
+            let url = pklFixtureUrl(for: "Sample1/static_role.pkl")
 
             await #expect(throws: Never.self) {
                 let config = try await PostgresStaticRole.loadFrom(source: .url(url))
@@ -46,15 +46,35 @@ extension IntegrationTests.Pkl {
         }
 
         @Test
-        func vault_duration_style_for_seconds() async throws {
-            let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
-            #expect(duration.formatted(.vaultSeconds) == "5400s")
+        func create_approle_with_pkl_file() async throws {
+            let url = pklFixtureUrl(for: "Sample1/app_role.pkl")
+
+            await #expect(throws: Never.self) {
+                _ = try await VaultAppRole.loadFrom(source: .url(url))
+            }
         }
 
         @Test
-        func vault_duration_style_for_hours() async throws {
-            let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
-            #expect(duration.formatted(.vaultHours) == "1.5h")
+        func create_token_with_pkl_file() async throws {
+            let url = pklFixtureUrl(for: "Sample1/user_token.pkl")
+
+            await #expect(throws: Never.self) {
+                _ = try await VaultToken.loadFrom(source: .url(url))
+            }
+        }
+
+        struct VaultDuration {
+            @Test
+            func vault_duration_style_for_seconds() async throws {
+                let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
+                #expect(duration.formatted(.vaultSeconds) == "5400s")
+            }
+
+            @Test
+            func vault_duration_style_for_hours() async throws {
+                let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
+                #expect(duration.formatted(.vaultHours) == "1.5h")
+            }
         }
     }
 }

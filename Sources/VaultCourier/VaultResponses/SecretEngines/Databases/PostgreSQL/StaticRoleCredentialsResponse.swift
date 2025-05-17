@@ -23,10 +23,10 @@ public struct StaticRoleCredentialsResponse: Sendable {
 
     public let renewable: Bool?
 
-    /// database username
+    /// Database username
     public let username: String
 
-    /// database password
+    /// Database password
     public let password: String
 
     public let ttl: Int

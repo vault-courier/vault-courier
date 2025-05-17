@@ -230,18 +230,6 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthApproleLoginSignature = @Sendable (Operations.AuthApproleLogin.Input) async throws -> Operations.AuthApproleLogin.Output
-    public var authApproleLoginAction: AuthApproleLoginSignature?
-    public func authApproleLogin(
-        _ input: Operations.AuthApproleLogin.Input
-    ) async throws -> Operations.AuthApproleLogin.Output {
-        guard let block = authApproleLoginAction
-        else { throw UnspecifiedBlockError() }
-
-        return try await block(input)
-    }
-
-
     public typealias EnableSecretsEngineSignature
         = @Sendable (Operations.MountsEnableSecretsEngine.Input) async throws -> Operations.MountsEnableSecretsEngine.Output
     public var enableSecretsEngineAction: EnableSecretsEngineSignature?
@@ -341,15 +329,18 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
-    // MARK: Unwrap
-    public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output
-    public var unwrapAction: UnwrapSignature?
-    public func unwrap(_ input: Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output {
-        guard let block = unwrapAction
+    public typealias AuthApproleLoginSignature = @Sendable (Operations.AuthApproleLogin.Input) async throws -> Operations.AuthApproleLogin.Output
+    public var authApproleLoginAction: AuthApproleLoginSignature?
+    public func authApproleLogin(
+        _ input: Operations.AuthApproleLogin.Input
+    ) async throws -> Operations.AuthApproleLogin.Output {
+        guard let block = authApproleLoginAction
         else { throw UnspecifiedBlockError() }
 
         return try await block(input)
     }
+
+    // MARK: TokenAuth
 
     public typealias TokenCreateSignature = @Sendable (Operations.TokenCreate.Input) async throws -> Operations.TokenCreate.Output
     public var tokenCreateAction: TokenCreateSignature?
@@ -360,7 +351,127 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
-    // MARK: Auth
+    public typealias TokenRenewSignature = @Sendable (Operations.TokenRenew.Input) async throws -> Operations.TokenRenew.Output
+    public var tokenRenewAction: TokenRenewSignature?
+    public func tokenRenew(
+        _ input: Operations.TokenRenew.Input
+    ) async throws -> Operations.TokenRenew.Output {
+        guard let block = tokenRenewAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRenewAccessorSignature = @Sendable (Operations.TokenRenewAccessor.Input) async throws -> Operations.TokenRenewAccessor.Output
+    public var tokenRenewAccessorAction: TokenRenewAccessorSignature?
+    public func tokenRenewAccessor(
+        _ input: Operations.TokenRenewAccessor.Input
+    ) async throws -> Operations.TokenRenewAccessor.Output {
+        guard let block = tokenRenewAccessorAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRenewSelfSignature = @Sendable (Operations.TokenRenewSelf.Input) async throws -> Operations.TokenRenewSelf.Output
+    public var tokenRenewSelfAction: TokenRenewSelfSignature?
+    public func tokenRenewSelf(
+        _ input: Operations.TokenRenewSelf.Input
+    ) async throws -> Operations.TokenRenewSelf.Output {
+        guard let block = tokenRenewSelfAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRevokeAccessorSignature = @Sendable (Operations.TokenRevokeAccessor.Input) async throws -> Operations.TokenRevokeAccessor.Output
+    public var tokenRevokeAccessorAction: TokenRevokeAccessorSignature?
+    public func tokenRevokeAccessor(
+        _ input: Operations.TokenRevokeAccessor.Input
+    ) async throws -> Operations.TokenRevokeAccessor.Output {
+        guard let block = tokenRevokeAccessorAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRevokeSelfSignature = @Sendable (Operations.TokenRevokeSelf.Input) async throws -> Operations.TokenRevokeSelf.Output
+    public var tokenRevokeSelfAction: TokenRevokeSelfSignature?
+    public func tokenRevokeSelf(
+        _ input: Operations.TokenRevokeSelf.Input
+    ) async throws -> Operations.TokenRevokeSelf.Output {
+        guard let block = tokenRevokeSelfAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRevokeSignature = @Sendable (Operations.TokenRevoke.Input) async throws -> Operations.TokenRevoke.Output
+    public var tokenRevokeAction: TokenRevokeSignature?
+    public func tokenRevoke(
+        _ input: Operations.TokenRevoke.Input
+    ) async throws -> Operations.TokenRevoke.Output {
+        guard let block = tokenRevokeAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRevokeOrphanSignature = @Sendable (Operations.TokenRevokeOrphan.Input) async throws -> Operations.TokenRevokeOrphan.Output
+    public var tokenRevokeOrphanAction: TokenRevokeOrphanSignature?
+    public func tokenRevokeOrphan(
+        _ input: Operations.TokenRevokeOrphan.Input
+    ) async throws -> Operations.TokenRevokeOrphan.Output {
+        guard let block = tokenRevokeOrphanAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias UpdateTokenRoleSignature = @Sendable (Operations.UpdateTokenRole.Input) async throws -> Operations.UpdateTokenRole.Output
+    public var updateTokenRoleAction: UpdateTokenRoleSignature?
+    public func updateTokenRole(
+        _ input: Operations.UpdateTokenRole.Input
+    ) async throws -> Operations.UpdateTokenRole.Output {
+        guard let block = updateTokenRoleAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias ReadTokenRoleSignature = @Sendable (Operations.ReadTokenRole.Input) async throws -> Operations.ReadTokenRole.Output
+    public var readTokenRoleAction: ReadTokenRoleSignature?
+    public func readTokenRole(
+        _ input: Operations.ReadTokenRole.Input
+    ) async throws -> Operations.ReadTokenRole.Output {
+        guard let block = readTokenRoleAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias DeleteTokenRoleSignature = @Sendable (Operations.DeleteTokenRole.Input) async throws -> Operations.DeleteTokenRole.Output
+    public var deleteTokenRoleAction: DeleteTokenRoleSignature?
+    public func deleteTokenRole(
+        _ input: Operations.DeleteTokenRole.Input
+    ) async throws -> Operations.DeleteTokenRole.Output {
+        guard let block = deleteTokenRoleAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    // MARK: Wrapping
+    public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output
+    public var unwrapAction: UnwrapSignature?
+    public func unwrap(_ input: Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output {
+        guard let block = unwrapAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    // MARK: SystemAuth
 
     public typealias EnableAuthSignature = @Sendable (Operations.AuthEnableMethod.Input) async throws -> Operations.AuthEnableMethod.Output
     public var enableAuthAction: EnableAuthSignature?

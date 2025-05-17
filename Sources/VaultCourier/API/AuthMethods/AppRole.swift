@@ -24,82 +24,6 @@ import protocol Foundation.LocalizedError
 #endif
 
 extension VaultClient {
-    /// Enables authentication mount. Example AppRole, GitHub, Token...
-    public func enableAuthMethod(configuration: EnableAuthMethodConfig) async throws {
-        let sessionToken = try sessionToken()
-
-        let requestConfig = try configuration.config.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
-        let requestOptions = try configuration.options.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
-
-        let response = try await client.authEnableMethod(.init(
-            path: .init(path: configuration.path),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
-                config: requestConfig,
-                local: configuration.local,
-                options: requestOptions,
-                sealWrap: configuration.sealWrap,
-                _type: configuration.type)))
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("\(configuration.type) authentication method enabled")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
-
-    /// This endpoints returns the configuration of the auth method
-    public func readAuthMethodConfiguration(_ path: String) async throws -> ReadAuthMethodResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.authReadMethod(
-            path: .init(path: path),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(component: json)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
-
-    /// Disables authentication method at given path
-    public func disableAuthMethod(_ path: String) async throws {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.authDisableMethod(
-            path: .init(path: path),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("Authentication method disabled successfully.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
-
     /// Creates a new AppRole
     public func createAppRole(_ appRole: CreateAppRole) async throws {
         let sessionToken = try sessionToken()
@@ -225,7 +149,7 @@ extension VaultClient {
         let appRolePath = self.mounts.appRole.relativePath.removeSlash()
 
         let headers: Operations.AuthApproleSecretId.Input.Headers = if let wrapTTL = capabilities.wrapTTL {
-            .init(xVaultToken: sessionToken, xVaultWrapTTL: wrapTTL)
+            .init(xVaultToken: sessionToken, xVaultWrapTTL: wrapTTL.formatted(.vaultSeconds))
         } else {
             .init(xVaultToken: sessionToken)
         }
