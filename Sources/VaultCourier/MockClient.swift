@@ -362,6 +362,29 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
+    public typealias TokenRenewAccessorSignature = @Sendable (Operations.TokenRenewAccessor.Input) async throws -> Operations.TokenRenewAccessor.Output
+    public var tokenRenewAccessorAction: TokenRenewAccessorSignature?
+    public func tokenRenewAccessor(
+        _ input: Operations.TokenRenewAccessor.Input
+    ) async throws -> Operations.TokenRenewAccessor.Output {
+        guard let block = tokenRenewAccessorAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias TokenRenewSelfSignature = @Sendable (Operations.TokenRenewSelf.Input) async throws -> Operations.TokenRenewSelf.Output
+    public var tokenRenewSelfAction: TokenRenewSelfSignature?
+    public func tokenRenewSelf(
+        _ input: Operations.TokenRenewSelf.Input
+    ) async throws -> Operations.TokenRenewSelf.Output {
+        guard let block = tokenRenewSelfAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+
     // MARK: Wrapping
     public typealias UnwrapSignature = @Sendable (Operations.Unwrap.Input) async throws -> Operations.Unwrap.Output
     public var unwrapAction: UnwrapSignature?

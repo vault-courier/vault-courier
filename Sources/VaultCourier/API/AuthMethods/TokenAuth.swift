@@ -54,7 +54,10 @@ extension VaultClient {
         }
     }
 
-    public func renewToken(_ token: String, by increment: Duration? = nil) async throws -> VaultTokenResponse {
+    public func renewToken(
+        _ token: String,
+        by increment: Duration? = nil
+    ) async throws -> VaultTokenResponse {
         let sessionToken = try sessionToken()
 
         let response = try await client.tokenRenew(
@@ -74,6 +77,54 @@ extension VaultClient {
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
                 throw VaultClientError.operationFailed(statusCode)
         }
+    }
 
+    public func renewToken(
+        by increment: Duration? = nil
+    ) async throws -> VaultTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.tokenRenewSelf(
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(increment: increment?.formatted(.vaultSeconds)))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    public func renewToken(
+        accessor: String,
+        by increment: Duration? = nil
+    ) async throws -> VaultTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.tokenRenewAccessor(
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(accessor: accessor, increment: increment?.formatted(.vaultSeconds)))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
     }
 }

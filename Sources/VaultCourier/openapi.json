@@ -357,6 +357,106 @@
         }
       ]
     },
+    "/auth/token/renew-self": {
+      "description": "Renews a lease associated with the calling token. This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.",
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Renews a lease associated with the calling token.",
+        "operationId": "token-renew-self",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRenewSelfRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/renew-accessor": {
+      "description": "Renews a lease associated with a token using its accessor. This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.",
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Renews a lease associated with a token using its accessor.",
+        "operationId": "token-renew-accessor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRenewAccessorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultApiResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
     "/auth/{engine_path}/role/{role_name}": {
       "description": "Creates a new role",
       "get": {
@@ -2441,6 +2541,35 @@
         },
         "required": [
           "token"
+        ]
+      },
+      "TokenRenewSelfRequest": {
+        "type": "object",
+        "properties": {
+          "increment": {
+            "type": "string",
+            "format": "duration",
+            "description": "The desired increment in seconds to the token expiration",
+            "default": "0"
+          }
+        }
+      },
+      "TokenRenewAccessorRequest": {
+        "type": "object",
+        "properties": {
+          "accessor": {
+            "type": "string",
+            "description": "Accessor associated with the token to renew."
+          },
+          "increment": {
+            "type": "string",
+            "format": "duration",
+            "description": "The desired increment in seconds to the token expiration",
+            "default": "0"
+          }
+        },
+        "required": [
+          "accessor"
         ]
       },
       "ReadStaticRoleResponse": {
