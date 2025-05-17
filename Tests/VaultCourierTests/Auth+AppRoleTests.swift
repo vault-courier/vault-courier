@@ -48,7 +48,7 @@ extension IntegrationTests.Auth.AppRole {
 
         let appRole = try await vaultClient.readAppRole(name: appRoleName)
 
-        #expect(appRole.tokenType == CreateAppRole.TokenType.batch.rawValue)
+        #expect(appRole.tokenType == TokenType.batch.rawValue)
 
         await #expect(throws: Never.self) {
             _ = try await vaultClient.appRoleId(name: appRoleName)
