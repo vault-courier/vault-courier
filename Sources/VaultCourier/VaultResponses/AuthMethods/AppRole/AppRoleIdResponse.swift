@@ -16,32 +16,14 @@
 
 
 public struct AppRoleIdResponse: Sendable {
-    /// This is the ID used to manage the lease of the secret, such as revoke or renew.
-    public let leaseId: String?
-
-    /// The lease duration is a Time To Live value: the time in seconds for which the lease is valid. A consumer of this secret must renew the lease within that time.
-    public let leaseDuration: Int?
-
-    public let renewable: Bool?
+    public let requestID: String
 
     public let roleId: String
-
-    public init(leaseId: String?,
-                leaseDuration: Int?,
-                renewable: Bool?,
-                roleId: String) {
-        self.leaseId = leaseId
-        self.leaseDuration = leaseDuration
-        self.renewable = renewable
-        self.roleId = roleId
-    }
 }
 
 extension AppRoleIdResponse {
     init(component: Components.Schemas.ReadAppRoleIdResponse) {
-        self.leaseId = component.leaseId
-        self.leaseDuration = component.leaseDuration
-        self.renewable = component.renewable
+        self.requestID = component.requestId
         self.roleId = component.data.roleId
     }
 }
