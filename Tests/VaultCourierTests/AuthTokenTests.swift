@@ -20,12 +20,13 @@ import Testing
 
 extension IntegrationTests.Auth.Token {
     @Test
-    func create_and_renew_token() async throws {
+    func crud_token() async throws {
         let vaultClient = VaultClient.current
 
         let displayName = "admin_token"
         let leaseDuration = 3600
         let policies = ["web", "stage"]
+        var tokenID = ""
         await #expect(throws: Never.self) {
             let response = try await vaultClient.createToken(
                 .init(policies: policies,
@@ -38,6 +39,8 @@ extension IntegrationTests.Auth.Token {
                       displayName: displayName,
                       tokenNumberOfUses: nil)
             )
+            tokenID = response.clientToken
+            #expect(tokenID.isEmpty == false)
 
             #expect(response.isOrphan)
             #expect(response.numberOfUses == 0)
@@ -46,8 +49,15 @@ extension IntegrationTests.Auth.Token {
 
             let renewTTL = 60
             let renewResponse = try await vaultClient.renewToken(response.clientToken, by: .seconds(renewTTL))
-
             #expect(renewResponse.leaseDuration == renewTTL)
+
+            _ = try await vaultClient.lookup(token: tokenID)
+
+            try await vaultClient.revoke(token: tokenID)
+        }
+
+        await #expect(throws: VaultClientError.self) {
+            _ = try await vaultClient.lookup(token: tokenID)
         }
     }
 
