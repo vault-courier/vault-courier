@@ -281,7 +281,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
+                  "$ref": "#/components/schemas/VaultAuthResponse"
                 }
               }
             }
@@ -468,7 +468,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
+                  "$ref": "#/components/schemas/VaultAuthResponse"
                 }
               }
             }
@@ -518,7 +518,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
+                  "$ref": "#/components/schemas/VaultAuthResponse"
                 }
               }
             }
@@ -568,7 +568,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
+                  "$ref": "#/components/schemas/VaultAuthResponse"
                 }
               }
             }
@@ -1295,45 +1295,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "auth": {
-                      "type": "object",
-                      "properties": {
-                        "renewable": {
-                          "type": "boolean"
-                        },
-                        "lease_duration": {
-                          "type": "integer"
-                        },
-                        "token_policies": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        },
-                        "accessor": {
-                          "type": "string"
-                        },
-                        "client_token": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "renewable",
-                        "lease_duration",
-                        "token_policies",
-                        "accessor",
-                        "client_token"
-                      ]
-                    },
-                    "lease_id": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "auth"
-                  ]
+                  "$ref": "#/components/schemas/VaultAuthResponse"
                 }
               }
             }
@@ -2829,15 +2791,6 @@
           "request_id": {
             "type": "string"
           },
-          "renewable": {
-            "type": "boolean"
-          },
-          "lease_id": {
-            "type": "string"
-          },
-          "lease_duration": {
-            "type": "integer"
-          },
           "data": {
             "type": "object",
             "properties": {
@@ -2869,14 +2822,8 @@
       "WrapAppRoleSecretIdResponse": {
         "type": "object",
         "properties": {
-          "renewable": {
-            "type": "boolean"
-          },
-          "lease_id": {
+          "request_id": {
             "type": "string"
-          },
-          "lease_duration": {
-            "type": "integer"
           },
           "wrap_info": {
             "type": "object",
@@ -2920,15 +2867,6 @@
         "properties": {
           "request_id": {
             "type": "string"
-          },
-          "renewable": {
-            "type": "boolean"
-          },
-          "lease_id": {
-            "type": "string"
-          },
-          "lease_duration": {
-            "type": "integer"
           },
           "data": {
             "type": "object",
@@ -3079,135 +3017,6 @@
             ]
           }
         }
-      },
-      "AuthTokenResponse": {
-        "type": "object",
-        "properties": {
-          "request_id": {
-            "type": "string"
-          },
-          "lease_id": {
-            "type": "string"
-          },
-          "renewable": {
-            "type": "boolean"
-          },
-          "lease_duration": {
-            "type": "integer"
-          },
-          "data": {
-            "type": "object"
-          },
-          "wrap_info": {
-            "type": "object",
-            "properties": {
-              "token": {
-                "type": "string"
-              },
-              "ttl": {
-                "type": "integer"
-              },
-              "creation_time": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "creation_path": {
-                "type": "string"
-              },
-              "wrapped_accessor": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "token",
-              "accessor",
-              "ttl",
-              "creation_time",
-              "creation_path",
-              "wrapped_accessor"
-            ]
-          },
-          "warnings": {
-            "type": "array",
-            "description": "A list of warnings, e.g. ignored parameters",
-            "items": {
-              "type": "string"
-            }
-          },
-          "auth": {
-            "type": "object",
-            "properties": {
-              "client_token": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "token_policies": {
-                "type": "array",
-                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "metadata": {
-                "type": "object",
-                "format": "kvpairs",
-                "description": "Arbitrary key=value metadata to associate with the token",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "lease_duration": {
-                "type": "integer"
-              },
-              "renewable": {
-                "type": "boolean"
-              },
-              "entity_id": {
-                "type": "string"
-              },
-              "token_type": {
-                "type": "string",
-                "enum": [
-                  "batch",
-                  "service",
-                  "default",
-                  "default-service",
-                  "default-batch"
-                ]
-              },
-              "orphan": {
-                "type": "boolean"
-              },
-              "mfa_requirement": {
-                "type": "boolean"
-              },
-              "num_uses": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "client_token",
-              "accessor",
-              "token_policies",
-              "lease_duration",
-              "token_type",
-              "orphan",
-              "num_uses",
-              "renewable"
-            ]
-          },
-          "mount_type": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "request_id",
-          "auth"
-        ]
       },
       "TokenLookupResponse": {
         "type": "object",
@@ -4482,6 +4291,135 @@
         },
         "required": [
           "request_id"
+        ]
+      },
+      "VaultAuthResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "creation_time": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "creation_path": {
+                "type": "string"
+              },
+              "wrapped_accessor": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token",
+              "accessor",
+              "ttl",
+              "creation_time",
+              "creation_path",
+              "wrapped_accessor"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object",
+            "properties": {
+              "client_token": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "token_policies": {
+                "type": "array",
+                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Arbitrary key=value metadata to associate with the token",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "lease_duration": {
+                "type": "integer"
+              },
+              "renewable": {
+                "type": "boolean"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "token_type": {
+                "type": "string",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              },
+              "orphan": {
+                "type": "boolean"
+              },
+              "mfa_requirement": {
+                "type": "boolean"
+              },
+              "num_uses": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "client_token",
+              "accessor",
+              "token_policies",
+              "lease_duration",
+              "token_type",
+              "orphan",
+              "num_uses",
+              "renewable"
+            ]
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "auth"
         ]
       },
       "VaultErrorsResponse": {

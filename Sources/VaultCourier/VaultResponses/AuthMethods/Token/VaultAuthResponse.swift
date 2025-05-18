@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-public struct VaultTokenResponse: Sendable {
+public struct VaultAuthResponse: Sendable {
     public let requestID: String?
 
     /// The token value
@@ -43,8 +43,8 @@ public struct VaultTokenResponse: Sendable {
     public let numberOfUses: Int
 }
 
-extension Components.Schemas.AuthTokenResponse {
-    var tokenResponse: VaultTokenResponse {
+extension Components.Schemas.VaultAuthResponse {
+    var authResponse: VaultAuthResponse {
         get throws {
             guard let tokenType = TokenType(rawValue: auth.tokenType.rawValue) else {
                 throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: auth.tokenType))")

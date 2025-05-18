@@ -40,7 +40,9 @@ public struct ReadAppRoleResponse: Sendable {
 
     public let secretIdNumberOfUses: Int?
 
-    public let bindSecretID: Bool?
+    public let bindSecretID: Bool
+
+    public let localSecretID: Bool
 
     public let secretIdBoundCIDRS: [String]?
 
@@ -67,7 +69,8 @@ extension Components.Schemas.ReadAppRoleResponse {
                 secretIdTimeToLive: data.secretIdTtl.flatMap(Duration.seconds(_:)),
                 isRenewable: renewable,
                 secretIdNumberOfUses: data.secretIdNumUses,
-                bindSecretID: data.bindSecretId,
+                bindSecretID: data.bindSecretId ?? true,
+                localSecretID: data.localSecretIds ?? false,
                 secretIdBoundCIDRS: data.secretIdBoundCidrs,
                 tokenType: tokenType
             )

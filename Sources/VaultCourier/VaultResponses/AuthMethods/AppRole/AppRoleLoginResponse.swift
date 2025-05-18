@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct AppRoleLoginResponse: Sendable {
-    let renewable: Bool
+    let isRenewable: Bool
 
     let leaseDuration: Int
 
@@ -29,8 +29,8 @@ public struct AppRoleLoginResponse: Sendable {
 }
 
 extension AppRoleLoginResponse {
-    init(payload: Operations.AuthApproleLogin.Output.Ok.Body.JsonPayload) {
-        self.renewable = payload.auth.renewable
+    init(payload: Components.Schemas.VaultAuthResponse) {
+        self.isRenewable = payload.auth.renewable
         self.leaseDuration = payload.auth.leaseDuration
         self.tokenPolicies = payload.auth.tokenPolicies
         self.accessor = payload.auth.accessor

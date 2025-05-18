@@ -26,7 +26,7 @@ extension VaultClient {
     public func createToken(
         _ capabilities: CreateVaultToken,
         wrappTTL: Duration? = nil
-    ) async throws -> VaultTokenResponse {
+    ) async throws -> VaultAuthResponse {
         let sessionToken = try sessionToken()
 
         let response = try await client.tokenCreate(
@@ -51,7 +51,7 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                return try json.tokenResponse
+                return try json.authResponse
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -141,7 +141,7 @@ extension VaultClient {
     public func renewToken(
         _ token: String,
         by increment: Duration? = nil
-    ) async throws -> VaultTokenResponse {
+    ) async throws -> VaultAuthResponse {
         let sessionToken = try sessionToken()
 
         let response = try await client.tokenRenew(
@@ -152,7 +152,7 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                return try json.tokenResponse
+                return try json.authResponse
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -171,7 +171,7 @@ extension VaultClient {
     /// - Returns: ``VaultTokenResponse``
     public func renewToken(
         by increment: Duration? = nil
-    ) async throws -> VaultTokenResponse {
+    ) async throws -> VaultAuthResponse {
         let sessionToken = try sessionToken()
 
         let response = try await client.tokenRenewSelf(
@@ -182,7 +182,7 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                return try json.tokenResponse
+                return try json.authResponse
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -203,7 +203,7 @@ extension VaultClient {
     public func renewToken(
         accessor: String,
         by increment: Duration? = nil
-    ) async throws -> VaultTokenResponse {
+    ) async throws -> VaultAuthResponse {
         let sessionToken = try sessionToken()
 
         let response = try await client.tokenRenewAccessor(
@@ -214,7 +214,7 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                return try json.tokenResponse
+                return try json.authResponse
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")

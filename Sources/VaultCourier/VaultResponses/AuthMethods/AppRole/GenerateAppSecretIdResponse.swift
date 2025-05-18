@@ -15,33 +15,24 @@
 //===----------------------------------------------------------------------===//
 
 public struct GenerateAppSecretIdResponse: Sendable {
-    public let requestId: String?
-
-    public let leaseId: String?
-
-    public let leaseDuration: Int?
-
-    public let renewable: Bool?
+    public let requestID: String?
 
     /// AppRole secret id
-    public let secretId: String
+    public let secretID: String
 
-    public let secretIdAccessor: String
+    public let secretIDAccessor: String
 
-    public let secretIdTtl: Int
+    public let secretIDTimeToLive: Int
 
-    public let secretIdNumUses: Int
+    public let secretIDNumberOfUses: Int
 }
 
 extension GenerateAppSecretIdResponse {
     init(component: Components.Schemas.GenerateAppRoleSecretIdResponse) {
-        self.requestId = component.requestId
-        self.leaseId = component.leaseId
-        self.leaseDuration = component.leaseDuration
-        self.renewable = component.renewable
-        self.secretId = component.data.secretId
-        self.secretIdAccessor = component.data.secretIdAccessor
-        self.secretIdTtl = component.data.secretIdTtl
-        self.secretIdNumUses = component.data.secretIdNumUses
+        self.requestID = component.requestId
+        self.secretID = component.data.secretId
+        self.secretIDAccessor = component.data.secretIdAccessor
+        self.secretIDTimeToLive = component.data.secretIdTtl
+        self.secretIDNumberOfUses = component.data.secretIdNumUses
     }
 }
