@@ -356,6 +356,94 @@
         }
       ]
     },
+    "/auth/token/lookup-self": {
+      "description": "Returns information about the current client token.",
+      "post": {
+        "tags": [
+          "auth",
+          "token"
+        ],
+        "summary": "Returns information about the current client token.",
+        "description": "Returns information about the current client token.",
+        "operationId": "lookup-token-self",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenLookupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/auth/token/lookup-accessor": {
+      "description": "Returns information about the client token from the accessor.",
+      "post": {
+        "tags": [
+          "auth",
+          "token"
+        ],
+        "summary": "Returns information about the client token from the accessor.",
+        "description": "Returns information about the client token from the accessor.",
+        "operationId": "lookup-token-accessor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessorBodyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenLookupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
     "/auth/token/renew": {
       "description": "This endpoint will renew the given token and prevent expiration.",
       "post": {
@@ -3074,10 +3162,23 @@
         "type": "object",
         "properties": {
           "token": {
-            "type": "string",
-            "description": "Token to renew (request body)"
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "AccessorBodyRequest": {
+        "type": "object",
+        "properties": {
+          "accessor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessor"
+        ]
       },
       "TokenUpdateRoleRequest": {
         "type": "object",

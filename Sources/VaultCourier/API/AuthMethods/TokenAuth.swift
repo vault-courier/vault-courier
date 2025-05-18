@@ -86,6 +86,49 @@ extension VaultClient {
         }
     }
 
+    public func lookupCurrentToken() async throws -> LookupTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.lookupTokenSelf(
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    public func lookupToken(accessor: String) async throws -> LookupTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.lookupTokenAccessor(
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(accessor: accessor))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
     // MARK: Renew
 
     /// Renews a lease associated with a token.
