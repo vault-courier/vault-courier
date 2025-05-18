@@ -265,7 +265,7 @@ extension VaultClient {
         }
     }
 
-    public func readTokenRole(name: String) async throws -> UpdateTokenRole {
+    public func readTokenRole(name: String) async throws -> VaultTokenRole {
         let sessionToken = try sessionToken()
 
         let response = try await client.readTokenRole(
@@ -288,7 +288,7 @@ extension VaultClient {
     }
 
     public func updateTokenRole(
-        _ capabilities: UpdateTokenRole
+        _ capabilities: VaultTokenRole
     ) async throws {
         let sessionToken = try sessionToken()
 
@@ -302,7 +302,7 @@ extension VaultClient {
                     disallowedPoliciesGlob: capabilities.disallowedPoliciesGlob,
                     orphan: capabilities.orphan,
                     renewable: capabilities.isRenewable,
-                    pathSufix: capabilities.pathSufix,
+                    pathSuffix: capabilities.pathSufix,
                     allowedEntityAliases: capabilities.allowedEntityAliases,
                     tokenBoundCidrs: capabilities.tokenBoundCidrs,
                     tokenExplicitMaxTtl: capabilities.tokenExplicitMaxTTL?.formatted(.vaultSeconds),
@@ -322,7 +322,7 @@ extension VaultClient {
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
                 throw VaultClientError.badRequest(errors)
             case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "\(#function). Operation failed with \(statusCode):"))
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
