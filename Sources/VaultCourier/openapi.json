@@ -307,6 +307,45 @@
         }
       ]
     },
+    "/auth/token/lookup": {
+      "description": "Returns information about the given token.",
+      "get": {
+        "tags": [
+          "auth",
+          "token"
+        ],
+        "summary": "Returns information about the given token.",
+        "description": "Returns information about the given token.",
+        "operationId": "lookup-token",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenLookupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
     "/auth/token/renew": {
       "description": "This endpoint will renew the given token and prevent expiration.",
       "post": {
@@ -476,15 +515,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultApiResponse"
-                }
-              }
-            }
+          "204": {
+            "description": "NoContent"
           },
           "400": {
             "description": "BadRequest",
@@ -516,15 +548,8 @@
         "summary": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
         "operationId": "token-revoke-self",
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultApiResponse"
-                }
-              }
-            }
+          "204": {
+            "description": "NoContent"
           },
           "400": {
             "description": "BadRequest",
@@ -566,15 +591,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultApiResponse"
-                }
-              }
-            }
+          "204": {
+            "description": "NoContent"
           },
           "400": {
             "description": "BadRequest",
@@ -616,15 +634,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultApiResponse"
-                }
-              }
-            }
+          "204": {
+            "description": "NoContent"
           },
           "400": {
             "description": "BadRequest",
@@ -691,7 +702,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TokenUpdateRequest"
+                "$ref": "#/components/schemas/TokenUpdateRoleRequest"
               }
             }
           },
@@ -2826,7 +2837,227 @@
           }
         }
       },
-      "TokenUpdateRequest": {
+      "TokenLookupResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessor": {
+                "type": "string"
+              },
+              "creation_time": {
+                "type": "integer"
+              },
+              "creation_ttl": {
+                "type": "integer"
+              },
+              "display_name": {
+                "type": "string",
+                "description": "Name to associate with this token"
+              },
+              "entity_id": {
+                "type": "string",
+                "description": "Name of the entity id to associate with this token"
+              },
+              "expire_time": {
+                "type": "string",
+                "description": "Optional expire time date in string format."
+              },
+              "id": {
+                "type": "string",
+                "description": "Value for the token"
+              },
+              "issue_time": {
+                "type": "string",
+                "description": "Value for the token"
+              },
+              "meta": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Arbitrary key=value metadata to associate with the token",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "num_uses": {
+                "type": "integer",
+                "description": "Max number of uses for this token"
+              },
+              "orphan": {
+                "type": "boolean"
+              },
+              "path": {
+                "type": "string"
+              },
+              "policies": {
+                "type": "array",
+                "description": "A list of policies for the token.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "renewable": {
+                "type": "boolean",
+                "description": "Allow token to be renewed past its initial TTL up to system/mount maximum TTL"
+              },
+              "ttl": {
+                "type": "string",
+                "description": "Time to live for this token"
+              },
+              "type": {
+                "type": "string",
+                "description": "Token type",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              }
+            },
+            "required": [
+              "accessor",
+              "creation_time",
+              "creation_ttl",
+              "display_name",
+              "entity_id",
+              "id",
+              "issue_time",
+              "num_uses",
+              "orphan",
+              "path",
+              "policies",
+              "renewable",
+              "ttl",
+              "type"
+            ]
+          },
+          "wrap_info": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "creation_time": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "creation_path": {
+                "type": "string"
+              },
+              "wrapped_accessor": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token",
+              "accessor",
+              "ttl",
+              "creation_time",
+              "creation_path",
+              "wrapped_accessor"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object",
+            "properties": {
+              "client_token": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "token_policies": {
+                "type": "array",
+                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Arbitrary key=value metadata to associate with the token",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "lease_duration": {
+                "type": "integer"
+              },
+              "renewable": {
+                "type": "boolean"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "token_type": {
+                "type": "string",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              },
+              "orphan": {
+                "type": "boolean"
+              },
+              "mfa_requirement": {
+                "type": "boolean"
+              },
+              "num_uses": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "client_token",
+              "accessor",
+              "token_policies",
+              "lease_duration",
+              "token_type",
+              "orphan",
+              "num_uses",
+              "renewable"
+            ]
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "TokenUpdateRoleRequest": {
         "type": "object",
         "properties": {
           "allowed_policies": {
@@ -3198,6 +3429,7 @@
           }
         },
         "required": [
+          "request_id",
           "data"
         ]
       },
@@ -3851,7 +4083,9 @@
             "type": "string"
           }
         },
-        "required": []
+        "required": [
+          "request_id"
+        ]
       },
       "VaultErrorsResponse": {
         "type": "object",

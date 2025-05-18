@@ -169,7 +169,7 @@ extension VaultClient {
     public func revokeToken(
         _ token: String,
         orphan: Bool = false
-    ) async throws -> VaultTokenResponse {
+    ) async throws {
         let sessionToken = try sessionToken()
 
         if orphan {
@@ -179,9 +179,8 @@ extension VaultClient {
             )
 
             switch response {
-                case .ok(let content):
-                    let json = try content.body.json
-                    return try json.tokenResponse
+                case .noContent:
+                    logger.info("Token revoked successfully.")
                 case .badRequest(let content):
                     let errors = (try? content.body.json.errors) ?? []
                     logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -197,9 +196,8 @@ extension VaultClient {
             )
 
             switch response {
-                case .ok(let content):
-                    let json = try content.body.json
-                    return try json.tokenResponse
+                case .noContent:
+                    logger.info("Token revoked successfully.")
                 case .badRequest(let content):
                     let errors = (try? content.body.json.errors) ?? []
                     logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -214,8 +212,7 @@ extension VaultClient {
     /// Revokes the current client's token and all child tokens.
     ///
     /// When the token is revoked, all dynamic secrets generated with it are also revoked.
-    /// - Returns: ``VaultTokenResponse``
-    public func revokeCurrentToken() async throws -> VaultTokenResponse {
+    public func revokeCurrentToken() async throws {
         let sessionToken = try sessionToken()
 
         let response = try await client.tokenRevokeSelf(
@@ -223,9 +220,8 @@ extension VaultClient {
         )
 
         switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.tokenResponse
+            case .noContent:
+                logger.info("Token revoked successfully.")
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -240,10 +236,9 @@ extension VaultClient {
     ///
     /// This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.
     /// - Parameter accessor: Accessor of the token
-    /// - Returns: ``VaultTokenResponse``
     public func revokeToken(
         accessor: String
-    ) async throws -> VaultTokenResponse {
+    ) async throws {
         let sessionToken = try sessionToken()
 
         let response = try await client.tokenRevokeAccessor(
@@ -252,9 +247,8 @@ extension VaultClient {
         )
 
         switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.tokenResponse
+            case .noContent:
+                logger.info("Token revoked successfully.")
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -265,6 +259,10 @@ extension VaultClient {
         }
     }
 
+    
+    /// Fetches the named role configuration.
+    /// - Parameter name: The name of the token role.
+    /// - Returns: ``VaultTokenRole``
     public func readTokenRole(name: String) async throws -> VaultTokenRole {
         let sessionToken = try sessionToken()
 
@@ -286,7 +284,9 @@ extension VaultClient {
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
-
+    
+    /// Creates (or replaces) the named token role.
+    /// - Parameter capabilities: new properties of the token role
     public func updateTokenRole(
         _ capabilities: VaultTokenRole
     ) async throws {
@@ -327,6 +327,9 @@ extension VaultClient {
         }
     }
 
+    
+    /// Deletes the named token role.
+    /// - Parameter name:The name of the token role.
     public func deleteTokenRole(name: String) async throws {
         let sessionToken = try sessionToken()
 
