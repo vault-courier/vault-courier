@@ -51,22 +51,50 @@ extension IntegrationTests.Auth.AppRole {
         #expect(appRole.tokenType == .batch)
 
         await #expect(throws: Never.self) {
-            _ = try await vaultClient.appRoleId(name: appRoleName)
+            _ = try await vaultClient.appRoleID(name: appRoleName)
         }
 
         let generateAppSecretIdResponse = try await vaultClient.generateAppSecretId(
             capabilities: .init(roleName: appRoleName)
         )
 
-        guard case let .secretId(secretIdResponse) = generateAppSecretIdResponse else {
-            Issue.record("Receive unexpected response \(generateAppSecretIdResponse)")
-            return
+        switch generateAppSecretIdResponse {
+            case .wrapped(let wrappedResponse):
+                Issue.record("Receive unexpected response: \(generateAppSecretIdResponse)")
+            case .secretId(let secretIdResponse):
+                #expect(secretIdResponse.secretIDNumberOfUses == 0)
         }
-
-        #expect(secretIdResponse.secretIdNumUses == 0)
 
         try await vaultClient.deleteAppRole(name: appRoleName)
 
         try await vaultClient.disableAuthMethod(path)
+    }
+
+    @Test
+    func unwrapped_login() async throws {
+        let vaultClient = VaultClient.current
+
+        let path = "approle"
+        try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
+
+        let appRoleName = "batch_role"
+        try await vaultClient.createAppRole(.init(name: appRoleName,
+                                                  tokenPolicies: [],
+                                                  tokenTTL: .seconds(60*60),
+                                                  tokenType: .batch))
+
+        let appRoleID = try await vaultClient.appRoleID(name: appRoleName).roleId
+        let secretIDResponse = try await vaultClient.generateAppSecretId(capabilities: .init(roleName: appRoleName))
+
+        switch secretIDResponse {
+            case .wrapped(let wrappedResponse):
+                Issue.record("Receive unexpected response: \(wrappedResponse)")
+            case .secretId(let response):
+                // MUT
+                await #expect(throws: Never.self) {
+                    _ = try await vaultClient.loginToken(roleID: appRoleID, secretID: response.secretID)
+                }
+        }
+
     }
 }

@@ -118,7 +118,7 @@ extension VaultClient {
     
     /// Get AppRole ID
     /// - Parameter name: role name
-    public func appRoleId(name: String) async throws -> AppRoleIdResponse {
+    public func appRoleID(name: String) async throws -> AppRoleIDResponse {
         let sessionToken = try sessionToken()
         let mountPath = self.mounts.appRole.relativePath.removeSlash()
 
@@ -130,7 +130,7 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                return AppRoleIdResponse(component: json)
+                return AppRoleIDResponse(component: json)
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -191,6 +191,42 @@ extension VaultClient {
             case .undocumented(let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
                 throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    
+    /// Fetches the login session token and its information.
+    ///
+    /// if ``bindSecretID`` is enabled (the default) on the AppRole, ``secretID`` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
+    ///
+    /// - Note: this method does not set the token session of the vault client. See the ``login()`` which initiates login from the given authentication
+    /// method and sets the session token of the client.
+    /// - Parameters:
+    ///   - roleID: RoleID of the AppRole
+    ///   - secretID: SecretID belonging to AppRole
+    /// - Returns: ``VaultAuthResponse``
+    public func loginToken(
+        roleID: String,
+        secretID: String
+    ) async throws -> VaultAuthResponse {
+        let appRolePath = mounts.appRole.relativePath.removeSlash()
+
+        let response = try await client.authApproleLogin(
+            path: .init(enginePath: appRolePath),
+            body: .json(.init(roleId: roleID, secretId: secretID))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.authResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.permissionDenied()
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "login failed with \(statusCode): "))
+                throw VaultClientError.permissionDenied()
         }
     }
 }
