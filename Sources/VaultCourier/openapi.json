@@ -663,7 +663,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadAppRoleResponse"
+                  "$ref": "#/components/schemas/TokenReadRoleResponse"
                 }
               }
             }
@@ -2845,7 +2845,7 @@
           },
           "allowed_policies_glob": {
             "type": "array",
-            "description": "If set, tokens can be created with any subset of glob matched policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy name globs. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically. If combined with allowed_policies policies need to only match one of the two lists to be permitted. Note that unlike allowed_policies the policies listed in allowed_policies_glob will not be added to the token when no policies are specified in the call to `/auth/token/create/:role_name`.",
+            "description": "If set, tokens can be created with any subset of glob matched policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy name globs. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically. If combined with allowed_policies policies need to only match one of the two lists to be permitted. Note that unlike allowed_policies the policies listed in allowed_policies_glob will not be added to the token when no policies are specified in the call to /auth/token/create/:role_name.",
             "items": {
               "type": "string"
             }
@@ -2863,16 +2863,15 @@
           },
           "renewable": {
             "type": "boolean",
-            "description": "Allow token to be renewed past its initial TTL up to system/mount maximum TTL",
-            "default": true
+            "description": "Set to false to disable the ability of the token to be renewed past its initial TTL. Setting the value to true will allow the token to be renewable up to the system/mount maximum TTL."
           },
-          "path_sufix": {
+          "path_suffix": {
             "type": "string",
-            "description": "If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios, such as keeping the same role name in the future but revoking all tokens created against it before some point in time. The suffix can be changed, allowing new callers to have the new suffix as part of their path, and then tokens with the old suffix can be revoked via `/sys/leases/revoke-prefix`."
+            "description": " If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios, such as keeping the same role name in the future but revoking all tokens created against it before some point in time. The suffix can be changed, allowing new callers to have the new suffix as part of their path, and then tokens with the old suffix can be revoked via /sys/leases/revoke-prefix."
           },
           "allowed_entity_aliases": {
             "type": "array",
-            "description": "JSON list of allowed entity aliases. If set, specifies the entity aliases which are allowed to be used during token generation. This field supports globbing. Note that allowed_entity_aliases is not case sensitive.",
+            "description": "String or JSON list of allowed entity aliases. If set, specifies the entity aliases which are allowed to be used during token generation. This field supports globbing. Note that allowed_entity_aliases is not case sensitive.",
             "items": {
               "type": "string"
             }
@@ -2890,11 +2889,11 @@
           },
           "token_no_default_policy": {
             "type": "boolean",
-            "description": "If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in token_policies"
+            "description": "If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in token_policies."
           },
           "token_num_uses": {
             "type": "integer",
-            "description": "Max number of uses for this token"
+            "description": "The maximum number of times a generated token may be used (within its lifetime); 0 means unlimited. If you require the token to have the ability to create child tokens, you will need to set this value to 0."
           },
           "token_period": {
             "type": "string",
@@ -2982,6 +2981,224 @@
         },
         "required": [
           "accessor"
+        ]
+      },
+      "TokenReadRoleResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "allowed_policies": {
+                "type": "array",
+                "description": "If set, tokens can be created with any subset of the policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy names. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disallowed_policies": {
+                "type": "array",
+                "description": "If set, successful token creation via this role will require that no policies in the given list are requested. The parameter is a comma-delimited string of policy names. Adding \"default\" to this list will prevent \"default\" from being added automatically to created tokens.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allowed_policies_glob": {
+                "type": "array",
+                "description": "If set, tokens can be created with any subset of glob matched policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy name globs. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically. If combined with allowed_policies policies need to only match one of the two lists to be permitted. Note that unlike allowed_policies the policies listed in allowed_policies_glob will not be added to the token when no policies are specified in the call to /auth/token/create/:role_name.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disallowed_policies_glob": {
+                "type": "array",
+                "description": "If set, successful token creation via this role will require that no requested policies glob match any of policies in this list. The parameter is a comma-delimited string of policy name globs. Adding any glob that matches \"default\" to this list will prevent \"default\" from being added automatically to created tokens. If combined with disallowed_policies policies need to only match one of the two lists to be blocked.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "orphan": {
+                "type": "boolean",
+                "description": "If true, tokens created against this policy will be orphan tokens (they will have no parent). As such, they will not be automatically revoked by the revocation of any other token."
+              },
+              "renewable": {
+                "type": "boolean",
+                "description": "Set to false to disable the ability of the token to be renewed past its initial TTL. Setting the value to true will allow the token to be renewable up to the system/mount maximum TTL."
+              },
+              "path_suffix": {
+                "type": "string",
+                "description": " If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios, such as keeping the same role name in the future but revoking all tokens created against it before some point in time. The suffix can be changed, allowing new callers to have the new suffix as part of their path, and then tokens with the old suffix can be revoked via /sys/leases/revoke-prefix."
+              },
+              "allowed_entity_aliases": {
+                "type": "array",
+                "description": "String or JSON list of allowed entity aliases. If set, specifies the entity aliases which are allowed to be used during token generation. This field supports globbing. Note that allowed_entity_aliases is not case sensitive.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "token_bound_cidrs": {
+                "type": "array",
+                "description": "List of CIDR blocks; if set, specifies blocks of IP addresses which can authenticate successfully, and ties the resulting token to these blocks as well.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "token_explicit_max_ttl": {
+                "type": "integer",
+                "description": "If set, will encode an explicit max TTL onto the token. This is a hard cap even if token_ttl and token_max_ttl would otherwise allow a renewal."
+              },
+              "token_no_default_policy": {
+                "type": "boolean",
+                "description": "If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in token_policies."
+              },
+              "token_num_uses": {
+                "type": "integer",
+                "description": "The maximum number of times a generated token may be used (within its lifetime); 0 means unlimited. If you require the token to have the ability to create child tokens, you will need to set this value to 0."
+              },
+              "token_period": {
+                "type": "integer",
+                "description": "The maximum allowed period value when a periodic token is requested from this role."
+              },
+              "token_type": {
+                "type": "string",
+                "description": "The type of token that should be generated. Can be service, batch, or default to use the mount's tuned default (which unless changed will be service tokens). For token store roles, there are two additional possibilities: default-service and default-batch which specify the type to return unless the client requests a different type at generation time. For machine based authentication cases, you should use batch type tokens.",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the token role."
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "wrap_info": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "creation_time": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "creation_path": {
+                "type": "string"
+              },
+              "wrapped_accessor": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token",
+              "accessor",
+              "ttl",
+              "creation_time",
+              "creation_path",
+              "wrapped_accessor"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object",
+            "properties": {
+              "client_token": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "token_policies": {
+                "type": "array",
+                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Arbitrary key=value metadata to associate with the token",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "lease_duration": {
+                "type": "integer"
+              },
+              "renewable": {
+                "type": "boolean"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "token_type": {
+                "type": "string",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              },
+              "orphan": {
+                "type": "boolean"
+              },
+              "mfa_requirement": {
+                "type": "boolean"
+              },
+              "num_uses": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "client_token",
+              "accessor",
+              "token_policies",
+              "lease_duration",
+              "token_type",
+              "orphan",
+              "num_uses",
+              "renewable"
+            ]
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "ReadStaticRoleResponse": {
@@ -3633,7 +3850,8 @@
           "mount_type": {
             "type": "string"
           }
-        }
+        },
+        "required": []
       },
       "VaultErrorsResponse": {
         "type": "object",

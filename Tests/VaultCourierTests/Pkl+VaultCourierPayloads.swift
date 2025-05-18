@@ -27,10 +27,8 @@ import PklSwift
 @testable import VaultCourier
 
 extension IntegrationTests.Pkl {
+    @Suite
     struct Payloads {
-        let localApiURL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
-        var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
-
         @Test
         func create_database_static_role_with_pkl_file() async throws {
             let url = pklFixtureUrl(for: "Sample1/static_role.pkl")
@@ -63,6 +61,7 @@ extension IntegrationTests.Pkl {
             }
         }
 
+        @Suite
         struct VaultDuration {
             @Test
             func vault_duration_style_for_seconds() async throws {

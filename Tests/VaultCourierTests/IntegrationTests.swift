@@ -46,7 +46,7 @@ extension IntegrationTests {
     @Suite struct KeyValue {}
     @Suite(.serialized) struct Database {}
     @Suite struct Auth {}
-    @Suite struct Pkl {}
+    @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
 }
 
 extension IntegrationTests.Auth {
