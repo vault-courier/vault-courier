@@ -27,6 +27,7 @@ import PklSwift
 @testable import VaultCourier
 
 extension IntegrationTests.Pkl {
+    @Suite
     struct Payloads {
         @Test
         func create_database_static_role_with_pkl_file() async throws {
@@ -60,6 +61,7 @@ extension IntegrationTests.Pkl {
             }
         }
 
+        @Suite
         struct VaultDuration {
             @Test
             func vault_duration_style_for_seconds() async throws {

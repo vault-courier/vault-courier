@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 
-public struct UpdateTokenRole: Sendable {
+public struct VaultTokenRole: Sendable {
     /// The name of the token role.
     public var roleName: String
 
@@ -113,7 +113,7 @@ public struct UpdateTokenRole: Sendable {
 }
 
 extension Components.Schemas.TokenReadRoleResponse {
-    var tokenRole: UpdateTokenRole {
+    var tokenRole: VaultTokenRole {
         get throws {
             return .init(
                 roleName: data.name,
@@ -127,9 +127,9 @@ extension Components.Schemas.TokenReadRoleResponse {
                 allowedEntityAliases: data.allowedEntityAliases,
                 tokenBoundCidrs: data.tokenBoundCidrs,
                 tokenType: .init(rawValue: data.tokenType?.rawValue ?? ""),
-                tokenExplicitMaxTTL: data.tokenExplicitMaxTtl.flatMap({Duration.seconds($0)}),
+                tokenExplicitMaxTTL: data.tokenExplicitMaxTtl.flatMap({.seconds($0)}),
                 tokenNumberOfUses: data.tokenNumUses,
-                tokenPeriod: data.tokenPeriod.flatMap({Duration.seconds($0)}),
+                tokenPeriod: data.tokenPeriod.flatMap({.seconds($0)}),
                 pathSufix: data.pathSuffix
             )
         }
