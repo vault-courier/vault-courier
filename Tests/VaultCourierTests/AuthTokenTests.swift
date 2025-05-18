@@ -52,7 +52,7 @@ extension IntegrationTests.Auth.Token {
     }
 
     @Test
-    func create_token_role_and_update() async throws {
+    func crud_token_role() async throws {
         let vaultClient = VaultClient.current
 
         let displayName = "dev_token"
@@ -60,11 +60,11 @@ extension IntegrationTests.Auth.Token {
         let policies = ["web", "stage"]
         let roleName = "nomad"
         await #expect(throws: Never.self) {
-            let response = try await vaultClient.createToken(
+            let write = try await vaultClient.createToken(
                 .init(roleName: roleName,
                       policies: policies,
                       meta: ["user": "Juan"],
-                      hasParent: false,
+                      hasParent: true,
                       hasDefaultPolicy: true,
                       ttl: .seconds(leaseDuration),
                       type: .service,
@@ -72,12 +72,23 @@ extension IntegrationTests.Auth.Token {
                       displayName: displayName,
                       tokenNumberOfUses: nil)
             )
+            #expect(write.isOrphan == false)
 
             try await vaultClient.updateTokenRole(
                 .init(roleName: roleName,
                       orphan: true,
                       noDefaultPolicy: false)
             )
+
+            let read = try await vaultClient.readTokenRole(name: roleName)
+            #expect(read.orphan == true)
+            #expect(read.noDefaultPolicy == false)
+
+            try await vaultClient.deleteTokenRole(name: roleName)
+        }
+
+        await #expect(throws: VaultClientError.self) {
+            _ = try await vaultClient.readTokenRole(name: roleName)
         }
     }
 }

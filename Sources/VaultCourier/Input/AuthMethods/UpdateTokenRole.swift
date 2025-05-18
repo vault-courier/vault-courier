@@ -54,6 +54,7 @@ public struct UpdateTokenRole: Sendable {
     public var isRenewable: Bool?
 
     /// JSON list of allowed entity aliases. If set, specifies the entity aliases which are allowed to be used during token generation. This field supports globbing.
+    /// 
     /// - Note: ``allowedEntityAliases`` is not case sensitive.
     public var allowedEntityAliases: [String]?
 
@@ -83,8 +84,8 @@ public struct UpdateTokenRole: Sendable {
                 disallowedPolicies: [String]? = nil,
                 allowedPoliciesGlob: [String]? = nil,
                 disallowedPoliciesGlob: [String]? = nil,
-                orphan: Bool,
-                noDefaultPolicy: Bool,
+                orphan: Bool = false,
+                noDefaultPolicy: Bool = false,
                 isRenewable: Bool? = nil,
                 allowedEntityAliases: [String]? = nil,
                 tokenBoundCidrs: [String]? = nil
@@ -108,5 +109,29 @@ public struct UpdateTokenRole: Sendable {
         self.tokenNumberOfUses = tokenNumberOfUses
         self.tokenPeriod = tokenPeriod
         self.pathSufix = pathSufix
+    }
+}
+
+extension Components.Schemas.TokenReadRoleResponse {
+    var tokenRole: UpdateTokenRole {
+        get throws {
+            return .init(
+                roleName: data.name,
+                allowedPolicies: data.allowedPolicies,
+                disallowedPolicies: data.disallowedPolicies,
+                allowedPoliciesGlob: data.allowedPoliciesGlob,
+                disallowedPoliciesGlob: data.disallowedPoliciesGlob,
+                orphan: data.orphan ?? false,
+                noDefaultPolicy: data.tokenNoDefaultPolicy ?? false,
+                isRenewable: data.renewable,
+                allowedEntityAliases: data.allowedEntityAliases,
+                tokenBoundCidrs: data.tokenBoundCidrs,
+                tokenType: .init(rawValue: data.tokenType?.rawValue ?? ""),
+                tokenExplicitMaxTTL: data.tokenExplicitMaxTtl.flatMap({Duration.seconds($0)}),
+                tokenNumberOfUses: data.tokenNumUses,
+                tokenPeriod: data.tokenPeriod.flatMap({Duration.seconds($0)}),
+                pathSufix: data.pathSuffix
+            )
+        }
     }
 }

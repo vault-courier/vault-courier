@@ -17,7 +17,7 @@
 extension VaultClient {
 
     /// Creates a new token.
-    /// 
+    ///
     /// - Note: Certain options are only available when called by a root token.
     /// - Parameters:
     ///   - capabilities: type with the desired token properties
@@ -65,7 +65,7 @@ extension VaultClient {
     // MARK: Renew
 
     /// Renews a lease associated with a token.
-    /// 
+    ///
     /// This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.
     /// - Parameters:
     ///   - token: Token to renew
@@ -127,7 +127,7 @@ extension VaultClient {
     }
 
     /// Renews a lease associated with a token using its accessor.
-    /// 
+    ///
     /// This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.
     /// - Parameters:
     ///   - accessor: Accessor associated with the token to renew.
@@ -161,7 +161,7 @@ extension VaultClient {
     // MARK: Revoke
 
     /// Revokes a token and all child tokens.
-    /// 
+    ///
     /// When the token is revoked, all dynamic secrets generated with it are also revoked.
     /// - Parameter token: Token to revoke.
     /// - Parameter orphan: Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently. This is a root-protected endpoint, so this flag only works with a root token.
@@ -212,7 +212,7 @@ extension VaultClient {
     }
 
     /// Revokes the current client's token and all child tokens.
-    /// 
+    ///
     /// When the token is revoked, all dynamic secrets generated with it are also revoked.
     /// - Returns: ``VaultTokenResponse``
     public func revokeCurrentToken() async throws -> VaultTokenResponse {
@@ -237,7 +237,7 @@ extension VaultClient {
     }
 
     /// Revoke the token associated with the accessor and all the child tokens.
-    /// 
+    ///
     /// This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.
     /// - Parameter accessor: Accessor of the token
     /// - Returns: ``VaultTokenResponse``
@@ -265,7 +265,27 @@ extension VaultClient {
         }
     }
 
-    #warning("TODO: Write the ReadTokenRole")
+    public func readTokenRole(name: String) async throws -> UpdateTokenRole {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.readTokenRole(
+            path: .init(roleName: name),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenRole
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
 
     public func updateTokenRole(
         _ capabilities: UpdateTokenRole
@@ -302,7 +322,7 @@ extension VaultClient {
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
                 throw VaultClientError.badRequest(errors)
             case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                logger.debug(.init(stringLiteral: "\(#function). Operation failed with \(statusCode):"))
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
