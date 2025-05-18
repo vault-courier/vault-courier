@@ -45,10 +45,10 @@ extension IntegrationTests.Auth.Token {
             #expect(response.isOrphan)
             #expect(response.numberOfUses == 0)
             #expect(Set(response.tokenPolicies) == Set(["default"] + policies))
-            #expect(response.leaseDuration == leaseDuration)
+            #expect(response.leaseDuration == .seconds(leaseDuration))
 
-            let renewTTL = 60
-            let renewResponse = try await vaultClient.renewToken(response.clientToken, by: .seconds(renewTTL))
+            let renewTTL = Duration.seconds(60)
+            let renewResponse = try await vaultClient.renewToken(response.clientToken, by: renewTTL)
             #expect(renewResponse.leaseDuration == renewTTL)
 
             _ = try await vaultClient.lookup(token: tokenID)

@@ -2803,14 +2803,8 @@
       "ReadAppRoleIdResponse": {
         "type": "object",
         "properties": {
-          "renewable": {
-            "type": "boolean"
-          },
-          "lease_id": {
+          "request_id": {
             "type": "string"
-          },
-          "lease_duration": {
-            "type": "integer"
           },
           "data": {
             "type": "object",
@@ -2825,6 +2819,7 @@
           }
         },
         "required": [
+          "request_id",
           "data"
         ]
       },

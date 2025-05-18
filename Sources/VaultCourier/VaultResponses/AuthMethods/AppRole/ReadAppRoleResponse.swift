@@ -16,25 +16,33 @@
 
 
 public struct ReadAppRoleResponse: Sendable {
-    public let requestId: String?
+    public let requestID: String?
 
     public let tokenPolicies: [String]
 
-    public let tokenTimeToLive: Int?
+    public let tokenTimeToLive: Duration?
 
-    public let tokenMaxTimeToLive: Int?
+    public let tokenMaxTimeToLive: Duration?
 
-    public let secretIdTimeToLive: Int?
+    public let tokenBoundCIDRS: [String]?
 
-    public let leaseDuration: Int?
+    public let tokenExplicitMaxTimeToLive: Duration?
 
-    public let renewable: Bool?
+    public let tokenNoDefaultPolicy: Bool
+
+    public let tokenNumberOfUses: Int
+
+    public let tokenPeriod: Int?
+
+    public let secretIdTimeToLive: Duration?
+
+    public let isRenewable: Bool?
 
     public let secretIdNumberOfUses: Int?
 
-    public let bindSecretId: Bool?
+    public let bindSecretID: Bool?
 
-    public let secretIdBoundCidrs: [String]?
+    public let secretIdBoundCIDRS: [String]?
 
     public let tokenType: TokenType
 }
@@ -47,16 +55,20 @@ extension Components.Schemas.ReadAppRoleResponse {
             }
 
             return .init(
-                requestId: requestId,
+                requestID: requestId,
                 tokenPolicies: data.tokenPolicies ?? [],
-                tokenTimeToLive: data.tokenTtl,
-                tokenMaxTimeToLive: data.tokenMaxTtl,
-                secretIdTimeToLive: data.secretIdTtl,
-                leaseDuration: leaseDuration,
-                renewable: renewable,
+                tokenTimeToLive: data.tokenTtl.flatMap(Duration.seconds(_:)),
+                tokenMaxTimeToLive: data.tokenMaxTtl.flatMap(Duration.seconds(_:)),
+                tokenBoundCIDRS: data.tokenBoundCidrs,
+                tokenExplicitMaxTimeToLive: data.tokenExplicitMaxTtl.flatMap(Duration.seconds(_:)),
+                tokenNoDefaultPolicy: data.tokenNoDefaultPolicy ?? false,
+                tokenNumberOfUses: data.tokenNumUses ?? 0,
+                tokenPeriod: data.tokenPeriod,
+                secretIdTimeToLive: data.secretIdTtl.flatMap(Duration.seconds(_:)),
+                isRenewable: renewable,
                 secretIdNumberOfUses: data.secretIdNumUses,
-                bindSecretId: data.bindSecretId,
-                secretIdBoundCidrs: data.secretIdBoundCidrs,
+                bindSecretID: data.bindSecretId,
+                secretIdBoundCIDRS: data.secretIdBoundCidrs,
                 tokenType: tokenType
             )
         }
