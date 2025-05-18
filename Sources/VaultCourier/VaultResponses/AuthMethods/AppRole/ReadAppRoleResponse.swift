@@ -16,41 +16,61 @@
 
 
 public struct ReadAppRoleResponse: Sendable {
-    public let leaseId: String?
+    public let requestID: String?
 
     public let tokenPolicies: [String]
 
-    public let tokenTTL: Int?
+    public let tokenTimeToLive: Duration?
 
-    public let tokenMaxTTL: Int?
+    public let tokenMaxTimeToLive: Duration?
 
-    public let secretIdTTL: Int?
+    public let tokenBoundCIDRS: [String]?
 
-    public let leaseDuration: Int?
+    public let tokenExplicitMaxTimeToLive: Duration?
 
-    public let renewable: Bool?
+    public let tokenNoDefaultPolicy: Bool
+
+    public let tokenNumberOfUses: Int
+
+    public let tokenPeriod: Int?
+
+    public let secretIdTimeToLive: Duration?
+
+    public let isRenewable: Bool?
 
     public let secretIdNumberOfUses: Int?
 
-    public let bindSecretId: Bool?
+    public let bindSecretID: Bool?
 
-    public let secretIdBoundCidrs: [String]?
+    public let secretIdBoundCIDRS: [String]?
 
-    public let tokenType: String?
+    public let tokenType: TokenType
 }
 
-extension ReadAppRoleResponse {
-    init(component: Components.Schemas.ReadAppRoleResponse) {
-        self.leaseId = component.leaseId
-        self.tokenPolicies = component.data.tokenPolicies
-        self.tokenTTL = component.data.tokenTtl
-        self.tokenMaxTTL = component.data.tokenMaxTtl
-        self.secretIdTTL = component.data.secretIdTtl
-        self.leaseDuration = component.leaseDuration
-        self.renewable = component.renewable
-        self.secretIdNumberOfUses = component.data.secretIdNumUses
-        self.bindSecretId = component.data.bindSecretId
-        self.secretIdBoundCidrs = component.data.secretIdBoundCidrs
-        self.tokenType = component.data.tokenType
+extension Components.Schemas.ReadAppRoleResponse {
+    var appRoleResponse: ReadAppRoleResponse {
+        get throws {
+            guard let tokenType = TokenType(rawValue: data.tokenType?.rawValue ?? "") else {
+                throw VaultClientError.receivedUnexpectedResponse("Unexpected token type: \(String(describing: data.tokenType))")
+            }
+
+            return .init(
+                requestID: requestId,
+                tokenPolicies: data.tokenPolicies ?? [],
+                tokenTimeToLive: data.tokenTtl.flatMap(Duration.seconds(_:)),
+                tokenMaxTimeToLive: data.tokenMaxTtl.flatMap(Duration.seconds(_:)),
+                tokenBoundCIDRS: data.tokenBoundCidrs,
+                tokenExplicitMaxTimeToLive: data.tokenExplicitMaxTtl.flatMap(Duration.seconds(_:)),
+                tokenNoDefaultPolicy: data.tokenNoDefaultPolicy ?? false,
+                tokenNumberOfUses: data.tokenNumUses ?? 0,
+                tokenPeriod: data.tokenPeriod,
+                secretIdTimeToLive: data.secretIdTtl.flatMap(Duration.seconds(_:)),
+                isRenewable: renewable,
+                secretIdNumberOfUses: data.secretIdNumUses,
+                bindSecretID: data.bindSecretId,
+                secretIdBoundCIDRS: data.secretIdBoundCidrs,
+                tokenType: tokenType
+            )
+        }
     }
 }

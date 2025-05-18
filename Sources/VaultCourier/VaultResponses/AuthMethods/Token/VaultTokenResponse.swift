@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct VaultTokenResponse: Sendable {
-    public let requestId: String?
+    public let requestID: String?
 
     /// The token value
     public let clientToken: String
@@ -28,9 +28,11 @@ public struct VaultTokenResponse: Sendable {
     public let metadata: [String: String]
 
     /// The time to live (TTL) period of the token
-    public let leaseDuration: Int
+    public let leaseDuration: Duration
 
     public let isRenewable: Bool
+
+    public let entityID: String?
 
     public let tokenType: TokenType
 
@@ -41,25 +43,22 @@ public struct VaultTokenResponse: Sendable {
     public let numberOfUses: Int
 }
 
-extension Components.Schemas.VaultApiResponse {
+extension Components.Schemas.AuthTokenResponse {
     var tokenResponse: VaultTokenResponse {
         get throws {
-            guard let auth else {
-                throw VaultClientError.receivedUnexpectedResponse("missing auth information in response: \(String(describing: self))")
-            }
-
             guard let tokenType = TokenType(rawValue: auth.tokenType.rawValue) else {
                 throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: auth.tokenType))")
             }
 
             return .init(
-                requestId: requestId,
+                requestID: requestId,
                 clientToken: auth.clientToken,
                 accessor: auth.accessor,
                 tokenPolicies: auth.tokenPolicies,
                 metadata: auth.metadata?.additionalProperties ?? [:],
-                leaseDuration: auth.leaseDuration,
+                leaseDuration: .seconds(auth.leaseDuration),
                 isRenewable: auth.renewable,
+                entityID: auth.entityId,
                 tokenType: tokenType,
                 isOrphan: auth.orphan,
                 numberOfUses: auth.numUses)

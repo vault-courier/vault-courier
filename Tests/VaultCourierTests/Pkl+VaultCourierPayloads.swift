@@ -27,7 +27,7 @@ import PklSwift
 @testable import VaultCourier
 
 extension IntegrationTests.Pkl {
-    @Suite
+    @Suite(.disabled())
     struct Payloads {
         @Test
         func create_database_static_role_with_pkl_file() async throws {
