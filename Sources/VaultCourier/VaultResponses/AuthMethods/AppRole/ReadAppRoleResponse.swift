@@ -16,15 +16,15 @@
 
 
 public struct ReadAppRoleResponse: Sendable {
-    public let leaseId: String?
+    public let requestId: String?
 
     public let tokenPolicies: [String]
 
-    public let tokenTTL: Int?
+    public let tokenTimeToLive: Int?
 
-    public let tokenMaxTTL: Int?
+    public let tokenMaxTimeToLive: Int?
 
-    public let secretIdTTL: Int?
+    public let secretIdTimeToLive: Int?
 
     public let leaseDuration: Int?
 
@@ -36,21 +36,29 @@ public struct ReadAppRoleResponse: Sendable {
 
     public let secretIdBoundCidrs: [String]?
 
-    public let tokenType: String?
+    public let tokenType: TokenType
 }
 
-extension ReadAppRoleResponse {
-    init(component: Components.Schemas.ReadAppRoleResponse) {
-        self.leaseId = component.leaseId
-        self.tokenPolicies = component.data.tokenPolicies
-        self.tokenTTL = component.data.tokenTtl
-        self.tokenMaxTTL = component.data.tokenMaxTtl
-        self.secretIdTTL = component.data.secretIdTtl
-        self.leaseDuration = component.leaseDuration
-        self.renewable = component.renewable
-        self.secretIdNumberOfUses = component.data.secretIdNumUses
-        self.bindSecretId = component.data.bindSecretId
-        self.secretIdBoundCidrs = component.data.secretIdBoundCidrs
-        self.tokenType = component.data.tokenType
+extension Components.Schemas.ReadAppRoleResponse {
+    var appRoleResponse: ReadAppRoleResponse {
+        get throws {
+            guard let tokenType = TokenType(rawValue: data.tokenType?.rawValue ?? "") else {
+                throw VaultClientError.receivedUnexpectedResponse("Unexpected token type: \(String(describing: data.tokenType))")
+            }
+
+            return .init(
+                requestId: requestId,
+                tokenPolicies: data.tokenPolicies ?? [],
+                tokenTimeToLive: data.tokenTtl,
+                tokenMaxTimeToLive: data.tokenMaxTtl,
+                secretIdTimeToLive: data.secretIdTtl,
+                leaseDuration: leaseDuration,
+                renewable: renewable,
+                secretIdNumberOfUses: data.secretIdNumUses,
+                bindSecretId: data.bindSecretId,
+                secretIdBoundCidrs: data.secretIdBoundCidrs,
+                tokenType: tokenType
+            )
+        }
     }
 }

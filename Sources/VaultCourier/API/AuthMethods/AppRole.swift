@@ -25,7 +25,9 @@ import protocol Foundation.LocalizedError
 
 extension VaultClient {
     /// Creates a new AppRole
-    public func createAppRole(_ appRole: CreateAppRole) async throws {
+    public func createAppRole(
+        _ appRole: CreateAppRole
+    ) async throws {
         let sessionToken = try sessionToken()
         let mountPath = self.mounts.appRole.relativePath.removeSlash()
 
@@ -33,20 +35,22 @@ extension VaultClient {
             path: .init(enginePath: mountPath, roleName: appRole.name),
             headers: .init(xVaultToken: sessionToken),
             body: .json(.init(
+                tokenBoundCidrs: appRole.tokenBoundCIDRS,
+                tokenExplicitMaxTtl: nil,
+                tokenNoDefaultPolicy: appRole.tokenNoDefaultPolicy,
+                tokenNumUses: appRole.tokenNumberOfUses,
+                tokenPeriod: appRole.tokenPeriod?.formatted(.vaultSeconds),
+                tokenType: .init(rawValue: appRole.tokenType.rawValue),
+                tokenTtl: appRole.tokenTTL?.formatted(.vaultSeconds),
+                tokenMaxTtl: appRole.tokenMaxTTL?.formatted(.vaultSeconds),
+                tokenPolicies: appRole.tokenPolicies,
                 bindSecretId: appRole.bindSecretId,
                 secretIdBoundCidrs: appRole.secretIdBoundCIDRS,
                 secretIdNumUses: appRole.secretIdNumberOfUses,
                 secretIdTtl: appRole.secretIdTTL?.formatted(.vaultSeconds),
-                localSecretIds: appRole.localSecretIds,
-                tokenTtl: appRole.tokenTTL?.formatted(.vaultSeconds),
-                tokenMaxTtl: appRole.tokenMaxTTL?.formatted(.vaultSeconds),
-                tokenPolicies: appRole.tokenPolicies,
-                tokenBoundCidrs: appRole.tokenBoundCIDRS,
-                tokenNoDefaultPolicy: appRole.tokenNoDefaultPolicy,
-                tokenNumUses: appRole.tokenNumberOfUses,
-                tokenPeriod: appRole.tokenPeriod?.formatted(.vaultSeconds),
-                tokenType: appRole.tokenType.rawValue))
+                localSecretIds: appRole.localSecretIds))
         )
+
 
         switch response {
             case .noContent:
@@ -75,8 +79,7 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                let role = ReadAppRoleResponse(component: json)
-                return role
+                return try json.appRoleResponse
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")

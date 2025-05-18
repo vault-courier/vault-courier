@@ -41,13 +41,9 @@ public struct VaultTokenResponse: Sendable {
     public let numberOfUses: Int
 }
 
-extension Components.Schemas.VaultApiResponse {
+extension Components.Schemas.AuthTokenResponse {
     var tokenResponse: VaultTokenResponse {
         get throws {
-            guard let auth else {
-                throw VaultClientError.receivedUnexpectedResponse("missing auth information in response: \(String(describing: self))")
-            }
-
             guard let tokenType = TokenType(rawValue: auth.tokenType.rawValue) else {
                 throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: auth.tokenType))")
             }
