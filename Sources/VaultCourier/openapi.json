@@ -309,7 +309,7 @@
     },
     "/auth/token/lookup": {
       "description": "Returns information about the given token.",
-      "get": {
+      "post": {
         "tags": [
           "auth",
           "token"
@@ -317,6 +317,16 @@
         "summary": "Returns information about the given token.",
         "description": "Returns information about the given token.",
         "operationId": "lookup-token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenBodyRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -2876,6 +2886,9 @@
                 "type": "string",
                 "description": "Optional expire time date in string format."
               },
+              "explicit_max_ttl": {
+                "type": "integer"
+              },
               "id": {
                 "type": "string",
                 "description": "Value for the token"
@@ -2914,7 +2927,7 @@
                 "description": "Allow token to be renewed past its initial TTL up to system/mount maximum TTL"
               },
               "ttl": {
-                "type": "string",
+                "type": "integer",
                 "description": "Time to live for this token"
               },
               "type": {
@@ -3056,6 +3069,15 @@
           "request_id",
           "data"
         ]
+      },
+      "TokenBodyRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token to renew (request body)"
+          }
+        }
       },
       "TokenUpdateRoleRequest": {
         "type": "object",

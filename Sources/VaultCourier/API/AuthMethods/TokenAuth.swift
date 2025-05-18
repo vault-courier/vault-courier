@@ -62,6 +62,30 @@ extension VaultClient {
         }
     }
 
+    // MARK: Lookup
+
+    public func lookup(token: String) async throws -> LookupTokenResponse {
+        let sessionToken = try sessionToken()
+
+        let response = try await client.lookupToken(
+            headers: .init(xVaultToken: sessionToken),
+            body: .json(.init(token: token))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.tokenResponse
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
     // MARK: Renew
 
     /// Renews a lease associated with a token.
@@ -165,9 +189,8 @@ extension VaultClient {
     /// When the token is revoked, all dynamic secrets generated with it are also revoked.
     /// - Parameter token: Token to revoke.
     /// - Parameter orphan: Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently. This is a root-protected endpoint, so this flag only works with a root token.
-    /// - Returns: ``VaultTokenResponse``
-    public func revokeToken(
-        _ token: String,
+    public func revoke(
+        token: String,
         orphan: Bool = false
     ) async throws {
         let sessionToken = try sessionToken()
