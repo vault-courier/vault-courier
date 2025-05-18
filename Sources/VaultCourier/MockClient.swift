@@ -351,6 +351,39 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
+    public typealias LookupTokenSignature = @Sendable (Operations.LookupToken.Input) async throws -> Operations.LookupToken.Output
+    public var lookupTokenAction: LookupTokenSignature?
+    public func lookupToken(
+        _ input: Operations.LookupToken.Input
+    ) async throws -> Operations.LookupToken.Output {
+        guard let block = lookupTokenAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias LookupTokenAccessorSignature = @Sendable (Operations.LookupTokenAccessor.Input) async throws -> Operations.LookupTokenAccessor.Output
+    public var lookupTokenAccessorAction: LookupTokenAccessorSignature?
+    public func lookupTokenAccessor(
+        _ input: Operations.LookupTokenAccessor.Input
+    ) async throws -> Operations.LookupTokenAccessor.Output {
+        guard let block = lookupTokenAccessorAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias LookupTokenSelfSignature = @Sendable (Operations.LookupTokenSelf.Input) async throws -> Operations.LookupTokenSelf.Output
+    public var lookupTokenSelfAction: LookupTokenSelfSignature?
+    public func lookupTokenSelf(
+        _ input: Operations.LookupTokenSelf.Input
+    ) async throws -> Operations.LookupTokenSelf.Output {
+        guard let block = lookupTokenSelfAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
     public typealias TokenRenewSignature = @Sendable (Operations.TokenRenew.Input) async throws -> Operations.TokenRenew.Output
     public var tokenRenewAction: TokenRenewSignature?
     public func tokenRenew(
