@@ -53,12 +53,16 @@ struct VaultClientTests {
         client.authApproleLoginAction = { input in
             #expect(input.headers.xVaultToken == nil)
 
-            return .ok(.init(body: .json(.init(auth: .init(renewable: true,
-                                                           leaseDuration: 1200,
-                                                           tokenPolicies: ["default"],
-                                                           accessor: "fd6c9a00-d2dc-3b11-0be5-af7ae0e1d374",
-                                                           clientToken: "5b1a0318-679c-9c45-e5c6-d1b9a9035d49"),
-                                                    leaseId: ""))))
+            return .ok(.init(body: .json(.init(
+                requestId: "8e33c808-f86c-cff8-f30a-fbb3ac22c431",
+                auth: .init(clientToken: "5b1a0318-679c-9c45-e5c6-d1b9a9035d49",
+                            accessor: "fd6c9a00-d2dc-3b11-0be5-af7ae0e1d374",
+                            tokenPolicies: ["default"],
+                            leaseDuration: 1200,
+                            renewable: true,
+                            tokenType: .batch,
+                            orphan: true,
+                            numUses: 0)))))
         }
 
         let vaultClient = VaultClient(configuration: configuration,
@@ -78,12 +82,16 @@ struct VaultClientTests {
         client.authApproleLoginAction = { input in
             #expect(input.headers.xVaultToken == nil)
 
-            return .ok(.init(body: .json(.init(auth: .init(renewable: true,
-                                                           leaseDuration: 1200,
-                                                           tokenPolicies: ["default"],
-                                                           accessor: "fd6c9a00-d2dc-3b11-0be5-af7ae0e1d374",
-                                                           clientToken: "5b1a0318-679c-9c45-e5c6-d1b9a9035d49"),
-                                                    leaseId: ""))))
+            return .ok(.init(body: .json(.init(
+                requestId: "8e33c808-f86c-cff8-f30a-fbb3ac22c431",
+                auth: .init(clientToken: "5b1a0318-679c-9c45-e5c6-d1b9a9035d49",
+                            accessor: "fd6c9a00-d2dc-3b11-0be5-af7ae0e1d374",
+                            tokenPolicies: ["default"],
+                            leaseDuration: 1200,
+                            renewable: true,
+                            tokenType: .batch,
+                            orphan: true,
+                            numUses: 0)))))
         }
 
         let config = VaultClient.Configuration(
@@ -109,12 +117,16 @@ struct VaultClientTests {
         client.authApproleLoginAction = { input in
             #expect(input.headers.xVaultToken == nil)
 
-            return .ok(.init(body: .json(.init(auth: .init(renewable: true,
-                                                           leaseDuration: 1200,
-                                                           tokenPolicies: ["default"],
-                                                           accessor: "fd6c9a00-d2dc-3b11-0be5-af7ae0e1d374",
-                                                           clientToken: "5b1a0318-679c-9c45-e5c6-d1b9a9035d49"),
-                                                    leaseId: ""))))
+            return .ok(.init(body: .json(.init(
+                requestId: "8e33c808-f86c-cff8-f30a-fbb3ac22c431",
+                auth: .init(clientToken: "5b1a0318-679c-9c45-e5c6-d1b9a9035d49",
+                            accessor: "fd6c9a00-d2dc-3b11-0be5-af7ae0e1d374",
+                            tokenPolicies: ["default"],
+                            leaseDuration: 1200,
+                            renewable: true,
+                            tokenType: .batch,
+                            orphan: true,
+                            numUses: 0)))))
         }
         client.unwrapAction = { input in
             return .ok(.init(body: .json(.init(requestId: "8e33c808-f86c-cff8-f30a-fbb3ac22c4a8",

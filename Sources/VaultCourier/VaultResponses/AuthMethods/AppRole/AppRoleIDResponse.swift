@@ -15,13 +15,13 @@
 //===----------------------------------------------------------------------===//
 
 
-public struct AppRoleIdResponse: Sendable {
+public struct AppRoleIDResponse: Sendable {
     public let requestID: String
 
     public let roleId: String
 }
 
-extension AppRoleIdResponse {
+extension AppRoleIDResponse {
     init(component: Components.Schemas.ReadAppRoleIdResponse) {
         self.requestID = component.requestId
         self.roleId = component.data.roleId
