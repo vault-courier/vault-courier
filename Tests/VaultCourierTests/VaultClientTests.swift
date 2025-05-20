@@ -130,9 +130,6 @@ struct VaultClientTests {
         }
         client.unwrapAction = { input in
             return .ok(.init(body: .json(.init(requestId: "8e33c808-f86c-cff8-f30a-fbb3ac22c4a8",
-                                               renewable: false,
-                                               leaseId: "",
-                                               leaseDuration: 2592000,
                                                data: .init(secretIdAccessor: "3a2e9483-a7d2-dc19-7480-b1a025daeccc",
                                                            secretId: "c4086c73-4569-90c9-fd73-72c879e3b7b4",
                                                            secretIdTtl: 3600,

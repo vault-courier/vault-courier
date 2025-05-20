@@ -32,7 +32,8 @@ extension VaultClient {
             serverURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
             transport: AsyncHTTPClientTransport()
         ),
-        authentication: .token("integration_token"))
+        authentication: .token("integration_token")
+    )
 }
 
 struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
