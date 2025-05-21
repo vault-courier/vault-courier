@@ -152,4 +152,47 @@ extension VaultClient {
                 return nil
         }
     }
+
+    @discardableResult
+    public func patchKeyValue(
+        enginePath: String? = nil,
+        secret: some Codable,
+        key: String
+    ) async throws -> KeyValueResponse<WriteData>? {
+        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
+        let sessionToken = try sessionToken()
+
+        let data = try JSONEncoder().encode(secret)
+        let json: OpenAPIObjectContainer
+        do {
+            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
+        } catch {
+            throw VaultClientError.invalidSecretType()
+        }
+
+        let response = try await client.patchKvSecrets(
+            path: .init(kvPath: enginePath, secretKey: key),
+            headers: .init(xVaultToken: sessionToken),
+            body: .applicationMergePatchJson(.init(
+                options: .init(cas: nil),
+                data: json))
+            )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return .init(payload: json)
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                return nil
+            case .undocumented(let statusCode, let payload):
+                if let buffer = try await payload.body?.collect(upTo: 1024, using: .init()) {
+                    let error = String(buffer: buffer)
+                    logger.debug(.init(stringLiteral: "operation error with body: \(error)"))
+                }
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+                return nil
+        }
+    }
 }

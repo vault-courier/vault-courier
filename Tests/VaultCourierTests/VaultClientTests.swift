@@ -154,7 +154,8 @@ struct VaultClientTests {
         let secret = Secret(apiKey: "abcde12345")
         var client = MockClient()
         client.writeKvSecretsAction = { input in
-            return .ok(.init(body: .json(.init(data: .init(createdTime: "2025-01-25T11:28:25.592030964Z",
+            return .ok(.init(body: .json(.init(requestId: "8e33c808-f86c-cff8-f30a-fbb3ac22c4a8",
+                                               data: .init(createdTime: "2025-01-25T11:28:25.592030964Z",
                                                            deletionTime: nil,
                                                            destroyed: false,
                                                            version: 1)))))
