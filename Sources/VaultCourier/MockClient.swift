@@ -26,7 +26,30 @@ public struct MockClient: APIProtocol {
 
     public init() {}
 
-    // MARK: Write KV Secret
+    // MARK: KV Secret
+
+    public typealias ConfigKvSecretsSignature = @Sendable (Operations.ConfigKvSecrets.Input) async throws -> Operations.ConfigKvSecrets.Output
+    public var configKvSecretsAction: ConfigKvSecretsSignature?
+    public func configKvSecrets(
+        _ input: Operations.ConfigKvSecrets.Input
+    ) async throws -> Operations.ConfigKvSecrets.Output {
+        guard let block = configKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias ReadKvSecretsConfigSignature = @Sendable (Operations.ReadKvSecretsConfig.Input) async throws -> Operations.ReadKvSecretsConfig.Output
+    public var readKvSecretsConfigAction: ReadKvSecretsConfigSignature?
+    public func readKvSecretsConfig(
+        _ input: Operations.ReadKvSecretsConfig.Input
+    ) async throws -> Operations.ReadKvSecretsConfig.Output {
+        guard let block = readKvSecretsConfigAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
     public typealias WriteKvSecretsSignature = @Sendable (Operations.WriteKvSecrets.Input) async throws -> Operations.WriteKvSecrets.Output
     public var writeKvSecretsAction: WriteKvSecretsSignature?
     public func writeKvSecrets(
@@ -38,7 +61,6 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
-    // MARK: Read KV Secret
     public typealias ReadKvSecretsSignature = @Sendable (Operations.ReadKvSecrets.Input) async throws -> Operations.ReadKvSecrets.Output
     public var readKvSecretsAction: ReadKvSecretsSignature?
     public func readKvSecrets(
