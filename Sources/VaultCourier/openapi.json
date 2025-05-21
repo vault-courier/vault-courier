@@ -1436,74 +1436,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "request_id": {
-                      "type": "string"
-                    },
-                    "lease_id": {
-                      "type": "string"
-                    },
-                    "renewable": {
-                      "type": "boolean"
-                    },
-                    "lease_duration": {
-                      "type": "integer"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "data"
-                      ]
-                    },
-                    "wrap_info": {
-                      "type": "object"
-                    },
-                    "warnings": {
-                      "type": "array",
-                      "description": "A list of warnings, e.g. ignored parameters",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "auth": {
-                      "type": "object"
-                    },
-                    "mount_type": {
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "properties": {
-                        "created_time": {
-                          "type": "string"
-                        },
-                        "deletion_time": {
-                          "type": "string"
-                        },
-                        "destroyed": {
-                          "type": "boolean"
-                        },
-                        "version": {
-                          "type": "integer"
-                        }
-                      },
-                      "required": [
-                        "created_time",
-                        "destroyed",
-                        "version"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "request_id",
-                    "data"
-                  ]
+                  "$ref": "#/components/schemas/ReadSecretResponse"
                 }
               }
             }
@@ -1531,23 +1464,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "options": {
-                    "type": "object",
-                    "properties": {
-                      "cas": {
-                        "type": "integer"
-                      }
-                    }
-                  },
-                  "data": {
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "data"
-                ]
+                "$ref": "#/components/schemas/WriteOrPatchKVSecretRequest"
               }
             }
           },
@@ -1559,38 +1476,47 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "request_id": {
-                      "type": "string"
-                    },
-                    "renewable": {
-                      "type": "boolean"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "created_time": {
-                          "type": "string"
-                        },
-                        "deletion_time": {
-                          "type": "string"
-                        },
-                        "destroyed": {
-                          "type": "boolean"
-                        },
-                        "version": {
-                          "type": "integer"
-                        }
-                      }
-                    },
-                    "mount_type": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ]
+                  "$ref": "#/components/schemas/WriteSecretResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "secrets"
+        ],
+        "summary": "Patch a kv secret",
+        "description": "This endpoint provides the ability to patch an existing secret at the specified location. The secret must neither be deleted nor destroyed. The calling token must have an ACL policy granting the patch capability. A new version will be created upon successfully applying a patch with the provided data.",
+        "operationId": "patch-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteOrPatchKVSecretRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteSecretResponse"
                 }
               }
             }
@@ -3520,6 +3446,168 @@
           },
           "mount_type": {
             "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "WriteOrPatchKVSecretRequest": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "object",
+            "properties": {
+              "cas": {
+                "type": "integer"
+              }
+            }
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "WriteSecretResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "created_time": {
+                "type": "string"
+              },
+              "custom_metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "deletion_time": {
+                "type": "string"
+              },
+              "destroyed": {
+                "type": "boolean"
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "created_time",
+              "destroyed",
+              "version"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "ReadSecretResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created_time": {
+                "type": "string"
+              },
+              "custom_metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "deletion_time": {
+                "type": "string"
+              },
+              "destroyed": {
+                "type": "boolean"
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "created_time",
+              "destroyed",
+              "version"
+            ]
           }
         },
         "required": [

@@ -38,6 +38,21 @@ extension IntegrationTests.KeyValue {
     }
 
     @Test
+    func write_and_patch_kv_secret() async throws {
+        struct Secret: Codable {
+            var apiKey: String
+        }
+        let key = "qa-secret"
+        let secret = Secret(apiKey: "abcde")
+
+        let vaultClient = VaultClient.current
+        try await vaultClient.writeKeyValue(secret: secret, key: key)
+
+        // MUT
+        try await vaultClient.patchKeyValue(secret: Secret(apiKey: "abcde12345"), key: key)
+    }
+
+    @Test
     func secrets_must_dictionaries_or_codable_objects() async throws {
         let vaultClient = VaultClient.current
 

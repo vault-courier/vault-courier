@@ -10,7 +10,7 @@ Swift client for interacting with Hashicorp Vault and OpenBao.
 
 ### Features
 
-- Arbitrary storage of Key/Value secrets
+- Arbitrary storage of Key/Value secrets (KV-v2)
 - Generation of static and dynamic credentials; database engine with PostgreSQL support.
 - AppRole Authentication
 - Token Authentication

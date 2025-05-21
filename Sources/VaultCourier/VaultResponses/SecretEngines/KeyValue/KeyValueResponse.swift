@@ -23,15 +23,9 @@ import struct Foundation.Data
 #endif
 
 public struct KeyValueResponse<T: Decodable & Sendable>: Sendable {
-    public let requestId: String?
+    public let requestID: String
 
-    public let leaseId: String?
-
-    public let leaseDuration: Int?
-
-    public let renewable: Bool?
-
-    /// Key-Value data
+    /// Key-Value secret data
     public let data: T
 
     public let metadata: Metadata?
@@ -41,7 +35,7 @@ public struct KeyValueResponse<T: Decodable & Sendable>: Sendable {
     public struct Metadata: Sendable {
         public let createdAt: String
 
-        public let custom: [UInt8]?
+        public let custom: [String:String]?
 
         public let deletedAt: String?
 
@@ -52,18 +46,15 @@ public struct KeyValueResponse<T: Decodable & Sendable>: Sendable {
 }
 
 public extension KeyValueResponse {
-    init?(payload: Operations.ReadKvSecrets.Output.Ok.Body.JsonPayload) {
-        self.requestId = payload.requestId
-        self.leaseId = payload.leaseId
-        self.leaseDuration = payload.leaseDuration
-        self.renewable = payload.renewable
+    init?(payload: Components.Schemas.ReadSecretResponse) {
+        self.requestID = payload.requestId
         guard let data = try? JSONEncoder().encode(payload.data.data),
               let secret = try? JSONDecoder().decode(T.self, from: data)
         else { return nil }
         self.data = secret
         self.metadata = if let metadata = payload.metadata {
             .init(createdAt: metadata.createdTime,
-                  custom: [],
+                  custom: metadata.customMetadata?.additionalProperties,
                   deletedAt: metadata.deletionTime,
                   isDestroyed: metadata.destroyed,
                   version: metadata.version)
@@ -87,13 +78,10 @@ public struct WriteData: Codable, Sendable {
 }
 
 public extension KeyValueResponse<WriteData> {
-    init?(payload: Operations.WriteKvSecrets.Output.Ok.Body.JsonPayload) {
-        self.requestId = payload.requestId
-        self.leaseId = nil
-        self.leaseDuration = nil
-        self.renewable = payload.renewable
+    init?(payload: Components.Schemas.WriteSecretResponse) {
+        self.requestID = payload.requestId
         self.data = .init(createdTime: payload.data.createdTime,
-                          customMetadata: nil,
+                          customMetadata: payload.data.customMetadata?.additionalProperties,
                           deletionTime: payload.data.deletionTime,
                           destroyed: payload.data.destroyed,
                           version: payload.data.version)

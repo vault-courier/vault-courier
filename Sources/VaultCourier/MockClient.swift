@@ -23,7 +23,6 @@ import protocol Foundation.LocalizedError
 #endif
 
 public struct MockClient: APIProtocol {
-
     public init() {}
 
     // MARK: KV Secret
@@ -67,6 +66,17 @@ public struct MockClient: APIProtocol {
         _ input: Operations.ReadKvSecrets.Input
     ) async throws -> Operations.ReadKvSecrets.Output {
         guard let block = readKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias PatchKvSecretsSignature = @Sendable (Operations.PatchKvSecrets.Input) async throws -> Operations.PatchKvSecrets.Output
+    public var patchKvSecretsAction: PatchKvSecretsSignature?
+    public func patchKvSecrets(
+        _ input: Operations.PatchKvSecrets.Input
+    ) async throws -> Operations.PatchKvSecrets.Output {
+        guard let block = patchKvSecretsAction
         else { throw UnspecifiedBlockError() }
 
         return try await block(input)
