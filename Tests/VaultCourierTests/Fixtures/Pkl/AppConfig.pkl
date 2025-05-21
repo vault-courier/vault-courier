@@ -1,0 +1,13 @@
+module AppConfig
+
+appKeys: String?
+
+database: Database?
+
+class Database {
+  hostname: String
+  
+  port: Int
+  
+  credentials: String?
+}

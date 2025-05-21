@@ -16,6 +16,13 @@
 
 import Testing
 
+import OpenAPIAsyncHTTPClient
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+#endif
+
 @testable import VaultCourier
 
 extension IntegrationTests.Auth.AppRole {
@@ -59,7 +66,7 @@ extension IntegrationTests.Auth.AppRole {
         )
 
         switch generateAppSecretIdResponse {
-            case .wrapped(let wrappedResponse):
+            case .wrapped:
                 Issue.record("Receive unexpected response: \(generateAppSecretIdResponse)")
             case .secretId(let secretIdResponse):
                 #expect(secretIdResponse.secretIDNumberOfUses == 0)
@@ -96,5 +103,53 @@ extension IntegrationTests.Auth.AppRole {
                 }
         }
 
+        try await vaultClient.deleteAppRole(name: appRoleName)
+
+        try await vaultClient.disableAuthMethod(path)
+    }
+
+    @Test
+    func wrapped_authentication() async throws {
+        let vaultClient = VaultClient.current
+
+        let path = "approle"
+        try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
+
+        let appRoleName = "test_app_role"
+        try await vaultClient.createAppRole(.init(name: appRoleName,
+                                                  tokenPolicies: [],
+                                                  tokenTTL: .seconds(60*60),
+                                                  tokenType: .batch))
+
+        let appRoleID = try await vaultClient.appRoleID(name: appRoleName).roleId
+        let secretIDResponse = try await vaultClient.generateAppSecretId(capabilities: .init(
+            roleName: appRoleName,
+            wrapTTL: .seconds(60))
+        )
+
+        switch secretIDResponse {
+            case .wrapped(let wrappedResponse):
+                let sut = VaultClient(
+                    configuration: .init(apiURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")),
+                    client: Client(
+                        serverURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
+                        transport: AsyncHTTPClientTransport()
+                    ),
+                    authentication: .appRole(credentials: .init(roleID: appRoleID,
+                                                                secretID: wrappedResponse.token),
+                                             isWrapped: true)
+                )
+
+                await #expect(throws: Never.self) {
+                    // MUT
+                    _ = try await sut.authenticate()
+                }
+            case .secretId:
+                Issue.record("Receive unexpected response: \(secretIDResponse)")
+        }
+
+        try await vaultClient.deleteAppRole(name: appRoleName)
+
+        try await vaultClient.disableAuthMethod(path)
     }
 }

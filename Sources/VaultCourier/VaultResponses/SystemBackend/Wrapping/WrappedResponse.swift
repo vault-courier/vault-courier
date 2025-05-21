@@ -33,7 +33,7 @@ public struct WrappedResponse: Sendable {
 }
 
 extension WrappedResponse {
-    init(component: Components.Schemas.WrapAppRoleSecretIdResponse) {
+    init(component: Components.Schemas.VaultWrappedResponse) {
         self.requestId = nil
         self.token = component.wrapInfo.token
         self.accessor = component.wrapInfo.accessor

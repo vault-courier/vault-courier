@@ -32,11 +32,7 @@ extension IntegrationTests.KeyValue {
         let response = try await vaultClient.writeKeyValue(secret: secret, key: key)
         #expect(response?.data.version == 1)
 
-        guard let readResponse: Secret = try await vaultClient.readKeyValueSecret(key: key)
-        else {
-            Issue.record("Failed to read kv secret")
-            return
-        }
+        let readResponse: Secret = try #require(try await vaultClient.readKeyValueSecret(key: key, version: 1))
 
         #expect(readResponse.apiKey == secret.apiKey)
     }

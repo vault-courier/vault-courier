@@ -1,0 +1,3 @@
+amends ".../AppConfig.pkl"
+
+appKeys = read("vault:/secret/app_key").text
