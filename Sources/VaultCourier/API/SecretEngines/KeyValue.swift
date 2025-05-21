@@ -35,7 +35,7 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - enginePath: path to key/value secret engine mount
-    ///   - secret: value of the secret
+    ///   - secret: value of the secret. It must be a codable object or a dictionary.
     ///   - key: It's the path of the secret to update
     /// - Returns: Metadata about the secret, like its current version and creation time
     @discardableResult
@@ -119,6 +119,7 @@ extension VaultClient {
     }
 
     /// Retrieves the secret at the specified location.
+    ///
     /// - Parameters:
     ///   - enginePath: path to key/value secret engine mount
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
@@ -127,7 +128,8 @@ extension VaultClient {
     public func readKeyValueSecretData(
         enginePath: String? = nil,
         key: String,
-        version: Int? = nil
+        version: Int? = nil,
+        subkeysDepth: Int? = nil
     ) async throws -> Data? {
         let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
@@ -142,6 +144,37 @@ extension VaultClient {
             case .ok(let content):
                 let json = try content.body.json
                 let data = try JSONEncoder().encode(json.data.data)
+                return data
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                return nil
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                return nil
+        }
+    }
+
+
+    public func readSecretSubkeys(
+        enginePath: String? = nil,
+        key: String,
+        version: Int? = nil,
+        depth: Int? = nil
+    ) async throws -> Data? {
+        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
+        let sessionToken = try sessionToken()
+
+        let response = try await client.subkeysKvSecrets(
+            path: .init(kvPath: enginePath, secretKey: key),
+            query: .init(version: version, depth: depth),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                let data = try JSONEncoder().encode(json.data.subkeys)
                 return data
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []

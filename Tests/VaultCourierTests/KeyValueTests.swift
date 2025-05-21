@@ -16,6 +16,12 @@
 
 import Testing
 import VaultCourier
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import class Foundation.JSONDecoder
+import struct Foundation.Data
+#endif
 
 extension IntegrationTests.KeyValue {
     @Test
@@ -50,6 +56,25 @@ extension IntegrationTests.KeyValue {
 
         // MUT
         try await vaultClient.patchKeyValue(secret: Secret(apiKey: "abcde12345"), key: key)
+    }
+
+    @Test
+    func read_subkeys_kv_secret() async throws {
+        struct Secret: Codable {
+            var apiKey: String
+            var database: Database
+            struct Database: Codable {
+                var credentials: DatabaseCredentials
+            }
+        }
+        let key = "op-secret"
+        let secret = Secret(apiKey: "abcde", database: .init(credentials: .init(username: "test_username", password: "test_password")))
+
+        let vaultClient = VaultClient.current
+        try await vaultClient.writeKeyValue(secret: secret, key: key)
+
+        // MUT
+        _ = try #require(try await vaultClient.readSecretSubkeys(key: key))
     }
 
     @Test

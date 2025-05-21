@@ -82,6 +82,17 @@ public struct MockClient: APIProtocol {
         return try await block(input)
     }
 
+    public typealias SubkeysKvSecretsSignature = @Sendable (Operations.SubkeysKvSecrets.Input) async throws -> Operations.SubkeysKvSecrets.Output
+    public var subkeysKvSecretsAction: SubkeysKvSecretsSignature?
+    public func subkeysKvSecrets(
+        _ input: Operations.SubkeysKvSecrets.Input
+    ) async throws -> Operations.SubkeysKvSecrets.Output {
+        guard let block = subkeysKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
     // MARK: Configure Database Connection
     public typealias ConfigureDatabaseSignature = @Sendable (Operations.ConfigureDatabase.Input) async throws -> Operations.ConfigureDatabase.Output
     public var configureDatabaseAction: ConfigureDatabaseSignature?
