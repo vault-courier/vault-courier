@@ -87,16 +87,19 @@ extension VaultClient {
     /// - Parameters:
     ///   - enginePath: path to key/value secret engine mount
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
+    ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: value of the secret
     public func readKeyValueSecret<T: Decodable & Sendable>(
         enginePath: String? = nil,
-        key: String
+        key: String,
+        version: Int? = nil
     ) async throws -> T? {
         let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
         let response = try await client.readKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
+            query: .init(version: version),
             headers: .init(xVaultToken: sessionToken)
         )
 
@@ -119,16 +122,20 @@ extension VaultClient {
     /// - Parameters:
     ///   - enginePath: path to key/value secret engine mount
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
+    ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: Data of the secret
     public func readKeyValueSecretData(
         enginePath: String? = nil,
-        key: String
+        key: String,
+        version: Int? = nil
     ) async throws -> Data? {
         let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
         let response = try await client.readKvSecrets(
-            .init(path: .init(kvPath: enginePath, secretKey: key), headers: .init(xVaultToken: sessionToken))
+            path: .init(kvPath: enginePath, secretKey: key),
+            query: .init(version: version),
+            headers: .init(xVaultToken: sessionToken)
         )
 
         switch response {
