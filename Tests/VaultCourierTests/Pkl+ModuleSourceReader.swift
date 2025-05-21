@@ -49,7 +49,10 @@ extension IntegrationTests.Pkl {
 
             var client = MockClient()
             client.readKvSecretsAction = { input in
-                return .ok(.init(body: .json(.init(data: .init(data: try .init(unvalidatedValue: [secret:value]))))))
+                return .ok(.init(body: .json(.init(
+                    requestId: "f1a8fba3-d06d-9283-2f77-d14304701479",
+                    data: .init(data: try .init(unvalidatedValue: [secret:value])))))
+                )
             }
 
             let schema = "vault"
@@ -77,7 +80,10 @@ extension IntegrationTests.Pkl {
             let secret = "api_key"
             let value = "abcde12345"
             client.readKvSecretsAction = { input in
-                return .ok(.init(body: .json(.init(data: .init(data: try .init(unvalidatedValue: [secret:value]))))))
+                return .ok(.init(body: .json(.init(
+                    requestId: "f1a8fba3-d06d-9283-2f77-d14304701479",
+                    data: .init(data: try .init(unvalidatedValue: [secret:value])))))
+                )
             }
 
             let vaultClient = VaultClient(configuration: configuration,
@@ -244,6 +250,27 @@ extension IntegrationTests.Pkl {
             #expect(secrets.password == password)
         }
 
+        @Test
+        func read_kv_secret_from_module_source() async throws {
+            struct Secret: Codable {
+                var apiKey: String
+            }
+            let key = "app_key"
+            let secret = Secret(apiKey: "abcde12345")
+
+            let vaultClient = VaultClient.current
+            _ = try await vaultClient.writeKeyValue(secret: secret, key: key)
+
+            let url = pklFixtureUrl(for: "Sample1/appConfig1.pkl")
+
+            // MUT
+            let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
+
+            let appkeys = try #require(output.appKeys)
+            let outputSecret = try JSONDecoder().decode(Secret.self, from: Data(appkeys.utf8))
+
+            #expect(outputSecret.apiKey == secret.apiKey)
+        }
     }
 }
 

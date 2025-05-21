@@ -9,6 +9,9 @@ extension VaultToken {
         case service = "service"
     }
 
+    /// DTO for creating a Token.
+    ///
+    /// See <https://developer.hashicorp.com/vault/api-docs/auth/token#create-token>
     public struct Module: PklRegisteredType, Decodable, Hashable {
         public static let registeredIdentifier: String = "VaultToken"
 
