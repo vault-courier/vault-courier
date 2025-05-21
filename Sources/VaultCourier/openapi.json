@@ -1060,7 +1060,7 @@
                           "$ref": "#/components/schemas/GenerateAppRoleSecretIdResponse"
                         },
                         {
-                          "$ref": "#/components/schemas/WrapAppRoleSecretIdResponse"
+                          "$ref": "#/components/schemas/VaultWrappedResponse"
                         }
                       ]
                     },
@@ -1327,6 +1327,100 @@
         }
       ]
     },
+    "/{kv_path}/config": {
+      "description": "This path configures backend level settings that are applied to every key in the key-value store",
+      "get": {
+        "tags": [
+          "secrets",
+          "kv"
+        ],
+        "summary": "This path retrieves the current configuration for the secrets backend at the given path.",
+        "description": "This path retrieves the current configuration for the secrets backend at the given path.",
+        "operationId": "read-kv-secrets-config",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KVSecretConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "secrets",
+          "kv"
+        ],
+        "summary": "This path configures backend level settings that are applied to every key in the key-value store.",
+        "description": "This path configures backend level settings that are applied to every key in the key-value store.",
+        "operationId": "config-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "max_versions": {
+                    "type": "integer",
+                    "description": "The number of versions to keep per key. This value applies to all keys, but a key's metadata setting can overwrite this value. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted. When 0 is used or the value is unset, Vault will keep 10 versions."
+                  },
+                  "cas_required": {
+                    "type": "boolean",
+                    "description": "If true all keys will require the cas parameter to be set on all write requests.",
+                    "default": "false"
+                  },
+                  "delete_version_after": {
+                    "type": "string",
+                    "description": " If set, specifies the length of time before a version is deleted. Accepts Vault's duration format strings."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
     "/{kv_path}/data/{secret_key}": {
       "description": "Server secrets endpoint",
       "get": {
@@ -1350,11 +1444,11 @@
                     "lease_id": {
                       "type": "string"
                     },
-                    "lease_duration": {
-                      "type": "integer"
-                    },
                     "renewable": {
                       "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
                     },
                     "data": {
                       "type": "object",
@@ -1366,6 +1460,22 @@
                       "required": [
                         "data"
                       ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
                     },
                     "metadata": {
                       "type": "object",
@@ -1388,12 +1498,10 @@
                         "destroyed",
                         "version"
                       ]
-                    },
-                    "mount_type": {
-                      "type": "string"
                     }
                   },
                   "required": [
+                    "request_id",
                     "data"
                   ]
                 }
@@ -1500,6 +1608,16 @@
         }
       },
       "parameters": [
+        {
+          "description": "Specifies the version to return. If not set the latest version is returned.",
+          "name": "version",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
         {
           "description": "Key-value engine path",
           "name": "kv_path",
@@ -2652,35 +2770,7 @@
             }
           },
           "wrap_info": {
-            "type": "object",
-            "properties": {
-              "token": {
-                "type": "string"
-              },
-              "ttl": {
-                "type": "integer"
-              },
-              "creation_time": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "creation_path": {
-                "type": "string"
-              },
-              "wrapped_accessor": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "token",
-              "accessor",
-              "ttl",
-              "creation_time",
-              "creation_path",
-              "wrapped_accessor"
-            ]
+            "type": "object"
           },
           "warnings": {
             "type": "array",
@@ -2690,68 +2780,7 @@
             }
           },
           "auth": {
-            "type": "object",
-            "properties": {
-              "client_token": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "token_policies": {
-                "type": "array",
-                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "metadata": {
-                "type": "object",
-                "format": "kvpairs",
-                "description": "Arbitrary key=value metadata to associate with the token",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "lease_duration": {
-                "type": "integer"
-              },
-              "renewable": {
-                "type": "boolean"
-              },
-              "entity_id": {
-                "type": "string"
-              },
-              "token_type": {
-                "type": "string",
-                "enum": [
-                  "batch",
-                  "service",
-                  "default",
-                  "default-service",
-                  "default-batch"
-                ]
-              },
-              "orphan": {
-                "type": "boolean"
-              },
-              "mfa_requirement": {
-                "type": "boolean"
-              },
-              "num_uses": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "client_token",
-              "accessor",
-              "token_policies",
-              "lease_duration",
-              "token_type",
-              "orphan",
-              "num_uses",
-              "renewable"
-            ]
+            "type": "object"
           },
           "mount_type": {
             "type": "string"
@@ -2768,6 +2797,15 @@
           "request_id": {
             "type": "string"
           },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
           "data": {
             "type": "object",
             "properties": {
@@ -2778,6 +2816,22 @@
             "required": [
               "role_id"
             ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
           }
         },
         "required": [
@@ -2817,49 +2871,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "WrapAppRoleSecretIdResponse": {
-        "type": "object",
-        "properties": {
-          "request_id": {
-            "type": "string"
-          },
-          "wrap_info": {
-            "type": "object",
-            "properties": {
-              "token": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "ttl": {
-                "type": "integer",
-                "description": "wrapped ttl in seconds"
-              },
-              "creation_time": {
-                "type": "string"
-              },
-              "creation_path": {
-                "type": "string"
-              },
-              "wrapped_accessor": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "token",
-              "accessor",
-              "ttl",
-              "creation_time",
-              "creation_path",
-              "wrapped_accessor"
-            ]
-          }
-        },
-        "required": [
-          "wrap_info"
         ]
       },
       "ReadAppRoleSecretIdWithAccessorResponse": {
@@ -3131,35 +3142,7 @@
             ]
           },
           "wrap_info": {
-            "type": "object",
-            "properties": {
-              "token": {
-                "type": "string"
-              },
-              "ttl": {
-                "type": "integer"
-              },
-              "creation_time": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "creation_path": {
-                "type": "string"
-              },
-              "wrapped_accessor": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "token",
-              "accessor",
-              "ttl",
-              "creation_time",
-              "creation_path",
-              "wrapped_accessor"
-            ]
+            "type": "object"
           },
           "warnings": {
             "type": "array",
@@ -3169,68 +3152,7 @@
             }
           },
           "auth": {
-            "type": "object",
-            "properties": {
-              "client_token": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "token_policies": {
-                "type": "array",
-                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "metadata": {
-                "type": "object",
-                "format": "kvpairs",
-                "description": "Arbitrary key=value metadata to associate with the token",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "lease_duration": {
-                "type": "integer"
-              },
-              "renewable": {
-                "type": "boolean"
-              },
-              "entity_id": {
-                "type": "string"
-              },
-              "token_type": {
-                "type": "string",
-                "enum": [
-                  "batch",
-                  "service",
-                  "default",
-                  "default-service",
-                  "default-batch"
-                ]
-              },
-              "orphan": {
-                "type": "boolean"
-              },
-              "mfa_requirement": {
-                "type": "boolean"
-              },
-              "num_uses": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "client_token",
-              "accessor",
-              "token_policies",
-              "lease_duration",
-              "token_type",
-              "orphan",
-              "num_uses",
-              "renewable"
-            ]
+            "type": "object"
           },
           "mount_type": {
             "type": "string"
@@ -3529,35 +3451,7 @@
             ]
           },
           "wrap_info": {
-            "type": "object",
-            "properties": {
-              "token": {
-                "type": "string"
-              },
-              "ttl": {
-                "type": "integer"
-              },
-              "creation_time": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "creation_path": {
-                "type": "string"
-              },
-              "wrapped_accessor": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "token",
-              "accessor",
-              "ttl",
-              "creation_time",
-              "creation_path",
-              "wrapped_accessor"
-            ]
+            "type": "object"
           },
           "warnings": {
             "type": "array",
@@ -3567,68 +3461,62 @@
             }
           },
           "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "KVSecretConfigResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
             "type": "object",
             "properties": {
-              "client_token": {
-                "type": "string"
+              "max_versions": {
+                "type": "integer",
+                "description": "The number of versions to keep per key. This value applies to all keys, but a key's metadata setting can overwrite this value. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted. When 0 is used or the value is unset, Vault will keep 10 versions."
               },
-              "accessor": {
-                "type": "string"
+              "cas_required": {
+                "type": "boolean",
+                "description": "If true all keys will require the cas parameter to be set on all write requests.",
+                "default": "false"
               },
-              "token_policies": {
-                "type": "array",
-                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "metadata": {
-                "type": "object",
-                "format": "kvpairs",
-                "description": "Arbitrary key=value metadata to associate with the token",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "lease_duration": {
-                "type": "integer"
-              },
-              "renewable": {
-                "type": "boolean"
-              },
-              "entity_id": {
-                "type": "string"
-              },
-              "token_type": {
+              "delete_version_after": {
                 "type": "string",
-                "enum": [
-                  "batch",
-                  "service",
-                  "default",
-                  "default-service",
-                  "default-batch"
-                ]
-              },
-              "orphan": {
-                "type": "boolean"
-              },
-              "mfa_requirement": {
-                "type": "boolean"
-              },
-              "num_uses": {
-                "type": "integer"
+                "description": " If set, specifies the length of time before a version is deleted. Accepts Vault's duration format strings."
               }
-            },
-            "required": [
-              "client_token",
-              "accessor",
-              "token_policies",
-              "lease_duration",
-              "token_type",
-              "orphan",
-              "num_uses",
-              "renewable"
-            ]
+            }
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
           },
           "mount_type": {
             "type": "string"
@@ -4184,35 +4072,7 @@
             "type": "object"
           },
           "wrap_info": {
-            "type": "object",
-            "properties": {
-              "token": {
-                "type": "string"
-              },
-              "ttl": {
-                "type": "integer"
-              },
-              "creation_time": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "creation_path": {
-                "type": "string"
-              },
-              "wrapped_accessor": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "token",
-              "accessor",
-              "ttl",
-              "creation_time",
-              "creation_path",
-              "wrapped_accessor"
-            ]
+            "type": "object"
           },
           "warnings": {
             "type": "array",
@@ -4222,68 +4082,7 @@
             }
           },
           "auth": {
-            "type": "object",
-            "properties": {
-              "client_token": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "token_policies": {
-                "type": "array",
-                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "metadata": {
-                "type": "object",
-                "format": "kvpairs",
-                "description": "Arbitrary key=value metadata to associate with the token",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "lease_duration": {
-                "type": "integer"
-              },
-              "renewable": {
-                "type": "boolean"
-              },
-              "entity_id": {
-                "type": "string"
-              },
-              "token_type": {
-                "type": "string",
-                "enum": [
-                  "batch",
-                  "service",
-                  "default",
-                  "default-service",
-                  "default-batch"
-                ]
-              },
-              "orphan": {
-                "type": "boolean"
-              },
-              "mfa_requirement": {
-                "type": "boolean"
-              },
-              "num_uses": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "client_token",
-              "accessor",
-              "token_policies",
-              "lease_duration",
-              "token_type",
-              "orphan",
-              "num_uses",
-              "renewable"
-            ]
+            "type": "object"
           },
           "mount_type": {
             "type": "string"
@@ -4312,35 +4111,7 @@
             "type": "object"
           },
           "wrap_info": {
-            "type": "object",
-            "properties": {
-              "token": {
-                "type": "string"
-              },
-              "ttl": {
-                "type": "integer"
-              },
-              "creation_time": {
-                "type": "string"
-              },
-              "accessor": {
-                "type": "string"
-              },
-              "creation_path": {
-                "type": "string"
-              },
-              "wrapped_accessor": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "token",
-              "accessor",
-              "ttl",
-              "creation_time",
-              "creation_path",
-              "wrapped_accessor"
-            ]
+            "type": "object"
           },
           "warnings": {
             "type": "array",
@@ -4420,6 +4191,74 @@
         "required": [
           "request_id",
           "auth"
+        ]
+      },
+      "VaultWrappedResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "creation_time": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "creation_path": {
+                "type": "string"
+              },
+              "wrapped_accessor": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token",
+              "accessor",
+              "ttl",
+              "creation_time",
+              "creation_path",
+              "wrapped_accessor"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "wrap_info"
         ]
       },
       "VaultErrorsResponse": {

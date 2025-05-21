@@ -175,7 +175,7 @@ extension VaultClient {
                     switch json {
                         case .GenerateAppRoleSecretIdResponse(let component):
                             return .secretId(.init(component: component))
-                        case .WrapAppRoleSecretIdResponse(let component):
+                        case .VaultWrappedResponse(let component):
                             return .wrapped(.init(component: component))
                     }
                 } else if let json = json.value2 {
