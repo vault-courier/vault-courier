@@ -93,7 +93,7 @@ extension IntegrationTests.KeyValue {
         struct Secret: Codable {
             var apiKey: String
         }
-        let key = "eu-central"
+        let key = "us-west"
         let secret = Secret(apiKey: "abcde")
         try await sut.writeKeyValue(secret: secret, key: key)
 

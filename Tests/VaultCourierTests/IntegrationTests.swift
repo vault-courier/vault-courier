@@ -54,6 +54,18 @@ extension IntegrationTests.Auth {
     @Suite(.serialized) struct AppRole {}
 }
 
+extension IntegrationTests.Pkl {
+    @Suite(
+        .bug(
+            "https://github.com/swiftlang/swift-package-manager/issues/8394",
+            "swift test is hanging on GitHub Actions, started in Swift 6.0+"
+        )
+    ) struct ModuleSourceReader {
+        let localApiURL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
+        var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
+    }
+}
+
 public func enableIntegrationTests() -> Bool {
     guard let rawValue = env("ENABLE_INTEGRATION_TESTS") else { return false }
     if let boolValue = Bool(rawValue) { return boolValue }
