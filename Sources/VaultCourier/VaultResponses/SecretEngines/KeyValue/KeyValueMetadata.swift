@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct KeyValueMetadata: Sendable {
-//    public let requestID: String
+    public let requestID: String
 
     /// Date of secret creation
     public let createdAt: String

@@ -40,7 +40,7 @@ extension VaultClient {
         enginePath: String? = nil,
         secret: some Codable,
         key: String
-    ) async throws -> KeyValueResponse<Never>? {
+    ) async throws -> KeyValueMetadata {
         let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
@@ -64,18 +64,14 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                return .init(payload: json)
+                return json.metadata
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
-            case .undocumented(let statusCode, let payload):
-                if let buffer = try await payload.body?.collect(upTo: 1024, using: .init()) {
-                    let error = String(buffer: buffer)
-                    logger.debug(.init(stringLiteral: "operation error with body: \(error)"))
-                }
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                return nil
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 
@@ -90,7 +86,7 @@ extension VaultClient {
         enginePath: String? = nil,
         key: String,
         version: Int? = nil
-    ) async throws -> T? {
+    ) async throws -> T {
         let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
@@ -108,10 +104,43 @@ extension VaultClient {
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
+                throw VaultClientError.badRequest(errors)
             case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
-                return nil
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    /// Retrieves the secret at the specified path location.
+    ///
+    /// - Parameters:
+    ///   - key: It's the path to the secret relative to the kv secret mount.
+    ///   - version: Specifies the version to return. If not set the latest version is returned.
+    /// - Returns: value of the secret with its requestID
+    public func readKeyValue<T: Decodable & Sendable>(
+        key: String,
+        version: Int? = nil
+    ) async throws -> KeyValueResponse<T> {
+        let enginePath = self.mounts.kv.relativePath.removeSlash()
+        let sessionToken = try sessionToken()
+
+        let response = try await client.readKvSecrets(
+            path: .init(kvPath: enginePath, secretKey: key),
+            query: .init(version: version),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return try json.secret()
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 
@@ -203,7 +232,7 @@ extension VaultClient {
         enginePath: String? = nil,
         secret: some Codable,
         key: String
-    ) async throws -> KeyValueResponse<Never>? {
+    ) async throws -> KeyValueMetadata? {
         let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
@@ -226,7 +255,7 @@ extension VaultClient {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-                return .init(payload: json)
+                return json.metadata
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
