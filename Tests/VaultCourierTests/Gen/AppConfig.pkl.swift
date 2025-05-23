@@ -24,9 +24,9 @@ extension AppConfig {
 
         public var port: Int
 
-        public var credentials: String?
+        public var credentials: String
 
-        public init(hostname: String, port: Int, credentials: String?) {
+        public init(hostname: String, port: Int, credentials: String) {
             self.hostname = hostname
             self.port = port
             self.credentials = credentials
