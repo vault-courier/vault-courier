@@ -51,7 +51,7 @@ extension VaultClient: PklSwift.ResourceReader {
                 throw VaultClientError.readingUnsupportedDatabaseEndpoint()
             }
         } else {
-            throw VaultClientError.readingUnsupportedEngine()
+            throw VaultClientError.readingUnsupportedEngine(url.relativePath)
         }
     }
 
