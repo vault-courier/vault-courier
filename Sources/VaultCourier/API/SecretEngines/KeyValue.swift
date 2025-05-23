@@ -324,7 +324,7 @@ extension VaultClient {
     /// This reverses the  ``delete(key:, versions:)`` operation.
     ///
     /// - Parameters:
-    ///   - key: It's the path to the secret relative to the secret mount `enginePath`
+    ///   - key: It's the path to the secret relative to the secret mount.
     ///   - versions: The versions to undelete. The versions will be restored and their data will be returned on normal read secret requests.
     public func undelete(key: String, versions: [String]) async throws {
         let enginePath = self.mounts.kv.relativePath.removeSlash()
@@ -350,6 +350,14 @@ extension VaultClient {
         }
     }
 
+    
+    /// Creates or updates the metadata of a secret at the specified location. It does not create a new version of the secret.
+    /// - Parameters:
+    ///   - key: It's the path to the secret relative to the secret mount.
+    ///   - isCasRequired: If `true`, the key will require the cas parameter to be set on all write requests. If `false`, the backend’s configuration will be used. Defaults to `false`
+    ///   - customMetadata: A Dictionary of user-provided metadata meant to describe the secret.
+    ///   - deleteVersionAfter: Specify the deletion time for all new versions written to this key.
+    ///   - versionLimit: The number of versions to keep per key. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted.
     public func writeMetadata(
         key: String,
         isCasRequired: Bool = false,
@@ -383,7 +391,10 @@ extension VaultClient {
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
-
+    
+    /// Retrieves the metadata and versions for the secret at the specified path. Metadata is version-agnostic.
+    /// - Parameter key: It's the path to the secret relative to the secret mount.
+    /// - Returns: All the versioned secret metadata
     public func readMetadata(key: String) async throws -> KeyValueStoreMetadata {
         let enginePath = self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
@@ -397,6 +408,31 @@ extension VaultClient {
             case .ok(let content):
                 let json = try content.body.json
                 return try json.metadata
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    
+    /// Permanently deletes the key metadata and all version _data_ for the specified key. All version history will be removed.
+    /// - Parameter key: It's the path to the secret relative to the secret mount.
+    public func deleteAllMetadata(key: String) async throws {
+        let enginePath = self.mounts.kv.relativePath.removeSlash()
+        let sessionToken = try sessionToken()
+
+        let response = try await client.deleteMetadataKvSecrets(
+            path: .init(kvPath: enginePath, secretKey: key),
+            headers: .init(xVaultToken: sessionToken)
+        )
+
+        switch response {
+            case .noContent:
+                logger.info("Metadata deleted successfully.")
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
