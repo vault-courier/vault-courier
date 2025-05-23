@@ -107,6 +107,33 @@ extension IntegrationTests.KeyValue {
     }
 
     @Test
+    func deleting_all_metadata_deletes_secret_data_and_history() async throws {
+        let sut = VaultClient.current
+        await #expect(throws: VaultClientError.self) {
+            try await sut.readMetadata(key: "non-existent")
+        }
+
+        struct Secret: Codable {
+            var apiKey: String
+        }
+        let key = "eu-central"
+        let secret = Secret(apiKey: "abcde")
+        try await sut.writeKeyValue(secret: secret, key: key)
+
+
+        _ = try await sut.readMetadata(key: key)
+        let customMetadata = ["deployment": "stage"]
+        try await sut.writeMetadata(key: key, customMetadata: customMetadata)
+
+        // MUT
+        try await sut.deleteAllMetadata(key: key)
+
+        await #expect(throws: VaultClientError.self) {
+            let _ : KeyValueResponse<Secret> = try await sut.readKeyValue(key: key)
+        }
+    }
+
+    @Test
     func secrets_must_dictionaries_or_codable_objects() async throws {
         let vaultClient = VaultClient.current
 

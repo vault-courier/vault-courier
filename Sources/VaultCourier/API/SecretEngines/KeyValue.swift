@@ -419,7 +419,8 @@ extension VaultClient {
     }
 
     
-    /// Permanently deletes the key metadata and all version _data_ for the specified key. All version history will be removed.
+    /// Permanently deletes the key metadata _and all version data_ for the specified key.
+    /// All version history will be removed.
     /// - Parameter key: It's the path to the secret relative to the secret mount.
     public func deleteAllMetadata(key: String) async throws {
         let enginePath = self.mounts.kv.relativePath.removeSlash()
