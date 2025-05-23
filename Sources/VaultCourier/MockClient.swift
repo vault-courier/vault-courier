@@ -23,6 +23,7 @@ import protocol Foundation.LocalizedError
 #endif
 
 public struct MockClient: APIProtocol {
+
     public init() {}
 
     // MARK: KV Secret
@@ -88,6 +89,83 @@ public struct MockClient: APIProtocol {
         _ input: Operations.SubkeysKvSecrets.Input
     ) async throws -> Operations.SubkeysKvSecrets.Output {
         guard let block = subkeysKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias DeleteKvSecretsSignature = @Sendable (Operations.DeleteKvSecrets.Input) async throws -> Operations.DeleteKvSecrets.Output
+    public var deleteKvSecretsAction: DeleteKvSecretsSignature?
+    public func deleteKvSecrets(
+        _ input: Operations.DeleteKvSecrets.Input
+    ) async throws -> Operations.DeleteKvSecrets.Output {
+        guard let block = deleteKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias UndeleteKvSecretsSignature = @Sendable (Operations.UndeleteKvSecrets.Input) async throws -> Operations.UndeleteKvSecrets.Output
+    public var undeleteKvSecretsAction: UndeleteKvSecretsSignature?
+    public func undeleteKvSecrets(
+        _ input: Operations.UndeleteKvSecrets.Input
+    ) async throws -> Operations.UndeleteKvSecrets.Output {
+        guard let block = undeleteKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias DestroyKvSecretsSignature = @Sendable (Operations.DestroyKvSecrets.Input) async throws -> Operations.DestroyKvSecrets.Output
+    public var destroyKvSecretsAction: DestroyKvSecretsSignature?
+    public func destroyKvSecrets(
+        _ input: Operations.DestroyKvSecrets.Input
+    ) async throws -> Operations.DestroyKvSecrets.Output {
+        guard let block = destroyKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias DeleteLatestKvSecretsSignature = @Sendable (Operations.DeleteLatestKvSecrets.Input) async throws -> Operations.DeleteLatestKvSecrets.Output
+    public var deleteLatestKvSecretsAction: DeleteLatestKvSecretsSignature?
+    public func deleteLatestKvSecrets(
+        _ input: Operations.DeleteLatestKvSecrets.Input
+    ) async throws -> Operations.DeleteLatestKvSecrets.Output {
+        guard let block = deleteLatestKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias ReadMetadataKvSecretsSignature = @Sendable (Operations.ReadMetadataKvSecrets.Input) async throws -> Operations.ReadMetadataKvSecrets.Output
+    public var readMetadataKvSecretsAction: ReadMetadataKvSecretsSignature?
+    public func readMetadataKvSecrets(
+        _ input: Operations.ReadMetadataKvSecrets.Input
+    ) async throws -> Operations.ReadMetadataKvSecrets.Output {
+        guard let block = readMetadataKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias UpdateMetadataKvSecretsSignature = @Sendable (Operations.UpdateMetadataKvSecrets.Input) async throws -> Operations.UpdateMetadataKvSecrets.Output
+    public var updateMetadataKvSecretsAction: UpdateMetadataKvSecretsSignature?
+    public func updateMetadataKvSecrets(
+        _ input: Operations.UpdateMetadataKvSecrets.Input
+    ) async throws -> Operations.UpdateMetadataKvSecrets.Output {
+        guard let block = updateMetadataKvSecretsAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    public typealias DeleteMetadataKvSecretsSignature = @Sendable (Operations.DeleteMetadataKvSecrets.Input) async throws -> Operations.DeleteMetadataKvSecrets.Output
+    public var deleteMetadataKvSecretsAction: DeleteMetadataKvSecretsSignature?
+    public func deleteMetadataKvSecrets(
+        _ input: Operations.DeleteMetadataKvSecrets.Input
+    ) async throws -> Operations.DeleteMetadataKvSecrets.Output {
+        guard let block = deleteMetadataKvSecretsAction
         else { throw UnspecifiedBlockError() }
 
         return try await block(input)

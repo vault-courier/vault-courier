@@ -25,24 +25,14 @@ import struct Foundation.Data
 public struct KeyValueResponse<T: Decodable & Sendable>: Sendable {
     public let requestID: String
 
-    /// Key-Value secret data
-    public let data: T
+    /// Key-Value secret data. Since there is a soft-delete mechanism this value can be `nil`, but its metadata no.
+    public let data: T?
 
-    public let metadata: Metadata?
+    public let metadata: KeyValueMetadata?
 
     public let mountType: String?
 
-    public struct Metadata: Sendable {
-        public let createdAt: String
 
-        public let custom: [String:String]?
-
-        public let deletedAt: String?
-
-        public let isDestroyed: Bool?
-
-        public let version: Int
-    }
 }
 
 public extension KeyValueResponse {
@@ -52,7 +42,7 @@ public extension KeyValueResponse {
               let secret = try? JSONDecoder().decode(T.self, from: data)
         else { return nil }
         self.data = secret
-        self.metadata = if let metadata = payload.metadata {
+        self.metadata = if let metadata = payload.data.metadata {
             .init(createdAt: metadata.createdTime,
                   custom: metadata.customMetadata?.additionalProperties,
                   deletedAt: metadata.deletionTime,
@@ -65,27 +55,28 @@ public extension KeyValueResponse {
     }
 }
 
-public struct WriteData: Codable, Sendable {
-    public let createdTime: String?
+//public extension KeyValueResponse<WriteData> {
+//    init?(payload: Components.Schemas.WriteSecretResponse) {
+//        self.requestID = payload.requestId
+//        self.data = .init(createdTime: payload.data.createdTime,
+//                          customMetadata: payload.data.customMetadata?.additionalProperties,
+//                          deletionTime: payload.data.deletionTime,
+//                          destroyed: payload.data.destroyed,
+//                          version: payload.data.version)
+//        self.metadata = nil
+//        self.mountType = payload.mountType
+//    }
+//}
 
-    public let customMetadata: [String: String]?
-
-    public let deletionTime: String?
-
-    public let destroyed: Bool?
-
-    public let version: Int?
-}
-
-public extension KeyValueResponse<WriteData> {
+public extension KeyValueResponse {
     init?(payload: Components.Schemas.WriteSecretResponse) {
         self.requestID = payload.requestId
-        self.data = .init(createdTime: payload.data.createdTime,
-                          customMetadata: payload.data.customMetadata?.additionalProperties,
-                          deletionTime: payload.data.deletionTime,
-                          destroyed: payload.data.destroyed,
-                          version: payload.data.version)
-        self.metadata = nil
+        self.data = nil
+        self.metadata = .init(createdAt: payload.data.createdTime,
+                              custom: payload.data.customMetadata?.additionalProperties,
+                              deletedAt: payload.data.deletionTime,
+                              isDestroyed: payload.data.destroyed,
+                              version: payload.data.version)
         self.mountType = payload.mountType
     }
 }
