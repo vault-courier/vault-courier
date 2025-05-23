@@ -16,6 +16,12 @@
 
 import Testing
 import VaultCourier
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import class Foundation.JSONDecoder
+import struct Foundation.Data
+#endif
 
 extension IntegrationTests.KeyValue {
     @Test
@@ -30,9 +36,10 @@ extension IntegrationTests.KeyValue {
 
         // MUT
         let response = try await vaultClient.writeKeyValue(secret: secret, key: key)
-        #expect(response?.data.version == 1)
+        let version = try #require(response?.metadata?.version)
+        #expect(version > 0)
 
-        let readResponse: Secret = try #require(try await vaultClient.readKeyValueSecret(key: key, version: 1))
+        let readResponse: Secret = try #require(try await vaultClient.readKeyValueSecret(key: key, version: version))
 
         #expect(readResponse.apiKey == secret.apiKey)
     }
@@ -50,6 +57,48 @@ extension IntegrationTests.KeyValue {
 
         // MUT
         try await vaultClient.patchKeyValue(secret: Secret(apiKey: "abcde12345"), key: key)
+    }
+
+    @Test
+    func read_subkeys_kv_secret() async throws {
+        struct Secret: Codable {
+            var apiKey: String
+            var database: Database
+            struct Database: Codable {
+                var credentials: DatabaseCredentials
+            }
+        }
+        let key = "op-secret"
+        let secret = Secret(apiKey: "abcde", database: .init(credentials: .init(username: "test_username", password: "test_password")))
+
+        let vaultClient = VaultClient.current
+        try await vaultClient.writeKeyValue(secret: secret, key: key)
+
+        // MUT
+        _ = try #require(try await vaultClient.readSecretSubkeys(key: key))
+    }
+
+    @Test
+    func metadata() async throws {
+        let sut = VaultClient.current
+        await #expect(throws: VaultClientError.self) {
+            try await sut.readMetadata(key: "non-existent")
+        }
+
+        struct Secret: Codable {
+            var apiKey: String
+        }
+        let key = "eu-central"
+        let secret = Secret(apiKey: "abcde")
+        try await sut.writeKeyValue(secret: secret, key: key)
+
+
+        _ = try await sut.readMetadata(key: key)
+        let customMetadata = ["deployment": "stage"]
+        try await sut.writeMetadata(key: key, customMetadata: customMetadata)
+
+        let metadata = try await sut.readMetadata(key: key)
+        #expect(metadata.custom == customMetadata)
     }
 
     @Test
