@@ -81,6 +81,7 @@ extension IntegrationTests.Database {
             try await vaultClient.deleteRole(name: dynamicRole.vaultRoleName, enginePath: enginePath)
         }
 
+        @Suite(.setupVaultClient(databaseMountPath: enginePath))
         struct Pkl {
             @Test
             func read_static_database_secret_from_module_source() async throws {
@@ -106,6 +107,31 @@ extension IntegrationTests.Database {
                 #expect(outputSecret.username == databaseRoleName)
 
                 try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, enginePath: enginePath)
+            }
+
+            @Test
+            func read_dynamic_database_secret_from_module_source() async throws {
+                let vaultClient = VaultClient.current
+                let dynamicRoleName = "test_dynamic_role"
+                let dynamicRole = CreateDatabaseRole(vaultRoleName: dynamicRoleName,
+                                                     databaseConnectionName: connectionName,
+                                                     creationStatements: [
+                                                        "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
+                                                     ])
+                // MUT
+                try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+
+                let url = pklFixtureUrl(for: "Sample1/appConfig3.pkl")
+
+                // MUT
+                let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
+
+                let databaseConfig = try #require(output.database)
+                let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))
+                #expect(outputSecret.username.isEmpty == false)
+                #expect(outputSecret.password.isEmpty == false)
+
+                try await vaultClient.deleteStaticRole(name: dynamicRoleName, enginePath: enginePath)
             }
         }
     }
