@@ -25,8 +25,6 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import Logging
-import OpenAPIRuntime
-import OpenAPIAsyncHTTPClient
 
 extension VaultClient: PklSwift.ResourceReader {
     // MARK: BaseReader

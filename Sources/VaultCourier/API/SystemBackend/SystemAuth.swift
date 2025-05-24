@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
+import struct OpenAPIRuntime.OpenAPIObjectContainer
 
 extension VaultClient {
     /// Enables authentication mount. Example AppRole, Token...
