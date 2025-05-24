@@ -47,7 +47,7 @@ extension VaultClient: PklSwift.ResourceReader {
             } else if databasePath.hasPrefix("/creds/") {
                 return try await readDatabaseCredential(relativePath: mountPath)
             } else {
-                throw VaultClientError.readingUnsupportedDatabaseEndpoint()
+                throw VaultClientError.readingUnsupportedDatabaseEndpoint(url.relativePath)
             }
         } else {
             throw VaultClientError.readingUnsupportedEngine(url.relativePath)
@@ -79,15 +79,16 @@ extension VaultClient: PklSwift.ResourceReader {
             return []
         }
 
-        guard let response = try await databaseCredentials(staticRole: roleName, enginePath: enginePath)
-        else {
+        do {
+            let response = try await databaseCredentials(staticRole: roleName, enginePath: enginePath)
+            let credentials = DatabaseCredentials(username: response.username, password: response.password)
+            let data = try JSONEncoder().encode(credentials)
+
+            return Array(data)
+        } catch {
+            logger.debug(.init(stringLiteral: String(reflecting: error)))
             return []
         }
-        logger.debug(.init(stringLiteral: "Static database credentials: " + String(reflecting: response)))
-        let credentials = DatabaseCredentials(username: response.username, password: response.password)
-        let data = try JSONEncoder().encode(credentials)
-
-        return Array(data)
     }
 
     func readDatabaseCredential(relativePath: String) async throws -> [UInt8] {
@@ -99,15 +100,16 @@ extension VaultClient: PklSwift.ResourceReader {
             return []
         }
 
-        guard let response = try await databaseCredentials(dynamicRole: roleName, enginePath: enginePath)
-        else {
+        do {
+            let response = try await databaseCredentials(dynamicRole: roleName, enginePath: enginePath)
+            let credentials = DatabaseCredentials(username: response.username, password: response.password)
+            let data = try JSONEncoder().encode(credentials)
+
+            return Array(data)
+        } catch {
+            logger.debug(.init(stringLiteral: String(reflecting: error)))
             return []
         }
-        logger.debug(.init(stringLiteral: "Dynamic database credentials: " + String(reflecting: response)))
-        let credentials = DatabaseCredentials(username: response.username, password: response.password)
-        let data = try JSONEncoder().encode(credentials)
-
-        return Array(data)
     }
 }
 

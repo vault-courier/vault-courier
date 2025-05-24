@@ -16,9 +16,6 @@
 
 #if Pkl
 import PklSwift
-import Logging
-
-extension ModuleSource: @unchecked Sendable { }
 
 extension VaultClient {
     /// The file path to the pkl ModuleSource

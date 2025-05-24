@@ -38,12 +38,13 @@ public struct VaultClientError: Error, Sendable {
         .init(message: "Reading module failed")
     }
 
+    #warning("delete these functions after moving reader")
     static func readingUnsupportedEngine(_ relativePath: String) -> VaultClientError {
         .init(message: "Reading unsupported vault engine or path: \(relativePath).")
     }
 
-    static func readingUnsupportedDatabaseEndpoint() -> VaultClientError {
-        .init(message: "Reading unsupported database endpoint")
+    static func readingUnsupportedDatabaseEndpoint(_ relativePath: String) -> VaultClientError {
+        .init(message: "Reading unsupported database endpoint: \(relativePath)")
     }
 
     static func clientIsNotLoggedIn() -> VaultClientError {
