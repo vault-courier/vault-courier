@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `AppConfig`. DO NOT EDIT.
 import PklSwift
 
@@ -54,3 +55,4 @@ extension AppConfig {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

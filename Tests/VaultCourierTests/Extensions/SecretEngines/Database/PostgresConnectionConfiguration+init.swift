@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import VaultCourier
 
 extension PostgresConnectionConfiguration {
@@ -36,3 +37,4 @@ extension PostgresConnectionConfiguration {
                   rootRotationStatements: module.root_rotation_statements ?? [])
     }
 }
+#endif

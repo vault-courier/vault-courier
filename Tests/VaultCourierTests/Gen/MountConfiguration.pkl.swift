@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `MountConfiguration`. DO NOT EDIT.
 import PklSwift
 
@@ -89,3 +90,4 @@ extension MountConfiguration {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

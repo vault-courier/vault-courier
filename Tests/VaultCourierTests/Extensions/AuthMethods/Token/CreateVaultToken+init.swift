@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import VaultCourier
 
 extension CreateVaultToken {
@@ -34,3 +35,4 @@ extension CreateVaultToken {
                   entityAlias: module.entity_alias)
     }
 }
+#endif

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import VaultCourier
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -44,3 +45,4 @@ extension GenerateAppRoleToken {
                   wrapTTL: wrapTTL?.toSwiftDuration())
     }
 }
+#endif

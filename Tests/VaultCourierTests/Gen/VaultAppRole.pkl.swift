@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `VaultAppRole`. DO NOT EDIT.
 import PklSwift
 
@@ -121,3 +122,4 @@ extension VaultAppRole {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

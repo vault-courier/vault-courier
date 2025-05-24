@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `PostgresRole`. DO NOT EDIT.
 import PklSwift
 
@@ -167,3 +168,4 @@ extension PostgresRole {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import VaultCourier
 
 extension EnableAuthMethodConfig {
@@ -32,3 +33,4 @@ extension EnableAuthMethodConfig {
                   sealWrap: module.seal_wrap ?? false)
     }
 }
+#endif
