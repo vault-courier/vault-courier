@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `AppConfig`. DO NOT EDIT.
 import PklSwift
 
@@ -24,9 +25,9 @@ extension AppConfig {
 
         public var port: Int
 
-        public var credentials: String?
+        public var credentials: String
 
-        public init(hostname: String, port: Int, credentials: String?) {
+        public init(hostname: String, port: Int, credentials: String) {
             self.hostname = hostname
             self.port = port
             self.credentials = credentials
@@ -54,3 +55,4 @@ extension AppConfig {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

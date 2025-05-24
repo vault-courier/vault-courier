@@ -9,5 +9,5 @@ class Database {
   
   port: Int
   
-  credentials: String?
+  credentials: String
 }

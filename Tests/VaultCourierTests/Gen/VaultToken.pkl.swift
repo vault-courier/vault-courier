@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `VaultToken`. DO NOT EDIT.
 import PklSwift
 
@@ -114,3 +115,4 @@ extension VaultToken {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

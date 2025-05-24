@@ -14,23 +14,20 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
-import VaultCourier
+import Testing
+@testable import VaultCourier
 
-extension EnableAuthMethodConfig {
-    init(_ module: AuthMethodConfig.Module) {
-        let config: [String:String]? = if let config = module.config  {
-            .init(uniqueKeysWithValues: zip(config.keys.map({ $0.rawValue}), config.values))
-        } else {
-            nil
-        }
-        self.init(path: module.path,
-                  type: module.type.rawValue,
-                  description: module.description,
-                  config: config,
-                  options: module.options,
-                  local: module.local ?? false,
-                  sealWrap: module.seal_wrap ?? false)
+@Suite
+struct VaultDuration {
+    @Test
+    func vault_duration_style_for_seconds() async throws {
+        let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
+        #expect(duration.formatted(.vaultSeconds) == "5400s")
+    }
+
+    @Test
+    func vault_duration_style_for_hours() async throws {
+        let duration = Swift.Duration(secondsComponent: 5400, attosecondsComponent: 0)
+        #expect(duration.formatted(.vaultHours) == "1.5h")
     }
 }
-#endif

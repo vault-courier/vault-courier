@@ -16,7 +16,19 @@
 
 import Testing
 
-@testable import VaultCourier
+import VaultCourier
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+import class Foundation.JSONDecoder
+import class Foundation.JSONEncoder
+import struct Foundation.Data
+#endif
+
+#if Pkl
+import PklSwift
+#endif
 
 extension IntegrationTests.Database {
     static let connectionName = "postgres_db"
@@ -71,5 +83,61 @@ extension IntegrationTests.Database {
             // MUT
             try await vaultClient.deleteRole(name: dynamicRole.vaultRoleName, enginePath: enginePath)
         }
+
+        #if Pkl
+        @Suite(.setupVaultClient(databaseMountPath: enginePath))
+        struct Pkl {
+            @Test
+            func read_static_database_secret_from_module_source() async throws {
+                let vaultClient = VaultClient.current
+                let staticRoleName = "test_static_role"
+                let databaseRoleName = env("STATIC_DB_ROLE") ?? "test_static_role_username"
+                let staticRole = CreateDatabaseStaticRole(vaultRoleName: staticRoleName,
+                                                          databaseUsername: databaseRoleName,
+                                                          databaseConnectionName: connectionName,
+                                                          rotation: .period(.seconds(28 * 24 * 60 * 60)))
+
+                // MUT
+                try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
+
+                let url = pklFixtureUrl(for: "Sample1/appConfig2.pkl")
+
+                // MUT
+                let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
+
+                let databaseConfig = try #require(output.database)
+                let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))
+
+                #expect(outputSecret.username == databaseRoleName)
+
+                try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, enginePath: enginePath)
+            }
+
+            @Test
+            func read_dynamic_database_secret_from_module_source() async throws {
+                let vaultClient = VaultClient.current
+                let dynamicRoleName = "test_dynamic_role"
+                let dynamicRole = CreateDatabaseRole(vaultRoleName: dynamicRoleName,
+                                                     databaseConnectionName: connectionName,
+                                                     creationStatements: [
+                                                        "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
+                                                     ])
+                // MUT
+                try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+
+                let url = pklFixtureUrl(for: "Sample1/appConfig3.pkl")
+
+                // MUT
+                let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
+
+                let databaseConfig = try #require(output.database)
+                let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))
+                #expect(outputSecret.username.isEmpty == false)
+                #expect(outputSecret.password.isEmpty == false)
+
+                try await vaultClient.deleteStaticRole(name: dynamicRoleName, enginePath: enginePath)
+            }
+        }
+        #endif
     }
 }

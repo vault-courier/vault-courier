@@ -39,14 +39,28 @@ extension VaultClient {
 struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
     let apiURL: URL
     let token: String
+    let readerSchema: String?
+    let appRolePath: String?
+    let kvMountPath: String?
+    let databaseMountPath: String?
+    let logger: Logger?
+    let middlewares: [any ClientMiddleware]
 
     func setupClient() async throws -> VaultClient {
-        let vaultClient = VaultClient(configuration: .init(apiURL: apiURL),
-                                      client: Client(
-                                        serverURL: apiURL,
-                                        transport: AsyncHTTPClientTransport()
-                                      ),
-                                      authentication: .token(token))
+        let vaultClient = VaultClient(
+            configuration: .init(
+                apiURL: apiURL,
+                readerSchema: readerSchema,
+                appRolePath: appRolePath,
+                kvMountPath: kvMountPath,
+                databaseMountPath: databaseMountPath,
+                backgroundActivityLogger: logger,
+                middlewares: middlewares),
+            client: Client(
+                serverURL: apiURL,
+                transport: AsyncHTTPClientTransport()
+            ),
+            authentication: .token(token))
         try await vaultClient.authenticate()
         return vaultClient
     }
@@ -61,8 +75,43 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
 
 extension SuiteTrait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
-                                 token: String = "integration_token") -> Self {
-        return Self(apiURL: apiURL, token: token)
+                                 token: String = "integration_token",
+                                 readerSchema: String? = nil,
+                                 appRolePath: String? = nil,
+                                 kvMountPath: String? = nil,
+                                 databaseMountPath: String? = nil,
+                                 logger: Logger? = nil,
+                                 middlewares: [any ClientMiddleware] = []
+    ) -> Self {
+        return Self(apiURL: apiURL,
+                    token: token,
+                    readerSchema: readerSchema,
+                    appRolePath: appRolePath,
+                    kvMountPath: kvMountPath,
+                    databaseMountPath: databaseMountPath,
+                    logger: logger,
+                    middlewares: middlewares)
+    }
+}
+
+extension TestTrait where Self == VaultClientTrait {
+    static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
+                                 token: String = "integration_token",
+                                 readerSchema: String? = nil,
+                                 appRolePath: String? = nil,
+                                 kvMountPath: String? = nil,
+                                 databaseMountPath: String? = nil,
+                                 logger: Logger? = nil,
+                                 middlewares: [any ClientMiddleware] = []
+    ) -> Self {
+        return Self(apiURL: apiURL,
+                    token: token,
+                    readerSchema: readerSchema,
+                    appRolePath: appRolePath,
+                    kvMountPath: kvMountPath,
+                    databaseMountPath: databaseMountPath,
+                    logger: logger,
+                    middlewares: middlewares)
     }
 }
 

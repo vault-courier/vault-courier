@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import VaultCourier
 
 extension CreateDatabaseRole {
@@ -37,3 +38,4 @@ extension CreateDatabaseRole {
                   credentialConfig: module.credential_config)
     }
 }
+#endif

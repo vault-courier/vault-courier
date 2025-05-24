@@ -28,11 +28,10 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 
-@testable import VaultCourier
+import VaultCourier
 
 extension Tag {
     @Tag static var integration: Self
-    @Tag static var pkl: Self
 }
 
 @Suite(
@@ -46,12 +45,23 @@ extension IntegrationTests {
     @Suite struct KeyValue {}
     @Suite(.serialized) struct Database {}
     @Suite struct Auth {}
-    @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
 }
 
 extension IntegrationTests.Auth {
     @Suite struct Token {}
     @Suite(.serialized) struct AppRole {}
+}
+
+public func enableIntegrationTests() -> Bool {
+    guard let rawValue = env("ENABLE_INTEGRATION_TESTS") else { return false }
+    if let boolValue = Bool(rawValue) { return boolValue }
+    if let intValue = Int(rawValue) { return intValue == 1 }
+    return rawValue.lowercased() == "yes"
+}
+
+#if Pkl
+extension IntegrationTests {
+    @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
 }
 
 extension IntegrationTests.Pkl {
@@ -66,14 +76,8 @@ extension IntegrationTests.Pkl {
     }
 }
 
-public func enableIntegrationTests() -> Bool {
-    guard let rawValue = env("ENABLE_INTEGRATION_TESTS") else { return false }
-    if let boolValue = Bool(rawValue) { return boolValue }
-    if let intValue = Int(rawValue) { return intValue == 1 }
-    return rawValue.lowercased() == "yes"
-}
-
 public func isPklEnabled() -> Bool {
     guard let rawValue = env("PKL_EXEC") else { return false }
     return !rawValue.isEmpty
 }
+#endif

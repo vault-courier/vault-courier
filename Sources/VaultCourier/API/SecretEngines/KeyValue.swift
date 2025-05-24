@@ -156,7 +156,7 @@ extension VaultClient {
         key: String,
         version: Int? = nil,
         subkeysDepth: Int? = nil
-    ) async throws -> Data? {
+    ) async throws -> Data {
         let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
@@ -174,10 +174,10 @@ extension VaultClient {
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
+                throw VaultClientError.badRequest(errors)
             case .undocumented(statusCode: let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                return nil
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 
@@ -260,13 +260,9 @@ extension VaultClient {
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
                 return nil
-            case .undocumented(let statusCode, let payload):
-                if let buffer = try await payload.body?.collect(upTo: 1024, using: .init()) {
-                    let error = String(buffer: buffer)
-                    logger.debug(.init(stringLiteral: "operation error with body: \(error)"))
-                }
+            case .undocumented(let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                return nil
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import PklSwift
 
 /// Perfoms `action`, returns its result and then closes the manager.
@@ -42,3 +43,5 @@ public func withEvaluatorManager<T: Sendable>(
         throw error
     }
 }
+
+#endif

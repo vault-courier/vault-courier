@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import VaultCourier
 
 extension CreateAppRole {
@@ -36,3 +37,4 @@ extension CreateAppRole {
       )
   }
 }
+#endif

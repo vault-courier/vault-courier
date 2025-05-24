@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `AppRoleToken`. DO NOT EDIT.
 import PklSwift
 
@@ -72,3 +73,4 @@ extension AppRoleToken {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

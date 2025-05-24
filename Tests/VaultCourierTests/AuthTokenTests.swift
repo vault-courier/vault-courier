@@ -16,7 +16,7 @@
 
 import Testing
 
-@testable import VaultCourier
+import VaultCourier
 
 extension IntegrationTests.Auth.Token {
     @Test

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import Testing
 
 import OpenAPIRuntime
@@ -27,7 +28,7 @@ import struct Foundation.Data
 #endif
 import PklSwift
 
-@testable import VaultCourier
+import VaultCourier
 
 extension IntegrationTests.Pkl.ModuleSourceReader {
     @Test
@@ -261,3 +262,4 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
     }
 }
 
+#endif

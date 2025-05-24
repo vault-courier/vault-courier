@@ -1,3 +1,4 @@
+#if Pkl
 // Code generated from Pkl module `AuthMethodConfig`. DO NOT EDIT.
 import PklSwift
 
@@ -93,3 +94,4 @@ extension AuthMethodConfig {
         try await evaluator.evaluateModule(source: source, as: Module.self)
     }
 }
+#endif

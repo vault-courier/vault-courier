@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import VaultCourier
 
 extension EnableSecretMountConfig {
@@ -41,3 +42,4 @@ extension EnableSecretMountConfig {
         )
     }
 }
+#endif
