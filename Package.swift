@@ -15,18 +15,27 @@
 
 import PackageDescription
 
+let PklTrait: Trait = .trait(
+    name: "Pkl",
+    description: "Enable Pkl Resource Reader. This provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
+)
+
 let package = Package(
     name: "vault-courier",
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "VaultCourier", targets: ["VaultCourier"]),
     ],
+    traits: [
+        PklTrait,
+        .default(enabledTraits: .init([PklTrait.name]))
+    ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.7.2"),
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.7.0"),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
-        .package(url: "https://github.com/apple/pkl-swift", from: "0.4.1"),
+        .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4")
     ],
     targets: [
@@ -36,7 +45,7 @@ let package = Package(
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
-                .product(name: "PklSwift", package: "pkl-swift"),
+                .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
             ],
             plugins: [

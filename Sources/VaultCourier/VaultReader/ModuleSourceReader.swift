@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import PklSwift
 import Logging
 
@@ -111,4 +112,4 @@ extension VaultClient {
     }
 }
 
-
+#endif

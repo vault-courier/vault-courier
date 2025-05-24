@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 @preconcurrency import PklSwift
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -63,8 +64,7 @@ extension VaultClient: PklSwift.ResourceReader {
         }
 
         do {
-            guard let buffer = try await readKeyValueSecretData(enginePath: mounts.kv.relativePath, key: key)
-            else { return [] }
+            let buffer = try await readKeyValueSecretData(key: key)
             return Array(buffer)
         } catch {
             logger.debug(.init(stringLiteral: String(reflecting: error)))
@@ -113,6 +113,8 @@ extension VaultClient: PklSwift.ResourceReader {
     }
 }
 
+#endif
+
 extension String {
     func removeSlash() -> String {
         if self.hasPrefix("/") {
@@ -121,3 +123,4 @@ extension String {
         return self
     }
 }
+

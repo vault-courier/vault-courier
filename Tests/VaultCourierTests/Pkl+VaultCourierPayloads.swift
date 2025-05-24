@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if Pkl
 import Testing
 
 import OpenAPIRuntime
@@ -77,3 +78,4 @@ extension IntegrationTests.Pkl {
         }
     }
 }
+#endif

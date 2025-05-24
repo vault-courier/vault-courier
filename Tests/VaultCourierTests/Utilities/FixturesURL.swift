@@ -24,6 +24,13 @@ func fixtureUrl(for fixture: String) -> URL {
     fixturesDirectory().appending(path: fixture)
 }
 
+func fixturesDirectory(path: String = #filePath) -> URL {
+    let url = URL(filePath: path)
+    let testsDir = url.deletingLastPathComponent().deletingLastPathComponent()
+    return testsDir.appending(path: "Fixtures", directoryHint: .isDirectory)
+}
+
+#if Pkl
 /// Returns URL of a pkl fixture file
 /// - Parameter fixture: name of pkl file with extension, e.g. `test_static_role.pkl`
 ///
@@ -32,9 +39,5 @@ func pklFixtureUrl(for fixture: String) -> URL {
     let url = URL(filePath: "\(#filePath)/../../Fixtures/Pkl", directoryHint: .isDirectory)
     return url.appending(path: fixture)
 }
+#endif
 
-func fixturesDirectory(path: String = #filePath) -> URL {
-    let url = URL(filePath: path)
-    let testsDir = url.deletingLastPathComponent().deletingLastPathComponent()
-    return testsDir.appending(path: "Fixtures", directoryHint: .isDirectory)
-}

@@ -25,7 +25,10 @@ import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
+
+#if Pkl
 import PklSwift
+#endif
 
 extension IntegrationTests.Database {
     static let connectionName = "postgres_db"
@@ -81,6 +84,7 @@ extension IntegrationTests.Database {
             try await vaultClient.deleteRole(name: dynamicRole.vaultRoleName, enginePath: enginePath)
         }
 
+        #if Pkl
         @Suite(.setupVaultClient(databaseMountPath: enginePath))
         struct Pkl {
             @Test
@@ -134,5 +138,6 @@ extension IntegrationTests.Database {
                 try await vaultClient.deleteStaticRole(name: dynamicRoleName, enginePath: enginePath)
             }
         }
+        #endif
     }
 }
