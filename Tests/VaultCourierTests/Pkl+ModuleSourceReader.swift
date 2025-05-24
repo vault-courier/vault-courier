@@ -260,6 +260,29 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
 
         #expect(outputSecret.apiKey == secret.apiKey)
     }
+
+    @Test(.setupVaultClient(kvMountPath: "secret"))
+    func default_vault_resource_reader() async throws {
+        struct Secret: Codable {
+            var apiKey: String
+        }
+        let key = "app_key"
+        let secret = Secret(apiKey: "abcde12345")
+
+        let vaultClient = VaultClient.current
+        _ = try await vaultClient.writeKeyValue(secret: secret, key: key)
+
+        let url = pklFixtureUrl(for: "Sample1/appConfig1.pkl")
+
+        let sut = await vaultClient.makeResourceReader()
+        
+        // MUT
+        let output = try await sut.readConfiguration(source: .url(url), as: AppConfig.Module.self)
+        let appkeys = try #require(output.appKeys)
+        let outputSecret = try JSONDecoder().decode(Secret.self, from: Data(appkeys.utf8))
+
+        #expect(outputSecret.apiKey == secret.apiKey)
+    }
 }
 
 #endif
