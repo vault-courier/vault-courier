@@ -67,10 +67,10 @@ extension VaultResourceReader: ResourceReader {
             } else if databasePath.hasPrefix("/creds/") {
                 return try await readDatabaseCredential(relativePath: mountPath)
             } else {
-                throw VaultClientError.readingUnsupportedDatabaseEndpoint(url.relativePath)
+                throw VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
             }
         } else {
-            throw VaultClientError.readingUnsupportedEngine(url.relativePath)
+            throw VaultReaderError.readingUnsupportedEngine(url.relativePath)
         }
     }
     
@@ -90,7 +90,7 @@ extension VaultResourceReader: ResourceReader {
             return Array(buffer)
         } catch {
             logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw VaultClientError.readingConfigurationFailed()
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 
@@ -110,7 +110,7 @@ extension VaultResourceReader: ResourceReader {
             return Array(data)
         } catch {
             logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw VaultClientError.readingConfigurationFailed()
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 
@@ -130,7 +130,7 @@ extension VaultResourceReader: ResourceReader {
             return Array(data)
         } catch {
             logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw VaultClientError.readingConfigurationFailed()
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 }
@@ -158,7 +158,7 @@ extension VaultResourceReader {
             return output
         } catch let error as PklSwift.PklError {
             logger.debug(.init(stringLiteral: String(describing: error.message)))
-            throw VaultClientError.readingConfigurationFailed()
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 
@@ -179,7 +179,7 @@ extension VaultResourceReader {
             return output
         } catch let error as PklSwift.PklError {
             logger.debug(.init(stringLiteral: String(describing: error.message)))
-            throw VaultClientError.readingConfigurationFailed()
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 
@@ -199,7 +199,7 @@ extension VaultResourceReader {
             return output
         } catch let error as PklSwift.PklError {
             logger.debug(.init(stringLiteral: String(describing: error.message)))
-            throw VaultClientError.readingConfigurationFailed()
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 
@@ -222,7 +222,7 @@ extension VaultResourceReader {
             return output
         } catch let error as PklSwift.PklError {
             logger.debug(.init(stringLiteral: String(describing: error.message)))
-            throw VaultClientError.readingConfigurationFailed()
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 }

@@ -34,19 +34,6 @@ public struct VaultClientError: Error, Sendable {
         .init(message: "Received unexpected response. Do you mind filling a bug at https://github.com/vault-courier/vault-courier/issues 🙏?")
     }
 
-    static func readingConfigurationFailed() -> VaultClientError {
-        .init(message: "Reading module failed")
-    }
-
-    #warning("delete these functions after moving reader")
-    static func readingUnsupportedEngine(_ relativePath: String) -> VaultClientError {
-        .init(message: "Reading unsupported vault engine or path: \(relativePath).")
-    }
-
-    static func readingUnsupportedDatabaseEndpoint(_ relativePath: String) -> VaultClientError {
-        .init(message: "Reading unsupported database endpoint: \(relativePath)")
-    }
-
     static func clientIsNotLoggedIn() -> VaultClientError {
         .init(message: "Vault client has not authenticated")
     }

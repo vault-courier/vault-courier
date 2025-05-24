@@ -31,7 +31,6 @@ struct VaultClientTests {
     var configuration: VaultClient.Configuration {
         .init(
             apiURL: localApiURL,
-            readerSchema: "vault",
             appRolePath: "approle",
         )
     }
@@ -96,7 +95,6 @@ struct VaultClientTests {
 
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: "vault",
                 appRolePath: "/path/to/approle",
                 backgroundActivityLogger: .init(label: "vault-courier-test")
         )

@@ -39,7 +39,6 @@ extension VaultClient {
 struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
     let apiURL: URL
     let token: String
-    let readerSchema: String?
     let appRolePath: String?
     let kvMountPath: String?
     let databaseMountPath: String?
@@ -50,7 +49,6 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
         let vaultClient = VaultClient(
             configuration: .init(
                 apiURL: apiURL,
-                readerSchema: readerSchema,
                 appRolePath: appRolePath,
                 kvMountPath: kvMountPath,
                 databaseMountPath: databaseMountPath,
@@ -76,7 +74,6 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
 extension SuiteTrait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
                                  token: String = "integration_token",
-                                 readerSchema: String? = nil,
                                  appRolePath: String? = nil,
                                  kvMountPath: String? = nil,
                                  databaseMountPath: String? = nil,
@@ -85,7 +82,6 @@ extension SuiteTrait where Self == VaultClientTrait {
     ) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
-                    readerSchema: readerSchema,
                     appRolePath: appRolePath,
                     kvMountPath: kvMountPath,
                     databaseMountPath: databaseMountPath,
@@ -97,7 +93,6 @@ extension SuiteTrait where Self == VaultClientTrait {
 extension TestTrait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
                                  token: String = "integration_token",
-                                 readerSchema: String? = nil,
                                  appRolePath: String? = nil,
                                  kvMountPath: String? = nil,
                                  databaseMountPath: String? = nil,
@@ -106,7 +101,6 @@ extension TestTrait where Self == VaultClientTrait {
     ) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
-                    readerSchema: readerSchema,
                     appRolePath: appRolePath,
                     kvMountPath: kvMountPath,
                     databaseMountPath: databaseMountPath,
@@ -120,7 +114,6 @@ extension TestTrait where Self == VaultClientTrait {
 struct MockVaultClient: SuiteTrait, TestTrait, TestScoping {
     let apiURL: URL
     let token: String
-    let readerSchema: String?
     let appRolePath: String?
     let kvMountPath: String?
     let databaseMountPath: String?
@@ -129,7 +122,6 @@ struct MockVaultClient: SuiteTrait, TestTrait, TestScoping {
 
     func setupClient() async throws -> VaultClient {
         let vaultClient = VaultClient(configuration: .init(apiURL: apiURL,
-                                                           readerSchema: readerSchema,
                                                            appRolePath: appRolePath,
                                                            kvMountPath: kvMountPath,
                                                            databaseMountPath: databaseMountPath,
@@ -151,7 +143,6 @@ struct MockVaultClient: SuiteTrait, TestTrait, TestScoping {
 extension TestTrait where Self == MockVaultClient {
     static func setupMockVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
                                      token: String = "test_token",
-                                     readerSchema: String? = nil,
                                      appRolePath: String? = nil,
                                      kvMountPath: String? = nil,
                                      databaseMountPath: String? = nil,
@@ -159,7 +150,6 @@ extension TestTrait where Self == MockVaultClient {
                                      middlewares: [any ClientMiddleware] = []) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
-                    readerSchema: readerSchema,
                     appRolePath: appRolePath,
                     kvMountPath: kvMountPath,
                     databaseMountPath: databaseMountPath,

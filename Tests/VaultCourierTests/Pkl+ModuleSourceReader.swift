@@ -44,18 +44,16 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
             )
         }
 
-        let schema = "vault"
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: schema,
-                kvMountPath: "/path/to/secrets",
-                backgroundActivityLogger: .init(label: "vault-client")
+                kvMountPath: "/path/to/secrets"
         )
         let vaultClient = VaultClient(configuration: config,
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
 
+        let schema = "vault"
         let sut = await vaultClient.makeResourceReader(scheme: schema)
         let output = try await sut.readConfiguration(text:"""
         appKeys = read("\(schema):/path/to/secrets/key?query=api_key").text
@@ -150,10 +148,8 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                             username: username)))))
         }
 
-        let scheme = "vault"
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: scheme,
                 databaseMountPath: "path/to/database/secrets"
         )
         let vaultClient = VaultClient(configuration: config,
@@ -161,7 +157,8 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
 
-        let sut = await vaultClient.makeResourceReader()
+        let scheme = "vault"
+        let sut = await vaultClient.makeResourceReader(scheme: scheme)
         // MUT
         let output = try await sut.readConfiguration(
             source: .text("""
@@ -196,7 +193,6 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
 
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: "vault",
                 databaseMountPath: "path/to/database/secrets",
                 backgroundActivityLogger: .init(label: "vault-client")
         )
