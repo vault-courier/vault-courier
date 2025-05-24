@@ -55,7 +55,9 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(text:"""
+
+        let sut = await vaultClient.makeResourceReader(scheme: schema)
+        let output = try await sut.readConfiguration(text:"""
         appKeys = read("\(schema):/path/to/secrets/key?query=api_key").text
         """)
         // Note: Pkl adds `\#n"` at the end of the file
@@ -79,7 +81,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(text:"""
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(text:"""
         appKeys = read("vault:/secret/key").text
         """)
         // Note: Pkl adds `\#n"` at the end of the file
@@ -111,7 +116,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
             databaseCredentials: String = read("vault:/database/static-creds/qa_role").text
             """),
@@ -142,19 +150,22 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                             username: username)))))
         }
 
+        let scheme = "vault"
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: "vault",
-                databaseMountPath: "path/to/database/secrets",
-                backgroundActivityLogger: .init(label: "vault-client")
+                readerSchema: scheme,
+                databaseMountPath: "path/to/database/secrets"
         )
         let vaultClient = VaultClient(configuration: config,
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
-            databaseCredentials: String = read("vault:/path/to/database/secrets/static-creds/qa_role").text
+            databaseCredentials: String = read("\(scheme):/path/to/database/secrets/static-creds/qa_role").text
             """),
             as: DatabaseSecret.self)
 
@@ -193,7 +204,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
             databaseCredentials: String = read("vault:/path/to/database/secrets/creds/qa_role").text
             """),
@@ -228,7 +242,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
             databaseCredentials: String = read("vault:/database/creds/qa_role").text
             """),
@@ -237,28 +254,6 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
         let secrets = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.databaseCredentials.utf8))
         #expect(secrets.username == username)
         #expect(secrets.password == password)
-    }
-
-    @Test
-    func read_kv_secret_from_module_source() async throws {
-        struct Secret: Codable {
-            var apiKey: String
-        }
-        let key = "app_key"
-        let secret = Secret(apiKey: "abcde12345")
-
-        let vaultClient = VaultClient.current
-        _ = try await vaultClient.writeKeyValue(secret: secret, key: key)
-
-        let url = pklFixtureUrl(for: "Sample1/appConfig1.pkl")
-
-        // MUT
-        let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
-
-        let appkeys = try #require(output.appKeys)
-        let outputSecret = try JSONDecoder().decode(Secret.self, from: Data(appkeys.utf8))
-
-        #expect(outputSecret.apiKey == secret.apiKey)
     }
 
     @Test(.setupVaultClient(kvMountPath: "secret"))

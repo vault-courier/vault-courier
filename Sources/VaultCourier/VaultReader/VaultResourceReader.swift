@@ -161,6 +161,70 @@ extension VaultResourceReader {
             throw VaultClientError.readingConfigurationFailed()
         }
     }
+
+    /// The file path to the pkl ModuleSource
+    public func readConfiguration(
+        filepath: String
+    ) async throws -> String {
+        do {
+            let output = try await withEvaluatorManager(isolation: client) { manager in
+                let readerOptions = EvaluatorOptions.preconfigured
+                    .withResourceReader(self)
+
+                return try await manager.withEvaluator(options: readerOptions) { evaluator in
+                    return try await evaluator.evaluateOutputText(source: .path(filepath))
+                }
+            }
+
+            return output
+        } catch let error as PklSwift.PklError {
+            logger.debug(.init(stringLiteral: String(describing: error.message)))
+            throw VaultClientError.readingConfigurationFailed()
+        }
+    }
+
+    public func readConfiguration(
+        text: String
+    ) async throws -> String {
+        do {
+            let output = try await withEvaluatorManager(isolation: client) { manager in
+                let readerOptions = EvaluatorOptions.preconfigured
+                    .withResourceReader(self)
+
+                return try await manager.withEvaluator(options: readerOptions) { evaluator in
+                    return try await evaluator.evaluateOutputText(source: .text(text))
+                }
+            }
+
+            return output
+        } catch let error as PklSwift.PklError {
+            logger.debug(.init(stringLiteral: String(describing: error.message)))
+            throw VaultClientError.readingConfigurationFailed()
+        }
+    }
+
+    public func readConfiguration<T>(
+        source: ModuleSource,
+        expression: String,
+        as type: T.Type,
+    ) async throws -> T
+    where T: Decodable & Sendable {
+        do {
+            let output = try await withEvaluatorManager(isolation: client) { manager in
+                let readerOptions = EvaluatorOptions.preconfigured
+                    .withResourceReader(self)
+
+                return try await manager.withEvaluator(options: readerOptions) { evaluator in
+                    return try await evaluator.evaluateExpression(source: source, expression: expression, as: type)
+                }
+            }
+
+            return output
+        } catch let error as PklSwift.PklError {
+            logger.debug(.init(stringLiteral: String(describing: error.message)))
+            throw VaultClientError.readingConfigurationFailed()
+        }
+    }
 }
 
 
