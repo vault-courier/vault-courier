@@ -22,7 +22,7 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 
-@testable import VaultCourier
+import VaultCourier
 
 @Suite
 struct VaultClientTests {

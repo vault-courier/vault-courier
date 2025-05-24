@@ -23,7 +23,7 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 
-@testable import VaultCourier
+import VaultCourier
 
 extension IntegrationTests.Auth.AppRole {
     @Test

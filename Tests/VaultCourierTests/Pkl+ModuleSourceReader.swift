@@ -28,7 +28,7 @@ import struct Foundation.Data
 #endif
 import PklSwift
 
-@testable import VaultCourier
+import VaultCourier
 
 extension IntegrationTests.Pkl.ModuleSourceReader {
     @Test

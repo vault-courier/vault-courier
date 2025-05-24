@@ -16,7 +16,7 @@
 
 import Testing
 
-@testable import VaultCourier
+import VaultCourier
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else

@@ -28,7 +28,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 
-@testable import VaultCourier
+import VaultCourier
 
 extension Tag {
     @Tag static var integration: Self
