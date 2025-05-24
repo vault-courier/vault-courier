@@ -14,8 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
-
 extension VaultClient {
     public func create(
         staticRole: CreateDatabaseStaticRole,

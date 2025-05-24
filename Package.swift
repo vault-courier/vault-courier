@@ -17,7 +17,7 @@ import PackageDescription
 
 let PklTrait: Trait = .trait(
     name: "Pkl",
-    description: "Enable Pkl Resource Reader. This provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
+    description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
 )
 
 let package = Package(
@@ -43,8 +43,6 @@ let package = Package(
             name: "VaultCourier",
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
-                .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
-                .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
             ],

@@ -17,7 +17,6 @@
 #if Pkl
 import Testing
 
-import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else

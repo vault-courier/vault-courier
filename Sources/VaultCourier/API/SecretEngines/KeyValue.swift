@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
+import struct OpenAPIRuntime.OpenAPIObjectContainer
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 import protocol Foundation.LocalizedError
