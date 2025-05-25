@@ -52,10 +52,10 @@ public final class VaultResourceReader<
     let databaseReaderParser: DatabaseStrategy
 
     init(client: VaultClient,
-            scheme: String,
-            keyValueReaderParser: KeyValueStrategy,
-            databaseReaderParser: DatabaseStrategy,
-            backgroundActivityLogger: Logging.Logger? = nil) {
+         scheme: String,
+         keyValueReaderParser: KeyValueStrategy,
+         databaseReaderParser: DatabaseStrategy,
+         backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
         self.logger = backgroundActivityLogger ?? Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
@@ -63,6 +63,8 @@ public final class VaultResourceReader<
         self.databaseReaderParser = databaseReaderParser
     }
 }
+
+// MARK: ResourceReader
 
 extension VaultResourceReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
@@ -106,6 +108,15 @@ extension VaultResourceReader: ResourceReader {
 }
 
 extension VaultResourceReader {
+    
+    /// Reads a Pkl module and decodes it into the specified type.
+    ///
+    /// This function loads and evaluates the provided Pkl module, then decodes the result into an instance of the given type.
+    ///
+    /// - Parameters:
+    ///   - source: The Pkl module to read and evaluate.
+    ///   - type: The expected output type to decode the module into.
+    /// - Returns: An instance of the specified type decoded from the module output.
     public func readConfiguration<T>(
         source: ModuleSource,
         as type: T.Type,
@@ -132,7 +143,9 @@ extension VaultResourceReader {
         }
     }
 
-    /// The file path to the pkl ModuleSource
+    /// Reads a Pkl module and decodes it into a String
+    /// - Parameter filepath: The filepath to the Pkl module
+    /// - Returns: The module source decoded into a string
     public func readConfiguration(
         filepath: String
     ) async throws -> String {
@@ -143,6 +156,9 @@ extension VaultResourceReader {
         )
     }
 
+    /// Reads a Pkl module and decodes it into a String
+    /// - Parameter text: A text representation of the Pkl module
+    /// - Returns: The module source decoded into a string
     public func readConfiguration(
         text: String
     ) async throws -> String {
@@ -153,6 +169,17 @@ extension VaultResourceReader {
         )
     }
 
+    
+    /// Reads a Pkl module, applies an expression to it, and decodes the result into the specified type.
+    ///
+    /// This method loads the provided Pkl module, evaluates the given Pkl expression within the context of the module,
+    /// and decodes the resulting value into an instance of the specified type.
+    ///
+    /// - Parameters:
+    ///   - source: The Pkl module to load and evaluate.
+    ///   - expression: A Pkl expression to apply to the loaded module (e.g., accessing a specific property).
+    ///   - type: The type to decode the evaluated result into.
+    /// - Returns: A value of the specified type decoded from the result of the evaluated expression.
     public func readConfiguration<T>(
         source: ModuleSource,
         expression: String,
@@ -178,16 +205,18 @@ extension VaultResourceReader {
 }
 
 extension VaultClient {
-    /// Creates a custom resource reader for Pkl configuration files using this VaultClient instance.
-    /// It uses the client's token and defined secret mounts to fetch the resources on those paths.
+    /// Creates a custom resource reader for Pkl configuration files using this `VaultClient` instance.
+    /// The reader uses the client's token and configured secret engine mounts to fetch resources from Vault.
     ///
-    /// Example of a declaration of a Pkl resource
+    /// For example, if a `VaultClient` is initialized with a Key-Value mount at `/path/to/secrets`,
+    /// you can access version 2 of the secret at the path `key` from a Pkl file like this:
+    ///
     /// ```
     /// appKeys = read("vault:/path/to/secrets/key?version=2").text
     /// ```
     ///
-    /// - Parameter scheme: The scheme that they are responsible for reading. It defaults to `vault`.
-    /// - Returns: Vault resource reader
+    /// - Parameter scheme: The URL scheme this reader handles. Defaults to `vault`.
+    /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeResourceReader(
         scheme: String = "vault"
     ) -> VaultResourceReader<KeyValueReaderParser, DatabaseReaderParser> {
@@ -200,15 +229,15 @@ extension VaultClient {
     }
 
     
-    /// Creates a custom resource reader for Pkl configuration files using this VaultClient instance.
+    /// Creates a custom resource reader for Pkl configuration files using this `VaultClient` instance.
     ///
-    /// It uses the client's token, and the respective ``ResourceReaderStrategy`` to parse the secret mounts that it uses on the requests.
+    /// The reader uses the client's session token, and the respective ``ResourceReaderStrategy`` to parse the secret mounts. These parsed mounts are used in the requests.
     ///
     /// - Parameters:
-    ///   - scheme: The scheme that they are responsible for reading. It defaults to `vault`.
-    ///   - keyValueReaderParser: The strategy for parsing a key/value mount URL.
+    ///   - scheme: The URL scheme this reader handles. Defaults to `vault`.
+    ///   - keyValueReaderParser: The strategy for parsing a Key-Value mount URL.
     ///   - databaseReaderParser: The strategy for parsing a database mount URL
-    /// - Returns: Vault resource reader
+    /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeResourceReader<
         KeyValueStrategy: KeyValueResourceReaderStrategy,
         DatabaseStrategy: DatabaseResourceReaderStrategy
@@ -233,169 +262,4 @@ extension VaultClient {
         .mount(mounts.database.relativePath.removeSlash())
     }
 }
-
-public protocol ResourceReaderStrategy {
-    /// The type of the data type.
-    associatedtype ParseOutput: Sendable
-
-    func parse(_ url: URL) throws -> ParseOutput
-}
-
-public protocol KeyValueResourceReaderStrategy: ResourceReaderStrategy, Sendable {
-    /// Parses URL into the parameters the vault client needs to fetch a key/value secret.
-    /// - Parameter url: URL to parse
-    /// - Returns: Returns `nil` if its not a URL for a KeyValue resource. Otherwise, it returns the parameters needed to call a key/value secret endpoint.
-    func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)?
-}
-
-extension KeyValueResourceReaderStrategy where Self == KeyValueReaderParser {
-    /// Strategy to parse KeyValue resource which expects a URL prefixed with the given `mount`
-    public static func mount(_ mount: String) -> KeyValueReaderParser {
-        .init(mount: mount)
-    }
-}
-
-extension KeyValueResourceReaderStrategy where Self == KeyValueDataPathParser {
-    /// Strategy to parse KeyValue resource which splits paths by the path "/data/"
-    public static var splitUponDataPathElement: KeyValueDataPathParser {
-        .init()
-    }
-}
-
-public protocol DatabaseResourceReaderStrategy: ResourceReaderStrategy, Sendable {
-    /// Parses URL into the parameters the vault client needs to fetch a database secret.
-    /// - Parameter url: URL to parse
-    /// - Returns: Returns `nil` if its not a URL for a database resource. Otherwise, it returns the parameters needed to call a database secret endpoint.
-    func parse(_ url: URL) throws -> (mount: String, role: DatabaseRole)?
-}
-
-extension DatabaseResourceReaderStrategy where Self == DatabaseReaderParser {
-    /// Strategy to parse Database resource which expects a URL prefixed with the given `mount`
-    public static func mount(_ mount: String) -> DatabaseReaderParser {
-        .init(mount: mount)
-    }
-}
-
-public struct KeyValueReaderParser: KeyValueResourceReaderStrategy, Sendable {
-    /// Mount path of Key/Value secret
-    let mount: String
-
-    public init(mount: String) {
-        self.mount = mount.removeSlash()
-    }
-
-    public func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)? {
-        let relativePath = url.relativePath.removeSlash()
-
-        if relativePath.starts(with: mount) {
-            let query = url.query()
-            let key = String(relativePath.suffix(from: mount.endIndex).dropFirst())
-            guard !key.isEmpty else {
-                throw VaultReaderError.invalidKeyValueURL(relativePath)
-            }
-
-            let version: Int? = if let query {
-                Int(query.dropFirst("version=".count))
-            } else {
-                nil
-            }
-
-            return (mount: mount, key: key, version: version)
-        } else {
-            return nil
-        }
-    }
-}
-
-/// Strategy to parse KeyValue resource which splits paths by "/data/"
-public struct KeyValueDataPathParser: KeyValueResourceReaderStrategy {
-    public init() {}
-
-    public func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)? {
-        let relativePath = url.relativePath.removeSlash()
-        let components = relativePath.split(separator: "/data/", maxSplits: 2).map({String($0)})
-        guard components.count == 2,
-              let mount = components.first,
-              let key = components.last else {
-            return nil
-        }
-
-        let version: Int? = if let query = url.query() {
-            Int(query.dropFirst("version=".count))
-        } else {
-            nil
-        }
-
-        return (mount, key, version)
-    }
-}
-
-public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
-    /// Mount path to Database secrets
-    let mount: String
-
-    public init(mount: String) {
-        self.mount = mount.removeSlash()
-    }
-
-    public func parse(_ url: URL) throws -> (mount: String, role: DatabaseRole)? {
-        let relativePath = url.relativePath.removeSlash()
-        if relativePath.starts(with: mount) {
-            let databasePath = relativePath.suffix(from: mount.endIndex)
-            if databasePath.hasPrefix("/static-creds/") {
-                let roleName = try split(url: url, separator: "/static-creds/")
-                return (mount, .static(name: roleName))
-            } else if databasePath.hasPrefix("/creds/") {
-                let roleName = try split(url: url, separator: "/creds/")
-                return (mount, .dynamic(name: roleName))
-            } else {
-                throw VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
-            }
-        } else {
-            return nil
-        }
-    }
-
-    /// Returns role name
-    func split(url: URL, separator: String) throws -> String {
-        let relativePath = url.relativePath.removeSlash()
-        let components = relativePath.split(separator: separator, maxSplits: 2).map({String($0)})
-        guard components.count == 2,
-              let roleName = components.last else {
-            throw VaultReaderError.invalidDatabaseCredential(path: url.relativePath)
-        }
-        return roleName
-    }
-}
-
-public enum DatabaseRole: Sendable {
-    case `static`(name: String)
-    case `dynamic`(name: String)
-}
-
-public struct VaultReaderError: Error, Sendable {
-    public var message: String
-
-    static func readingConfigurationFailed() -> VaultClientError {
-        .init(message: "Reading module failed")
-    }
-
-    static func invalidKeyValueURL(_ relativePath: String) -> VaultClientError {
-        .init(message: "Invalid key-value relative path: \(relativePath).")
-    }
-
-    static func invalidDatabaseCredential(path: String) -> VaultClientError {
-        .init(message: "Invalid database credential path: \(path).")
-    }
-
-    static func readingUnsupportedEngine(_ relativePath: String) -> VaultClientError {
-        .init(message: "Reading unsupported vault engine or path: \(relativePath).")
-    }
-
-    static func readingUnsupportedDatabaseEndpoint(_ relativePath: String) -> VaultClientError {
-        .init(message: "Reading unsupported database endpoint: \(relativePath)")
-    }
-}
-
-
 #endif
