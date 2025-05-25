@@ -56,7 +56,7 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
         let schema = "vault"
         let sut = await vaultClient.makeResourceReader(scheme: schema)
         let output = try await sut.readConfiguration(text:"""
-        appKeys = read("\(schema):/path/to/secrets/key?query=api_key").text
+        appKeys = read("\(schema):/path/to/secrets/key?version=2").text
         """)
         // Note: Pkl adds `\#n"` at the end of the file
         let expected = #"appKeys = "{\"\#(secret)\":\"\#(value)\"}"\#n"#

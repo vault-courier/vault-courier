@@ -29,7 +29,7 @@ import Logging
 extension ModuleSource: @unchecked Sendable { }
 
 public final class VaultResourceReader: Sendable {
-    /// Underlying Vault client which holds the secret mount paths
+    /// Vault client containing the base URL and secret engine mount paths used for requests.
     let client: VaultClient
 
     /// Each URI begins with a scheme name that refers to a specification for
@@ -44,34 +44,42 @@ public final class VaultResourceReader: Sendable {
 
     static let loggingDisabled = Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
 
-    init(client: VaultClient,
-         scheme: String,
-         backgroundActivityLogger: Logging.Logger? = nil) {
+    let keyValueReaderParser: any KeyValueResourceReaderStrategy
+
+    let databaseReaderParser: any DatabaseResourceReader
+
+    init<T, U>(client: VaultClient,
+            scheme: String,
+            keyValueReaderParser: T,
+            databaseReaderParser: U,
+            backgroundActivityLogger: Logging.Logger? = nil)
+    where T: KeyValueResourceReaderStrategy, U: DatabaseResourceReader {
         self.client = client
         self.scheme = scheme
         self.logger = backgroundActivityLogger ?? VaultResourceReader.loggingDisabled
+        self.keyValueReaderParser = keyValueReaderParser
+        self.databaseReaderParser = databaseReaderParser
     }
 }
 
 extension VaultResourceReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
-        let mountPath = url.relativePath.removeSlash()
-        let kvMountPath = client.mounts.kv.relativePath.removeSlash()
-        let databaseMountPath = client.mounts.database.relativePath.removeSlash()
-
-        if mountPath.starts(with: kvMountPath) {
-            return try await readKVSecret(relativePath: mountPath)
-        } else if mountPath.starts(with: databaseMountPath) {
-            let databasePath = mountPath.suffix(from: client.mounts.database.relativePath.endIndex)
-            if databasePath.hasPrefix("/static-creds/") {
-                return try await readStaticDatabaseCredential(relativePath: mountPath)
-            } else if databasePath.hasPrefix("/creds/") {
-                return try await readDatabaseCredential(relativePath: mountPath)
+        do {
+            if let (mount,key, version) = try keyValueReaderParser.parse(url) {
+                let buffer = try await client.readKeyValueSecretData(
+                    enginePath: mount.removeSlash(),
+                    key: key,
+                    version: version
+                )
+                return Array(buffer)
+            } else if let (mount, role) = try databaseReaderParser.parse(url) {
+                return try await readDatabaseCredential(mount: mount.removeSlash(), role: role)
             } else {
-                throw VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
+                throw VaultReaderError.readingUnsupportedEngine(url.relativePath)
             }
-        } else {
-            throw VaultReaderError.readingUnsupportedEngine(url.relativePath)
+        } catch {
+            logger.debug(.init(stringLiteral: String(reflecting: error)))
+            throw VaultReaderError.readingConfigurationFailed()
         }
     }
     
@@ -79,60 +87,19 @@ extension VaultResourceReader: ResourceReader {
         throw PklError("listElements(uri:) not implemented")
     }
 
-    func readKVSecret(relativePath: String) async throws -> [UInt8] {
-        let key = String(relativePath.suffix(from: client.mounts.kv.relativePath.endIndex).dropFirst())
-        guard !key.isEmpty else {
-            logger.error("missing key in url path")
-            throw VaultReaderError.invalidKeyValueURL(relativePath)
+    func readDatabaseCredential(mount: String, role: DatabaseRole) async throws -> [UInt8] {
+        let credentials: DatabaseCredentials
+        switch role {
+            case .static(let name):
+                let response = try await client.databaseCredentials(staticRole: name, enginePath: mount)
+                credentials = DatabaseCredentials(username: response.username, password: response.password)
+
+            case .dynamic(let name):
+                let response = try await client.databaseCredentials(dynamicRole: name, enginePath: mount)
+                credentials = DatabaseCredentials(username: response.username, password: response.password)
         }
-
-        do {
-            let buffer = try await client.readKeyValueSecretData(key: key)
-            return Array(buffer)
-        } catch {
-            logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw VaultReaderError.readingConfigurationFailed()
-        }
-    }
-
-    func readStaticDatabaseCredential(relativePath: String) async throws -> [UInt8] {
-        let components = relativePath.split(separator: "/static-creds/", maxSplits: 2).map({String($0)})
-        guard components.count == 2,
-              let enginePath = components.first,
-              let roleName = components.last else {
-            throw VaultReaderError.invalidDatabaseCredential(path: relativePath)
-        }
-
-        do {
-            let response = try await client.databaseCredentials(staticRole: roleName, enginePath: enginePath)
-            let credentials = DatabaseCredentials(username: response.username, password: response.password)
-            let data = try JSONEncoder().encode(credentials)
-
-            return Array(data)
-        } catch {
-            logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw VaultReaderError.readingConfigurationFailed()
-        }
-    }
-
-    func readDatabaseCredential(relativePath: String) async throws -> [UInt8] {
-        let components = relativePath.split(separator: "/creds/", maxSplits: 2).map({String($0)})
-        guard components.count == 2,
-              let enginePath = components.first,
-              let roleName = components.last else {
-            throw VaultReaderError.invalidDatabaseCredential(path: relativePath)
-        }
-
-        do {
-            let response = try await client.databaseCredentials(dynamicRole: roleName, enginePath: enginePath)
-            let credentials = DatabaseCredentials(username: response.username, password: response.password)
-            let data = try JSONEncoder().encode(credentials)
-
-            return Array(data)
-        } catch {
-            logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw VaultReaderError.readingConfigurationFailed()
-        }
+        let data = try JSONEncoder().encode(credentials)
+        return Array(data)
     }
 }
 
@@ -208,18 +175,127 @@ extension VaultResourceReader {
     }
 }
 
-
-final class ResourceReaderStrategy {
-
-}
-
 extension VaultClient {
+    /// Creates a custom resource reader for Pkl configuration files using this VaultClient instance.
+    /// It uses the client's token and defined secret mounts to fetch the resources on those paths.
+    ///
+    /// Example of a declaration of a Pkl resource
+    /// ```
+    /// appKeys = read("vault:/path/to/secrets/key?version=2").text
+    /// ```
+    ///
+    /// - Parameter scheme: The scheme that they are responsible for reading. It defaults to `vault`.
+    /// - Returns: Vault resource reader
     public func makeResourceReader(
         scheme: String = "vault"
     ) -> VaultResourceReader {
         .init(client: self,
-              scheme: scheme)
+              scheme: scheme,
+              keyValueReaderParser: KeyValueReaderParser(mount: mounts.kv.relativePath.removeSlash()),
+              databaseReaderParser: DatabaseReaderParser(mount: mounts.database.relativePath.removeSlash()))
     }
+}
+
+public protocol ResourceReaderStrategy: Sendable {
+    /// The type of the data type.
+    associatedtype ParseOutput
+
+    func parse(_ url: URL) throws -> ParseOutput
+}
+
+public protocol KeyValueResourceReaderStrategy: ResourceReaderStrategy {
+    /// Parses URL into the parameters the vault client needs to fetch a key/value secret.
+    /// - Parameter url: URL to parse
+    /// - Returns: Returns `nil` if its not a URL for a KeyValue resource. Otherwise, it returns the parameters needed to call a key/value secret endpoint.
+    func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)?
+}
+
+public protocol DatabaseResourceReader: ResourceReaderStrategy {
+    /// Parses URL into the parameters the vault client needs to fetch a database secret.
+    /// - Parameter url: URL to parse
+    /// - Returns: Returns `nil` if its not a URL for a database resource. Otherwise, it returns the parameters needed to call a database secret endpoint.
+    func parse(_ url: URL) throws -> (mount: String, role: DatabaseRole)?
+}
+
+public struct KeyValueReaderParser: KeyValueResourceReaderStrategy {
+    /// Mount path of Key/Value secret
+    let mount: String
+
+    public init(mount: String) {
+        self.mount = mount.removeSlash()
+    }
+
+    public func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)? {
+        let relativePath = url.relativePath.removeSlash()
+
+        if relativePath.starts(with: mount) {
+            let query = url.query()
+            let key = String(relativePath.suffix(from: mount.endIndex).dropFirst())
+            guard !key.isEmpty else {
+                throw VaultReaderError.invalidKeyValueURL(relativePath)
+            }
+
+            let version: Int? = if let query {
+                Int(query.dropFirst("version=".count))
+            } else {
+                nil
+            }
+
+            return (mount: mount, key: key, version: version)
+        } else {
+            return nil
+        }
+    }
+}
+
+/// Strategy to parse KeyValue resource which splits paths by "/data/"
+struct KeyValueDataParser: KeyValueResourceReaderStrategy {
+    func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)? {
+        fatalError("Not implemented")
+    }
+}
+
+public struct DatabaseReaderParser: DatabaseResourceReader {
+    /// Mount path to Database secrets
+    let mount: String
+
+    public init(mount: String) {
+        self.mount = mount.removeSlash()
+    }
+
+    public func parse(_ url: URL) throws -> (mount: String, role: DatabaseRole)? {
+        let relativePath = url.relativePath.removeSlash()
+        if relativePath.starts(with: mount) {
+            let databasePath = relativePath.suffix(from: mount.endIndex)
+            if databasePath.hasPrefix("/static-creds/") {
+                let roleName = try split(url: url, separator: "/static-creds/")
+                return (mount, .static(name: roleName))
+            } else if databasePath.hasPrefix("/creds/") {
+                let roleName = try split(url: url, separator: "/creds/")
+                return (mount, .dynamic(name: roleName))
+            } else {
+                throw VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
+            }
+        } else {
+            return nil
+        }
+    }
+
+    /// Returns role name
+    func split(url: URL, separator: String) throws -> String {
+        let relativePath = url.relativePath.removeSlash()
+        let components = relativePath.split(separator: separator, maxSplits: 2).map({String($0)})
+        guard components.count == 2,
+              let roleName = components.last else {
+            throw VaultReaderError.invalidDatabaseCredential(path: url.relativePath)
+        }
+        return roleName
+    }
+}
+
+public enum DatabaseRole: Sendable {
+    case `static`(name: String)
+    case `dynamic`(name: String)
 }
 
 public struct VaultReaderError: Error, Sendable {
