@@ -27,8 +27,7 @@ let package = Package(
         .library(name: "VaultCourier", targets: ["VaultCourier"]),
     ],
     traits: [
-        PklTrait,
-        .default(enabledTraits: .init([PklTrait.name]))
+        PklTrait
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.7.2"),
