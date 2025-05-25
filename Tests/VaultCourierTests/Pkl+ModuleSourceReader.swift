@@ -274,6 +274,86 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
 
         #expect(outputSecret.apiKey == secret.apiKey)
     }
+
+    struct ResourceReaderStrategy {
+        @Test
+        func kv_parse_strategy() async throws {
+            let keyValueMount = "/path/to/secrets"
+            let expectedKey = "key"
+            let expectedVersion = 2
+            let url =   URL(string: "vault:\(keyValueMount)/\(expectedKey)?version=\(expectedVersion)")!
+            let sut = KeyValueReaderParser(mount: keyValueMount)
+
+            // MUT
+            let (mount, key, version) = try #require(try sut.parse(url))
+
+            #expect(mount == keyValueMount.dropFirst())
+            #expect(key == expectedKey)
+            #expect(version == expectedVersion)
+        }
+
+        @Test
+        func kv_parse_strategy_by_data_path() async throws {
+            let keyValueMount = "/path/to/secrets"
+            let expectedKey = "key"
+            let expectedVersion = 2
+            let url =   URL(string: "vault:\(keyValueMount)/data/\(expectedKey)?version=\(expectedVersion)")!
+            let sut = KeyValueDataPathParser()
+
+            // MUT
+            let (mount, key, version) = try #require(try sut.parse(url))
+
+            #expect(mount == keyValueMount.dropFirst())
+            #expect(key == expectedKey)
+            #expect(version == expectedVersion)
+
+            guard try sut.parse(.init(string: "vault:secrets/key")!) == nil
+            else {
+                Issue.record("KeyValueDataPathParser should fail when path data is missing")
+                return
+            }
+        }
+
+        @Test
+        func database_parse_strategy_static_creds() async throws {
+            let databaseMount = "/path/to/database/mount"
+            let expectedRoleName = "test_static_role"
+            let url =   URL(string: "vault:\(databaseMount)/static-creds/\(expectedRoleName)")!
+            let sut = DatabaseReaderParser(mount: databaseMount)
+
+            // MUT
+            let (mount, role) = try #require(try sut.parse(url))
+
+            guard case .static(let roleName) = role
+            else {
+                Issue.record("Unexpected role type")
+                return
+            }
+
+            #expect(mount == databaseMount.dropFirst())
+            #expect(roleName == expectedRoleName)
+        }
+
+        @Test
+        func database_parse_strategy_dynamic_creds() async throws {
+            let databaseMount = "/path/to/database/mount"
+            let expectedRoleName = "test_dynamic_role"
+            let url =   URL(string: "vault:\(databaseMount)/creds/\(expectedRoleName)")!
+            let sut = DatabaseReaderParser(mount: databaseMount)
+
+            // MUT
+            let (mount, role) = try #require(try sut.parse(url))
+
+            guard case .dynamic(let roleName) = role
+            else {
+                Issue.record("Unexpected role type: \(role)")
+                return
+            }
+
+            #expect(mount == databaseMount.dropFirst())
+            #expect(roleName == expectedRoleName)
+        }
+    }
 }
 
 #endif
