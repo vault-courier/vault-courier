@@ -29,6 +29,7 @@ import Logging
 extension ModuleSource: @unchecked Sendable { }
 
 public final class VaultResourceReader: Sendable {
+    /// Underlying Vault client which holds the secret mount paths
     let client: VaultClient
 
     /// Each URI begins with a scheme name that refers to a specification for
@@ -166,41 +167,21 @@ extension VaultResourceReader {
     public func readConfiguration(
         filepath: String
     ) async throws -> String {
-        do {
-            let output = try await withEvaluatorManager(isolation: client) { manager in
-                let readerOptions = EvaluatorOptions.preconfigured
-                    .withResourceReader(self)
-
-                return try await manager.withEvaluator(options: readerOptions) { evaluator in
-                    return try await evaluator.evaluateOutputText(source: .path(filepath))
-                }
-            }
-
-            return output
-        } catch let error as PklSwift.PklError {
-            logger.debug(.init(stringLiteral: String(describing: error.message)))
-            throw VaultReaderError.readingConfigurationFailed()
-        }
+        try await readConfiguration(
+            source: .path(filepath),
+            expression: "output.text",
+            as: String.self
+        )
     }
 
     public func readConfiguration(
         text: String
     ) async throws -> String {
-        do {
-            let output = try await withEvaluatorManager(isolation: client) { manager in
-                let readerOptions = EvaluatorOptions.preconfigured
-                    .withResourceReader(self)
-
-                return try await manager.withEvaluator(options: readerOptions) { evaluator in
-                    return try await evaluator.evaluateOutputText(source: .text(text))
-                }
-            }
-
-            return output
-        } catch let error as PklSwift.PklError {
-            logger.debug(.init(stringLiteral: String(describing: error.message)))
-            throw VaultReaderError.readingConfigurationFailed()
-        }
+        try await readConfiguration(
+            source: .text(text),
+            expression: "output.text",
+            as: String.self
+        )
     }
 
     public func readConfiguration<T>(
