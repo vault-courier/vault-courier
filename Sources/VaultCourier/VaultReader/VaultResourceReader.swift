@@ -28,7 +28,10 @@ import Logging
 
 extension ModuleSource: @unchecked Sendable { }
 
-public final class VaultResourceReader: Sendable {
+public final class VaultResourceReader<
+    KeyValueStrategy: KeyValueResourceReaderStrategy,
+    DatabaseStrategy: DatabaseResourceReaderStrategy
+> : Sendable {
     /// Vault client containing the base URL and secret engine mount paths used for requests.
     let client: VaultClient
 
@@ -42,21 +45,20 @@ public final class VaultResourceReader: Sendable {
 
     let logger: Logging.Logger
 
-    static let loggingDisabled = Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+    /// Strategy for reading the component of key/value resources
+    let keyValueReaderParser: KeyValueStrategy
 
-    let keyValueReaderParser: any KeyValueResourceReaderStrategy
+    /// Strategy for reading the component of database resources
+    let databaseReaderParser: DatabaseStrategy
 
-    let databaseReaderParser: any DatabaseResourceReader
-
-    init<T, U>(client: VaultClient,
+    init(client: VaultClient,
             scheme: String,
-            keyValueReaderParser: T,
-            databaseReaderParser: U,
-            backgroundActivityLogger: Logging.Logger? = nil)
-    where T: KeyValueResourceReaderStrategy, U: DatabaseResourceReader {
+            keyValueReaderParser: KeyValueStrategy,
+            databaseReaderParser: DatabaseStrategy,
+            backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
-        self.logger = backgroundActivityLogger ?? VaultResourceReader.loggingDisabled
+        self.logger = backgroundActivityLogger ?? Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
         self.keyValueReaderParser = keyValueReaderParser
         self.databaseReaderParser = databaseReaderParser
     }
@@ -188,36 +190,93 @@ extension VaultClient {
     /// - Returns: Vault resource reader
     public func makeResourceReader(
         scheme: String = "vault"
-    ) -> VaultResourceReader {
-        .init(client: self,
-              scheme: scheme,
-              keyValueReaderParser: KeyValueReaderParser(mount: mounts.kv.relativePath.removeSlash()),
-              databaseReaderParser: DatabaseReaderParser(mount: mounts.database.relativePath.removeSlash()))
+    ) -> VaultResourceReader<KeyValueReaderParser, DatabaseReaderParser> {
+        .init(
+            client: self,
+            scheme: scheme,
+            keyValueReaderParser: useClientKeyValueMount(),
+            databaseReaderParser: useClientDatabaseMount()
+        )
+    }
+
+    
+    /// Creates a custom resource reader for Pkl configuration files using this VaultClient instance.
+    ///
+    /// It uses the client's token, and the respective ``ResourceReaderStrategy`` to parse the secret mounts that it uses on the requests.
+    ///
+    /// - Parameters:
+    ///   - scheme: The scheme that they are responsible for reading. It defaults to `vault`.
+    ///   - keyValueReaderParser: The strategy for parsing a key/value mount URL.
+    ///   - databaseReaderParser: The strategy for parsing a database mount URL
+    /// - Returns: Vault resource reader
+    public func makeResourceReader<
+        KeyValueStrategy: KeyValueResourceReaderStrategy,
+        DatabaseStrategy: DatabaseResourceReaderStrategy
+    >(
+        scheme: String = "vault",
+        keyValueReaderParser: KeyValueStrategy,
+        databaseReaderParser: DatabaseStrategy
+    ) -> VaultResourceReader<KeyValueStrategy, DatabaseStrategy> {
+        .init(
+            client: self,
+            scheme: scheme,
+            keyValueReaderParser: keyValueReaderParser,
+            databaseReaderParser: databaseReaderParser
+        )
+    }
+
+    public func useClientKeyValueMount() -> KeyValueReaderParser {
+        .mount(mounts.kv.relativePath.removeSlash())
+    }
+
+    public func useClientDatabaseMount() -> DatabaseReaderParser {
+        .mount(mounts.database.relativePath.removeSlash())
     }
 }
 
-public protocol ResourceReaderStrategy: Sendable {
+public protocol ResourceReaderStrategy {
     /// The type of the data type.
-    associatedtype ParseOutput
+    associatedtype ParseOutput: Sendable
 
     func parse(_ url: URL) throws -> ParseOutput
 }
 
-public protocol KeyValueResourceReaderStrategy: ResourceReaderStrategy {
+public protocol KeyValueResourceReaderStrategy: ResourceReaderStrategy, Sendable {
     /// Parses URL into the parameters the vault client needs to fetch a key/value secret.
     /// - Parameter url: URL to parse
     /// - Returns: Returns `nil` if its not a URL for a KeyValue resource. Otherwise, it returns the parameters needed to call a key/value secret endpoint.
     func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)?
 }
 
-public protocol DatabaseResourceReader: ResourceReaderStrategy {
+extension KeyValueResourceReaderStrategy where Self == KeyValueReaderParser {
+    /// Strategy to parse KeyValue resource which expects a URL prefixed with the given `mount`
+    public static func mount(_ mount: String) -> KeyValueReaderParser {
+        .init(mount: mount)
+    }
+}
+
+extension KeyValueResourceReaderStrategy where Self == KeyValueDataPathParser {
+    /// Strategy to parse KeyValue resource which splits paths by the path "/data/"
+    public static var splitUponDataPathElement: KeyValueDataPathParser {
+        .init()
+    }
+}
+
+public protocol DatabaseResourceReaderStrategy: ResourceReaderStrategy, Sendable {
     /// Parses URL into the parameters the vault client needs to fetch a database secret.
     /// - Parameter url: URL to parse
     /// - Returns: Returns `nil` if its not a URL for a database resource. Otherwise, it returns the parameters needed to call a database secret endpoint.
     func parse(_ url: URL) throws -> (mount: String, role: DatabaseRole)?
 }
 
-public struct KeyValueReaderParser: KeyValueResourceReaderStrategy {
+extension DatabaseResourceReaderStrategy where Self == DatabaseReaderParser {
+    /// Strategy to parse Database resource which expects a URL prefixed with the given `mount`
+    public static func mount(_ mount: String) -> DatabaseReaderParser {
+        .init(mount: mount)
+    }
+}
+
+public struct KeyValueReaderParser: KeyValueResourceReaderStrategy, Sendable {
     /// Mount path of Key/Value secret
     let mount: String
 
@@ -249,13 +308,29 @@ public struct KeyValueReaderParser: KeyValueResourceReaderStrategy {
 }
 
 /// Strategy to parse KeyValue resource which splits paths by "/data/"
-struct KeyValueDataParser: KeyValueResourceReaderStrategy {
-    func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)? {
-        fatalError("Not implemented")
+public struct KeyValueDataPathParser: KeyValueResourceReaderStrategy {
+    public init() {}
+
+    public func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)? {
+        let relativePath = url.relativePath.removeSlash()
+        let components = relativePath.split(separator: "/data/", maxSplits: 2).map({String($0)})
+        guard components.count == 2,
+              let mount = components.first,
+              let key = components.last else {
+            return nil
+        }
+
+        let version: Int? = if let query = url.query() {
+            Int(query.dropFirst("version=".count))
+        } else {
+            nil
+        }
+
+        return (mount, key, version)
     }
 }
 
-public struct DatabaseReaderParser: DatabaseResourceReader {
+public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
     /// Mount path to Database secrets
     let mount: String
 
