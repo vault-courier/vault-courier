@@ -50,8 +50,8 @@ extension IntegrationTests.Database {
             try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
 
             // MUT
-            guard let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, enginePath: enginePath),
-                  case .period(let period) =  response.rotation else {
+            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, enginePath: enginePath)
+            guard case .period(let period) =  response.rotation else {
                 Issue.record("Response does not correspond to given request")
                 return
             }
@@ -74,11 +74,7 @@ extension IntegrationTests.Database {
             // MUT
             try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
 
-            guard let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, enginePath: enginePath)
-            else {
-                Issue.record("Read dynamic role credentials failed")
-                return
-            }
+            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, enginePath: enginePath)
 
             // MUT
             try await vaultClient.deleteRole(name: dynamicRole.vaultRoleName, enginePath: enginePath)
@@ -96,14 +92,14 @@ extension IntegrationTests.Database {
                                                           databaseUsername: databaseRoleName,
                                                           databaseConnectionName: connectionName,
                                                           rotation: .period(.seconds(28 * 24 * 60 * 60)))
-
-                // MUT
                 try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
 
-                let url = pklFixtureUrl(for: "Sample1/appConfig2.pkl")
-
+                let sut = await vaultClient.makeResourceReader()
                 // MUT
-                let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
+                let output = try await sut.readConfiguration(
+                    source: .url(pklFixtureUrl(for: "Sample1/appConfig2.pkl")),
+                    as: AppConfig.Module.self
+                )
 
                 let databaseConfig = try #require(output.database)
                 let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))
@@ -122,13 +118,14 @@ extension IntegrationTests.Database {
                                                      creationStatements: [
                                                         "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
                                                      ])
-                // MUT
                 try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
 
-                let url = pklFixtureUrl(for: "Sample1/appConfig3.pkl")
-
+                let sut = await vaultClient.makeResourceReader()
                 // MUT
-                let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
+                let output = try await sut.readConfiguration(
+                    source: .url(pklFixtureUrl(for: "Sample1/appConfig3.pkl")),
+                    as: AppConfig.Module.self
+                )
 
                 let databaseConfig = try #require(output.database)
                 let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))

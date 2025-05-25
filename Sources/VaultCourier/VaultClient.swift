@@ -32,9 +32,6 @@ public actor VaultClient {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
         public let apiURL: URL
 
-        /// Name of the schema for the Pkl resource reader. It defaults to `vault`.
-        public let readerSchema: String
-
         /// Custom AppRole engine path in Vault. Defaults to `approle` when set to `nil`.
         public let appRolePath: String
 
@@ -51,14 +48,12 @@ public actor VaultClient {
         static let loggingDisabled = Logger(label: "vault-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
 
         public init(apiURL: URL,
-                    readerSchema: String? = nil,
                     appRolePath: String? = nil,
                     kvMountPath: String? = nil,
                     databaseMountPath: String? = nil,
                     backgroundActivityLogger: Logging.Logger? = nil,
                     middlewares: [any ClientMiddleware] = []) {
             self.apiURL = apiURL
-            self.readerSchema = readerSchema ?? "vault"
             self.appRolePath = appRolePath ?? "approle"
             self.kvMountPath = kvMountPath ?? "secret"
             self.databaseMountPath = databaseMountPath ?? "database"
@@ -87,14 +82,6 @@ public actor VaultClient {
 
     private var authMethod: AuthMethod
 
-    /// Each URI begins with a scheme name that refers to a specification for
-    /// assigning identifiers within that scheme.
-    public let scheme: String
-
-    public let isGlobbable: Bool = false
-
-    public let hasHierarchicalUris: Bool = true
-
     public init(configuration: Configuration,
                 clientTransport: any ClientTransport,
                 authentication: Authentication) {
@@ -113,7 +100,6 @@ public actor VaultClient {
             middlewares: configuration.middlewares
         )
         self.logger = configuration.backgroundActivityLogger
-        self.scheme = configuration.readerSchema
         self.mounts = .init(kv: .init(string: configuration.kvMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/secret", relativeTo: configuration.apiURL)!,
                             database: .init(string: configuration.databaseMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/database", relativeTo: configuration.apiURL)!,
                             appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)
@@ -133,7 +119,6 @@ public actor VaultClient {
 
         self.client = client
         self.logger = configuration.backgroundActivityLogger
-        self.scheme = configuration.readerSchema
         self.mounts = .init(kv: .init(string: configuration.kvMountPath, relativeTo: configuration.apiURL) ?? URL(string: "secret", relativeTo: configuration.apiURL)!,
                             database: .init(string: configuration.databaseMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/database", relativeTo: configuration.apiURL)!,
                             appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)

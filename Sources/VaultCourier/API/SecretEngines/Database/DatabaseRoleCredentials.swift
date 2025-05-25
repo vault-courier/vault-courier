@@ -35,7 +35,7 @@ extension VaultClient {
     public func databaseCredentials(
         staticRole: String,
         enginePath: String? = nil
-    ) async throws -> StaticRoleCredentialsResponse? {
+    ) async throws -> StaticRoleCredentialsResponse {
         let enginePath = enginePath ?? self.mounts.database.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
@@ -51,14 +51,14 @@ extension VaultClient {
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
+                throw VaultClientError.badRequest(errors)
             case .internalServerError(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                return nil
+                throw VaultClientError.internalServerError(errors)
             case .undocumented(let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                return nil
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 
@@ -71,7 +71,7 @@ extension VaultClient {
     public func databaseCredentials(
         dynamicRole: String,
         enginePath: String? = nil
-    ) async throws -> RoleCredentialsResponse? {
+    ) async throws -> RoleCredentialsResponse {
         let enginePath = enginePath ?? self.mounts.database.relativePath.removeSlash()
         let sessionToken = try sessionToken()
 
@@ -87,14 +87,14 @@ extension VaultClient {
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
+                throw VaultClientError.badRequest(errors)
             case .internalServerError(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                return nil
+                throw VaultClientError.internalServerError(errors)
             case .undocumented(let statusCode, _):
                 logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                return nil
+                throw VaultClientError.operationFailed(statusCode)
         }
     }
 }

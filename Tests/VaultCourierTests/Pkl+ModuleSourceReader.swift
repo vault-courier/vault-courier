@@ -44,19 +44,19 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
             )
         }
 
-        let schema = "vault"
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: schema,
-                kvMountPath: "/path/to/secrets",
-                backgroundActivityLogger: .init(label: "vault-client")
+                kvMountPath: "/path/to/secrets"
         )
         let vaultClient = VaultClient(configuration: config,
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(text:"""
-        appKeys = read("\(schema):/path/to/secrets/key?query=api_key").text
+
+        let schema = "vault"
+        let sut = await vaultClient.makeResourceReader(scheme: schema)
+        let output = try await sut.readConfiguration(text:"""
+        appKeys = read("\(schema):/path/to/secrets/key?version=2").text
         """)
         // Note: Pkl adds `\#n"` at the end of the file
         let expected = #"appKeys = "{\"\#(secret)\":\"\#(value)\"}"\#n"#
@@ -79,7 +79,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(text:"""
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(text:"""
         appKeys = read("vault:/secret/key").text
         """)
         // Note: Pkl adds `\#n"` at the end of the file
@@ -111,7 +114,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
             databaseCredentials: String = read("vault:/database/static-creds/qa_role").text
             """),
@@ -144,17 +150,19 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
 
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: "vault",
-                databaseMountPath: "path/to/database/secrets",
-                backgroundActivityLogger: .init(label: "vault-client")
+                databaseMountPath: "path/to/database/secrets"
         )
         let vaultClient = VaultClient(configuration: config,
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let scheme = "vault"
+        let sut = await vaultClient.makeResourceReader(scheme: scheme)
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
-            databaseCredentials: String = read("vault:/path/to/database/secrets/static-creds/qa_role").text
+            databaseCredentials: String = read("\(scheme):/path/to/database/secrets/static-creds/qa_role").text
             """),
             as: DatabaseSecret.self)
 
@@ -185,7 +193,6 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
 
         let config = VaultClient.Configuration(
                 apiURL: localApiURL,
-                readerSchema: "vault",
                 databaseMountPath: "path/to/database/secrets",
                 backgroundActivityLogger: .init(label: "vault-client")
         )
@@ -193,7 +200,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
             databaseCredentials: String = read("vault:/path/to/database/secrets/creds/qa_role").text
             """),
@@ -228,7 +238,10 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
                                       client: client,
                                       authentication: .token("vault_token"))
         try await vaultClient.authenticate()
-        let output = try await vaultClient.readConfiguration(
+
+        let sut = await vaultClient.makeResourceReader()
+        // MUT
+        let output = try await sut.readConfiguration(
             source: .text("""
             databaseCredentials: String = read("vault:/database/creds/qa_role").text
             """),
@@ -239,8 +252,8 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
         #expect(secrets.password == password)
     }
 
-    @Test
-    func read_kv_secret_from_module_source() async throws {
+    @Test(.setupVaultClient(kvMountPath: "secret"))
+    func default_vault_resource_reader() async throws {
         struct Secret: Codable {
             var apiKey: String
         }
@@ -252,13 +265,94 @@ extension IntegrationTests.Pkl.ModuleSourceReader {
 
         let url = pklFixtureUrl(for: "Sample1/appConfig1.pkl")
 
+        let sut = await vaultClient.makeResourceReader()
+        
         // MUT
-        let output = try await vaultClient.readConfiguration(source: .url(url), as: AppConfig.Module.self)
-
+        let output = try await sut.readConfiguration(source: .url(url), as: AppConfig.Module.self)
         let appkeys = try #require(output.appKeys)
         let outputSecret = try JSONDecoder().decode(Secret.self, from: Data(appkeys.utf8))
 
         #expect(outputSecret.apiKey == secret.apiKey)
+    }
+
+    struct ResourceReaderStrategy {
+        @Test
+        func kv_parse_strategy() async throws {
+            let keyValueMount = "/path/to/secrets"
+            let expectedKey = "key"
+            let expectedVersion = 2
+            let url =   URL(string: "vault:\(keyValueMount)/\(expectedKey)?version=\(expectedVersion)")!
+            let sut = KeyValueReaderParser(mount: keyValueMount)
+
+            // MUT
+            let (mount, key, version) = try #require(try sut.parse(url))
+
+            #expect(mount == keyValueMount.dropFirst())
+            #expect(key == expectedKey)
+            #expect(version == expectedVersion)
+        }
+
+        @Test
+        func kv_parse_strategy_by_data_path() async throws {
+            let keyValueMount = "/path/to/secrets"
+            let expectedKey = "key"
+            let expectedVersion = 2
+            let url =   URL(string: "vault:\(keyValueMount)/data/\(expectedKey)?version=\(expectedVersion)")!
+            let sut = KeyValueDataPathParser()
+
+            // MUT
+            let (mount, key, version) = try #require(try sut.parse(url))
+
+            #expect(mount == keyValueMount.dropFirst())
+            #expect(key == expectedKey)
+            #expect(version == expectedVersion)
+
+            guard try sut.parse(.init(string: "vault:secrets/key")!) == nil
+            else {
+                Issue.record("KeyValueDataPathParser should fail when path data is missing")
+                return
+            }
+        }
+
+        @Test
+        func database_parse_strategy_static_creds() async throws {
+            let databaseMount = "/path/to/database/mount"
+            let expectedRoleName = "test_static_role"
+            let url =   URL(string: "vault:\(databaseMount)/static-creds/\(expectedRoleName)")!
+            let sut = DatabaseReaderParser(mount: databaseMount)
+
+            // MUT
+            let (mount, role) = try #require(try sut.parse(url))
+
+            guard case .static(let roleName) = role
+            else {
+                Issue.record("Unexpected role type")
+                return
+            }
+
+            #expect(mount == databaseMount.dropFirst())
+            #expect(roleName == expectedRoleName)
+        }
+
+        @Test
+        func database_parse_strategy_dynamic_creds() async throws {
+            let databaseMount = "/path/to/database/mount"
+            let expectedRoleName = "test_dynamic_role"
+            let url =   URL(string: "vault:\(databaseMount)/creds/\(expectedRoleName)")!
+            let sut = DatabaseReaderParser(mount: databaseMount)
+
+            // MUT
+            let (mount, role) = try #require(try sut.parse(url))
+
+            guard case .dynamic(let roleName) = role
+            else {
+                Issue.record("Unexpected role type: \(role)")
+                return
+            }
+
+            #expect(mount == databaseMount.dropFirst())
+            #expect(roleName == expectedRoleName)
+        }
     }
 }
 
