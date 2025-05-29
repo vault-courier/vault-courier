@@ -52,11 +52,11 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
                 appRolePath: appRolePath,
                 kvMountPath: kvMountPath,
                 databaseMountPath: databaseMountPath,
-                backgroundActivityLogger: logger,
-                middlewares: middlewares),
+                backgroundActivityLogger: logger),
             client: Client(
                 serverURL: apiURL,
-                transport: AsyncHTTPClientTransport()
+                transport: AsyncHTTPClientTransport(),
+                middlewares: middlewares
             ),
             authentication: .token(token))
         try await vaultClient.authenticate()
@@ -118,15 +118,13 @@ struct MockVaultClient: SuiteTrait, TestTrait, TestScoping {
     let kvMountPath: String?
     let databaseMountPath: String?
     let logger: Logger?
-    let middlewares: [any ClientMiddleware]
 
     func setupClient() async throws -> VaultClient {
         let vaultClient = VaultClient(configuration: .init(apiURL: apiURL,
                                                            appRolePath: appRolePath,
                                                            kvMountPath: kvMountPath,
                                                            databaseMountPath: databaseMountPath,
-                                                           backgroundActivityLogger: logger,
-                                                           middlewares: middlewares),
+                                                           backgroundActivityLogger: logger),
                                       client: MockClient(),
                                       authentication: .token(token))
         return vaultClient
@@ -146,14 +144,12 @@ extension TestTrait where Self == MockVaultClient {
                                      appRolePath: String? = nil,
                                      kvMountPath: String? = nil,
                                      databaseMountPath: String? = nil,
-                                     logger: Logger? = nil,
-                                     middlewares: [any ClientMiddleware] = []) -> Self {
+                                     logger: Logger? = nil) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
                     appRolePath: appRolePath,
                     kvMountPath: kvMountPath,
                     databaseMountPath: databaseMountPath,
-                    logger: logger,
-                    middlewares: middlewares)
+                    logger: logger)
     }
 }

@@ -33,7 +33,7 @@ extension EnableSecretMountConfig {
         self.init(
             mountType: mountType.rawValue,
             path: path,
-            description: nil,
+            description: module.description,
             config: config,
             options: options,
             local: local,

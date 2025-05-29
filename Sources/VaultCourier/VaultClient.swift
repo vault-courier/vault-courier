@@ -43,22 +43,18 @@ public actor VaultClient {
 
         public let backgroundActivityLogger: Logging.Logger
 
-        public var middlewares: [any ClientMiddleware]
-
         static let loggingDisabled = Logger(label: "vault-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
 
         public init(apiURL: URL,
                     appRolePath: String? = nil,
                     kvMountPath: String? = nil,
                     databaseMountPath: String? = nil,
-                    backgroundActivityLogger: Logging.Logger? = nil,
-                    middlewares: [any ClientMiddleware] = []) {
+                    backgroundActivityLogger: Logging.Logger? = nil) {
             self.apiURL = apiURL
             self.appRolePath = appRolePath ?? "approle"
             self.kvMountPath = kvMountPath ?? "secret"
             self.databaseMountPath = databaseMountPath ?? "database"
             self.backgroundActivityLogger = backgroundActivityLogger ?? Self.loggingDisabled
-            self.middlewares = middlewares
         }
     }
 
@@ -84,7 +80,8 @@ public actor VaultClient {
 
     public init(configuration: Configuration,
                 clientTransport: any ClientTransport,
-                authentication: Authentication) {
+                authentication: Authentication,
+                middlewares: [any ClientMiddleware] = []) {
         switch authentication {
             case let .appRole(credentials, isWrapped):
                 self.authState = isWrapped ? .wrapped(credentials) : .unwrapped(credentials)
@@ -97,7 +94,7 @@ public actor VaultClient {
         self.client = Client(
             serverURL: configuration.apiURL,
             transport: clientTransport,
-            middlewares: configuration.middlewares
+            middlewares: middlewares
         )
         self.logger = configuration.backgroundActivityLogger
         self.mounts = .init(kv: .init(string: configuration.kvMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/secret", relativeTo: configuration.apiURL)!,
