@@ -25,7 +25,7 @@ It's the responsibility of the operations team to configure these dynamic secret
                 
                 You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.
                 
-                @Code(name: "Terminal Tab 1", file: postgres-dynamic-role.console.0.txt, reset: true)
+                @Code(name: "Terminal Tab 1", file: start-vault.console.0.txt, reset: true)
             }
             
             @Step {

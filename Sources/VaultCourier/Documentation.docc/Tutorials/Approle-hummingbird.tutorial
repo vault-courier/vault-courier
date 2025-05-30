@@ -192,7 +192,7 @@
     }
     
     @Section(title: "Migrator App") {
-        In this section, we'll create the final app of this tutorial: the `Migrator` app. It will perform high-privilege tasks in the database, in particular it creates the Todos table.
+        In this section, we'll create the final app of this tutorial: the `Migrator` app. It will perform high-privilege tasks in the database, in particular it creates the `todos` table.
         
         @Steps {
             @Step {
@@ -226,6 +226,75 @@
                 This finishes the Migrator app. We are now ready to run our applications.  We'll do this in the next section.
                 
                 @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.3.swift, previousFile:  hummingbird.2.1.2.swift)
+            }
+        }
+    }
+    
+    @Section(title: "Run Lab") {
+        This last section of this tutorial will set up the lab to run our applications. You need the HashiCorpVault or OpenBao binary installed in your system `PATH`, as well as Docker installed.
+        
+        @Steps {
+            @Step {
+                Open a terminal and start a Vault dev server with the literal string `education` as the root token value.
+                
+                You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.
+                
+                @Code(name: "Terminal Tab 1", file: start-vault.console.0.txt, reset: true)
+            }
+            
+            @Step {
+                Open a **new terminal** and start a PostgreSQL database with docker with a root user named `vault_root` and password `root_password`.
+                
+                **Note**: In production, it's important to create a _dedicated role_ for Vault, separate from the general admin role. This allows you to rotate the Vault user's password after setup to avoid relying on the initial credentials — but once rotated, only Vault knows the new password.
+                Failing to separate these roles can result in the root admin being locked out of the database.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.0.sh)
+            }
+            
+            @Step {
+                Create a database role for the `Todo` app, and grant access to the database.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.1.sh, previousFile: hummingbird.console.1.0.sh)
+            }
+            
+            @Step {
+                In the terminal go to root folder of the modified `todos-postgres-tutorial` and run the `admin-vault` command line tool. First run the provision
+                
+                You can of course run this and the following commands in your favourite IDE.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.0.sh, reset: true)
+            }
+            
+            @Step {
+                Run the approle credentials generation for the Migrator app 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.1.sh, previousFile: hummingbird.console.2.0.sh)
+            }
+            
+            @Step {
+                Run the the Migrator app. Don't forget to add the Env variables. 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.2.sh, previousFile: hummingbird.console.2.1.sh)
+            }
+            
+            @Step {
+                Run the approle credentials generation for the Todo app. 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.3.sh, previousFile: hummingbird.console.2.2.sh)
+            }
+            
+            @Step {
+                Run the the Todo app. Again, don't forget to add the Env variables. We have successfully integrated VaultCourier into the Todo app! 🥳
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.4.sh, previousFile: hummingbird.console.2.3.sh)
+            }
+            
+            @Step {
+                Open a new Terminal and try creating a Todo. As we can see our App has access to the database.
+                
+                You can also open your browser `http://localhost:8080/todos`.
+                
+                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh)
             }
         }
     }
