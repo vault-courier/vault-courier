@@ -9,6 +9,12 @@
         @TutorialReference(tutorial: "doc:Understand-dynamic-roles")
     }
     
+    @Chapter(name: "AppRole with Hummingbird server") {
+        Understand AppRole authentication by extending [Hummingbird's Todo Application](https://docs.hummingbird.codes/2.0/tutorials/todos).
+        
+        @TutorialReference(tutorial: "doc:Approle-hummingbird")
+    }
+    
     @Resources {
         Explore more resources for learning about VaultCourier.
 
