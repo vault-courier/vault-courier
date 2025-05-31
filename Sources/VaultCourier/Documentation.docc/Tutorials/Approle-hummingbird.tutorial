@@ -33,6 +33,8 @@
         2. **Database credential management via Vault:** Vault issues database credentials, including:
             - A static role for the Todo app.
             - Dynamic credentials for the Migrator app, which needs short-term access with higher privileges. Dynamic credentials are well-suited for batch tasks like migrations. Vault generates short-lived usernames and passwords and removes them when they expire.
+            
+            In both cases, we'll use **VaultCourier** to interact with Vault and carry out this plan.
 
         ### Personas
 

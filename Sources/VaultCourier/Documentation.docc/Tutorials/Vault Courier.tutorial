@@ -21,6 +21,14 @@
         @TutorialReference(tutorial: "doc:Approle-hummingbird")
     }
     
+    @Chapter(name: "AppRole with Hummingbird server and Pkl") {
+        Scale Vault secret provisioning and consumption with Pkl. This chapter picks up where "AppRole with Hummingbird Server" left off.
+        
+        @Image(source: vault-courier-pkl.png, alt: "Image from chapter AppRole with Hummingbird server")
+                
+        @TutorialReference(tutorial: "doc:Approle-hummingbird-pkl")
+    }
+    
     @Resources {
         Explore more resources for learning about VaultCourier.
 
@@ -33,6 +41,7 @@
             - [Create Dynamic Role: generate dynamic credentials](https://github.com/vault-courier/vault-courier-examples/tree/main/create-dynamic-role-example)
             - [Create Static Role](https://github.com/vault-courier/vault-courier-examples/tree/main/create-static-role-example)
             - [AppRole with Hummingbird server](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example)
+            - [AppRole with Hummingbird server and Pkl](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example-with-pkl)
         }
     }
 }
