@@ -1,12 +1,24 @@
 @Tutorials(name: "VaultCourier") {
     @Intro(title: "Manage secrets with VaultCourier") {
         Learn how to use *Vault Courier* to retrieve, provision and manage secrets that your application needs.
+        
+        @Image(source: vault-courier.png, alt: "Image from Tutorials introduction.")
     }
     
     @Chapter(name: "Database Mount") {
         Understand about the differences between dynamic and static secrets, and the use of the database mount.
         
+        @Image(source: vault-courier.png, alt: "Image from Database Mount chapter.")
+        
         @TutorialReference(tutorial: "doc:Understand-dynamic-roles")
+    }
+    
+    @Chapter(name: "AppRole with Hummingbird server") {
+        Understand AppRole authentication by extending [Hummingbird's Todo Application](https://docs.hummingbird.codes/2.0/tutorials/todos).
+        
+        @Image(source: vault-courier.png, alt: "Image from chapter AppRole with Hummingbird server")
+                
+        @TutorialReference(tutorial: "doc:Approle-hummingbird")
     }
     
     @Resources {
@@ -20,6 +32,7 @@
             - [Configure Vault-Database Connection](https://github.com/vault-courier/vault-courier-examples/tree/main/configure-pg-connection-example)
             - [Create Dynamic Role: generate dynamic credentials](https://github.com/vault-courier/vault-courier-examples/tree/main/create-dynamic-role-example)
             - [Create Static Role](https://github.com/vault-courier/vault-courier-examples/tree/main/create-static-role-example)
+            - [AppRole with Hummingbird server](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example)
         }
     }
 }

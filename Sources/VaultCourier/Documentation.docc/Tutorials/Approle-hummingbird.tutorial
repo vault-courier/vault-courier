@@ -1,0 +1,327 @@
+@Tutorial(time: 60) {
+    @Intro(title: "Todos App with VaultCourier") {
+        In this tutorial, we'll demonstrate how to integrate **VaultCourier** with **Hummingbird's Todo example app**. VaultCourier will be responsible for securely retrieving the database credentials required by the Todo server.
+
+        At the end of this tutorial we will have the following applications:
+
+        1. A **Todo** app using VaultCourier to access database credentials.
+        2. A **Migrator** app that performs the initial database migrations.
+        3. A **VaultOperations** app that sets up the Vault-PostgreSQL integration and creates the necessary AppRoles.
+
+        This tutorial will walk through Vault concepts such as **AppRole authentication**, **static and dynamic database roles**, and **response wrapping**.
+
+        > Important: This tutorial is deliberately simplified and is intended for illustrative purposes only. Please refer to Hashicorp Vault or Openbao documentation for best practices and production hardening.
+        
+        ----
+        
+        ###  Scenario
+
+        To set the stage for this tutorial, consider a scenario where the _Imaginary Service Company_ (ISC) plans to scale its Todo service by deploying multiple instances of the Todo app across several servers. Each instance must connect securely to a PostgreSQL database.
+
+        The database team wants to follow the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege) and limit what each app instance can do in the database. They also want to introduce a separate application that handles higher-privilege operations such as database migrations — ISC is really growing and the number of people working on these apps as well!
+
+        To mitigate secret leakage and reduce risk, ISC wants to give each Todo App a form of identity that, in the event of a compromise, can be traced back to the affected machine. This would diminish the blast radius of revocation and reduce disruption in such a critical situation.
+
+        Rather than sharing secrets between services or managing numerous unique secrets in environment files, the ISC team wants to use Vault, with VaultCourier as the client to securely retrieve them.
+
+        ### Proposed Solution
+        
+        Proposed approach:
+
+        1. **App identity via AppRole authentication:** each app authenticates to Vault using a Vault-defined AppRole, which controls what secrets it can access.
+        
+        2. **Database credential management via Vault:** Vault issues database credentials, including:
+            - A static role for the Todo app.
+            - Dynamic credentials for the Migrator app, which needs short-term access with higher privileges. Dynamic credentials are well-suited for batch tasks like migrations. Vault generates short-lived usernames and passwords and removes them when they expire.
+
+        ### Personas
+
+        This tutorial outlines an end-to-end scenario involving two distinct roles or so-called "personas", each with different responsibilities:
+
+        - Vault admins (operations team). They have privileged permissions to configure the Vault, such as creating policies, approles and managing secret engines.
+        - App developers and Applications. The apps are the consumer of secrets stored in Vault. The developers do not manage Vault directly and are unaware of the internal setup. They only interact with the Vault via the client to request secrets.
+
+        Before starting our lab session, let us briefly summarize the approle auth concepts
+        ### What is AppRole authentication?
+
+        Before an app can access secrets from Vault, it must authenticate and receive a token. This token includes policies that define what the app can access — much like a session token on a website.
+
+        **AppRole** is an authentication method designed for machines and applications. It uses two components:
+
+        - **RoleID** A fixed identifier, similar to a username.
+        - **SecretID** A short-lived credential, like a one-time password.
+
+        The key benefit of AppRole is that it splits the credentials across two channels. The RoleID can be stored or embedded, while the SecretID is delivered just in time, often during app startup. This improves security and traceability.
+
+        Note that this model is similar to multi-factor authentication: one part is known (RoleID), and the other is time-sensitive and delivered securely (SecretID).
+
+        The basic workflow is depicted in this graphic: 
+        
+        ![approle-auth](approle-auth.png)
+        
+        
+    }
+    
+    @Section(title: "Integrate VaultCourier in Todo App") {
+        In this section we will modify the Hummingbird Todo app and remove the hardcoded credentials. We will add VaultCourier as our mechanism to retrieve the secrets.
+        
+        @Steps {
+            @Step {
+                Clone the Hummingbird Todo example
+                
+                @Code(name: "Terminal", file: hummingbird.console.0.0.sh, reset: true)
+            }
+            
+            @Step {
+                Open `Package.swift`.
+
+                You can see it has dependencies for Hummingbird, Argument Parser, and PostgresNIO
+                
+                @Code(name: "Terminal", file: hummingbird.console.0.1.sh)
+            }
+            
+            @Step {
+                Set the toolchain to 6.1 which is the current minimum version supported by VaultCourier. Set supported Platforms.
+                
+                @Code(name: "Package.swift", file: hummingbird.0.0.1.swift, previousFile:  hummingbird.0.0.0.swift)
+            }
+            
+            @Step {
+                Then, we'll add `VaultCourier` and a Swift-OpenAPI transport dependency. Here we've selected the `AsyncHTTPClientTransport` transport dependency, but a `URLSessionTransport` would have been a good option as well.
+                
+                @Code(name: "Package.swift", file:  hummingbird.0.0.2.swift, previousFile:  hummingbird.0.0.1.swift)
+            }
+            
+            @Step {
+                Create a new file called `Vault.swift`. Here, we create a function to connect to Vault. For the moment, we return the current hardcoded database credentials.
+                
+                @Code(name: "Sources/App/Vault.swift", file: hummingbird.0.1.0.swift)
+            }
+            
+            @Step {
+                We will authenticate our Vault client with approle, so we need a RoleID and a SecretID. The RoleID will be injected in the enviroment, while the SecretID will be provided in an external file.
+                
+                @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.1.swift, previousFile:  hummingbird.0.1.0.swift)
+            }
+            
+            @Step {
+                Import our chosen client transport `OpenAPIAsyncHTTPClient`, and create a VaultClient with VaultCourier. You may need to trust the Swift OpenAPI Generator plugin in your IDE if you have not done so.
+                Note that we initialize the vault client with the approle authentication credentials. The parameter `isWrapped` is not important at the moment. We will come back later and modify it to add an extra security layer to the authentication process.
+                
+                @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.2.swift, previousFile:  hummingbird.0.1.1.swift)
+            }
+            
+            @Step {
+                Start authentication process with Vault to get a valid session token. With this token we are ready to fetch the secrets the Todos app is entitled. Finally we return our database credentials.
+                
+                @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.3.swift, previousFile:  hummingbird.0.1.2.swift)
+            }
+            
+            @Step {
+                Go to `Application+build.swift`. Add the function we just created close to the application start, and replace the hardcoded credentials with the credentials from Vault.
+                
+                Since the Todo app will have scoped access to the database, we remove the createTable migration before the server starts. The todo app will only have permissions for CRUD operations on the `todo` Table. We will introduce a separate app with higher privileges to run migrations like create a new Table.
+                In the next section, we add a new vault-operations-example app that provisions our Vault and enables our `todo` app to be deployed. 
+                
+                @Code(name: "Sources/App/Application+build.swift", file:  hummingbird.0.2.1.swift, previousFile:  hummingbird.0.2.0.swift)
+            }
+        }
+    }
+    
+    @Section(title: "Vault operations example App") {
+        In this section we'll make a command line tool for configuring the Vault, creating the connection between Vault and PostgreSQL, and generating the approle credentials our applications need.
+        
+        @Steps {
+            @Step {
+                Create a new executable target with dependencies to Swift `ArgumentParser`, `VaultCourier` and `OpenAPIAsyncHTTPClient`. Create a new subfolder `Sources/Operations`.
+                
+                @Code(name: "Package.swift", file: hummingbird.1.0.1.swift, previousFile:  hummingbird.1.0.0.swift)
+            }
+            
+            @Step {
+                Create a new file in `Sources/Operations/VaultAdmin.swift`. We introduce a main argument parser async command, called `vault-admin` with a vault client static function.
+                Note that we use the token authentication method, which is usually reserved to privileged roles.
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.0.swift)
+            }
+            
+            @Step {
+                We'll introduce two subcommands. The first subcommand `provision` is a one time vault operation to create policies, approles, and configuring the Vault-PostgreSQL connection.
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.1.swift, previousFile:  hummingbird.1.1.0.swift)
+            }
+            
+            @Step {
+                Add a function to define the todo and migrator policies. The todo policy grants the Todo app read access to the static database credentials required by the server. The migrator policy allows read access to dynamic credentials needed by the migrator app, which will be implemented in the next section.
+
+                For simplicity, we're writing the configuration directly here. In a separate tutorial, we'll demonstrate how to scale this setup using [Pkl](https://pkl-lang.org).
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.2.swift, previousFile:  hummingbird.1.1.1.swift)
+            }
+            
+            @Step {
+                Add a function to let Vault manage PostgreSQL credentials. Here we create the `static_server_role` for the Todo app (used in Section 1, Step 9),
+                and create in advance the `dynamic_migrator_role`. We use VaultClient's method ``create(staticRole:enginePath:)`` and ``create(dynamicRole:enginePath:)``
+                
+                Note: in a production environment, we'd have a separate vault user different from the root user. After creating the connection, the vault user credentials can be rotated (and are thus only known by the Vault).
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.3.swift, previousFile:  hummingbird.1.1.2.swift)
+            }
+            
+            @Step {
+                To complete the provision, we add a function for enabling the `AppRole` authentication method, and create the approles for our apps. We used VaultClient's method ``createAppRole``. This completes the setup for the `provision` subcommand.
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.4.swift, previousFile:  hummingbird.1.1.3.swift)
+            }
+            
+            @Step {
+                Next we add a last subcommand `AppRoleCredentials` to generate the approle credentials for our apps
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.5.swift, previousFile:  hummingbird.1.1.4.swift)
+            }
+            
+            @Step {
+                Using VaultClient's  method ``generateAppSecretId(capabilities:)`` we add a function which generates the approle credentials depending on the app. Contrary to the `provision` subcommand we can call this function
+                multiple times. It writes the SecretID into an output text file. The output parameter can be given. For simplicity we print the RoleID into the standard input. This finishes our command line tool.
+                
+                To deploy the Todo app, we first need to create the Todos table. We'll do that in the next section.
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.6.swift, previousFile:  hummingbird.1.1.5.swift)
+            }
+        }
+    }
+    
+    @Section(title: "Migrator App") {
+        In this section, we'll create the final app of this tutorial: the `Migrator` app. It will perform high-privilege tasks in the database, in particular it creates the `todos` table.
+        
+        @Steps {
+            @Step {
+                Create a new executable target with dependencies to Swift `ArgumentParser`, `VaultCourier` and `OpenAPIAsyncHTTPClient`. Create a new subfolder `Sources/Migrator` and add a `main.swift` file.
+                
+                @Code(name: "Package.swift", file: hummingbird.2.0.1.swift, previousFile:  hummingbird.2.0.0.swift)
+            }
+            
+            @Step {
+                Similar to the Todo app we load the approle credentials to login with Vault.
+                
+                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.0.swift)
+            }
+            
+            @Step {
+                Next we create a VaultClient and authenticate with the migrator's approle credentials.
+                
+                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.1.swift, previousFile:  hummingbird.2.1.0.swift)
+            }
+            
+            @Step {
+                Get the dynamic credentials. This will generate a temporary Postgres user that will be deleted as soon as the credentials expire. Then instante a `PostgresClient` with the retrieved credentials.
+                
+                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.2.swift, previousFile:  hummingbird.2.1.1.swift)
+            }
+            
+            @Step {
+                Run the Postgres client and run the migration. The migration 1) creates the `todos` Table, 2) Grants the `todo_user` (the Todo app) permissions to
+                read, create, update, and delete in the `todo` table. 3) We make other user own the Table because the dynamic user will be automatically deleted soon. 
+                
+                This finishes the Migrator app. We are now ready to run our applications.  We'll do this in the next section.
+                
+                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.3.swift, previousFile:  hummingbird.2.1.2.swift)
+            }
+        }
+    }
+    
+    @Section(title: "Run Lab") {
+        This last section of this tutorial will set up the lab to run our applications. You need the HashiCorpVault or OpenBao binary installed in your system `PATH`, as well as Docker installed.
+        
+        @Steps {
+            @Step {
+                Open a terminal and start a Vault dev server with the literal string `education` as the root token value.
+                
+                You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.
+                
+                @Code(name: "Terminal Tab 1", file: start-vault.console.0.txt, reset: true)
+            }
+            
+            @Step {
+                Open a **new terminal** and start a PostgreSQL database with docker with a root user named `vault_root` and password `root_password`.
+                
+                **Note**: In production, it's important to create a _dedicated role_ for Vault, separate from the general admin role. This allows you to rotate the Vault user's password after setup to avoid relying on the initial credentials — but once rotated, only Vault knows the new password.
+                Failing to separate these roles can result in the root admin being locked out of the database.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.0.sh)
+            }
+            
+            @Step {
+                Create a database role for the `Todo` app, and grant access to the database.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.1.sh, previousFile: hummingbird.console.1.0.sh)
+            }
+            
+            @Step {
+                In the terminal go to root folder of the modified `todos-postgres-tutorial` and run the `admin-vault` command line tool. First run the provision
+                
+                You can of course run this and the following commands in your favourite IDE.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.0.sh, reset: true)
+            }
+            
+            @Step {
+                Run the approle credentials generation for the Migrator app 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.1.sh, previousFile: hummingbird.console.2.0.sh)
+            }
+            
+            @Step {
+                Run the the Migrator app. Don't forget to add the Env variables. 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.2.sh, previousFile: hummingbird.console.2.1.sh)
+            }
+            
+            @Step {
+                Run the approle credentials generation for the Todo app. 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.3.sh, previousFile: hummingbird.console.2.2.sh)
+            }
+            
+            @Step {
+                Run the the Todo app. Again, don't forget to add the Env variables. We have successfully integrated VaultCourier into the Todo app! 🥳
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.4.sh, previousFile: hummingbird.console.2.3.sh)
+            }
+            
+            @Step {
+                Open a new Terminal and try creating a Todo. As we can see our App has access to the database.
+                
+                You can also open your browser `http://localhost:8080/todos`.
+                
+                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh, reset: true)
+            }
+        }
+    }
+    
+    @Section(title: "(Optional) Response Wrapping") {
+        We can enhance the security of the Todo app deployment by using Vault's response wrapping feature during AppRole credential generation. Currently, the app can be run multiple times using the same randomly generated `SECRET_ID` stored at `SECRET_ID_FILEPATH`, which isn't ideal for production.
+
+        Instead, we can generate a one-time-use token that wraps the AppRole credentials. This wrapped token can only be used once within a limited time window to retrieve the actual `SECRET_ID`. If someone tries to reuse the wrapped token, Vault will reject it as already unwrapped.
+
+        The unwrapped `SECRET_ID` can still be reused according to its configured limits. VaultCourier handles the response wrapping process automatically during authentication—we just need to indicate that the credentials are wrapped.
+
+        Let's add this to the Todo app configuration.
+        
+        @Steps {
+            @Step {
+                Go To the function that generates the approle credentials in `Sources/Operations/VaultAdmin.swift` and add a wrapTimeToLive duration, say of 60 seconds.
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.7.swift, previousFile:  hummingbird.1.1.6.swift)
+            }
+            
+            @Step {
+                Update `Vault.swift` to tell VaultCourier that the credential is wrapped. That's it—now regenerate the credentials using Operations credentials todo and run the app. On a second run, authentication will fail.
+
+                This mechanism enables malfeasance detection by ensuring only one party can unwrap the token. If a client receives a token that can't be unwrapped, it can trigger an immediate security alert. 
+                
+                @Code(name: "Sources/App/Vault.swift", file: hummingbird.0.1.4.swift, previousFile:  hummingbird.0.1.3.swift)
+            }
+        }
+    }
+}

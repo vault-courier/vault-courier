@@ -14,7 +14,7 @@ Swift client for interacting with Hashicorp Vault and OpenBao.
 - Generation of static and dynamic credentials; database engine with PostgreSQL support.
 - AppRole Authentication
 - Token Authentication
-- Pkl Resource Reader (Enabled with PackageTrait "Pkl").
+- Pkl Resource Reader (Enabled with PackageTrait `Pkl`).
 
 ## Documentation
 
