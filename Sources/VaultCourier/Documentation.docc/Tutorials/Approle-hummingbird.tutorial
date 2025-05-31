@@ -4,7 +4,7 @@
 
         At the end of this tutorial we will have the following applications:
 
-        1. A **TodoApp** using VaultCourier to access database credentials.
+        1. A **Todo** app using VaultCourier to access database credentials.
         2. A **Migrator** app that performs the initial database migrations.
         3. A **VaultOperations** app that sets up the Vault-PostgreSQL integration and creates the necessary AppRoles.
 
@@ -294,7 +294,7 @@
                 
                 You can also open your browser `http://localhost:8080/todos`.
                 
-                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh)
+                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh, reset: true)
             }
         }
     }

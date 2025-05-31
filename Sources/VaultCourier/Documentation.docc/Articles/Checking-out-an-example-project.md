@@ -24,4 +24,5 @@ Each of the following packages shows an end-to-end working example.
 - [configure-pg-connection-example](https://github.com/vault-courier/vault-courier-examples/tree/main/configure-pg-connection-example) - A CLI client that enables the vault's database mount and creates a connection between Vault/OpenBao and a [Postgres](https://www.postgresql.org) database.
 - [create-dynamic-role-example](https://github.com/vault-courier/vault-courier-examples/tree/main/create-dynamic-role-example) - A CLI client that creates a dynamic role in a [Postgres](https://www.postgresql.org) database.
 - [create-static-role-example](https://github.com/vault-courier/vault-courier-examples/tree/main/create-static-role-example) - A CLI client that creates a static role in a [Postgres](https://www.postgresql.org) database.
+- [approle-hummingbird](https://github.com/vault-courier/vault-courier-examples/tree/approle-hummingbird-example) - Modified version of [Hummingbird's Todo example](https://docs.hummingbird.codes/2.0/tutorials/todos) that uses VaultCourier to retrieve secrets. End-to-end example with PostgreSQL and Vault integration.
 
