@@ -8,7 +8,7 @@
     @Chapter(name: "Database Mount") {
         Understand about the differences between dynamic and static secrets, and the use of the database mount.
         
-        @Image(source: vault-courier.png, alt: "Image from Database Mount chapter.")
+        @Image(source: database-mount.png, alt: "Image from Database Mount chapter.")
         
         @TutorialReference(tutorial: "doc:Understand-dynamic-roles")
     }
@@ -16,9 +16,17 @@
     @Chapter(name: "AppRole with Hummingbird server") {
         Understand AppRole authentication by extending [Hummingbird's Todo Application](https://docs.hummingbird.codes/2.0/tutorials/todos).
         
-        @Image(source: vault-courier.png, alt: "Image from chapter AppRole with Hummingbird server")
+        @Image(source: hummingbird-todo.png, alt: "Image from chapter AppRole with Hummingbird server")
                 
         @TutorialReference(tutorial: "doc:Approle-hummingbird")
+    }
+    
+    @Chapter(name: "AppRole with Hummingbird server and Pkl") {
+        Scale Vault secret provisioning and consumption with Pkl. This chapter picks up where "AppRole with Hummingbird Server" left off.
+        
+        @Image(source: vault-courier-pkl.png, alt: "Image from chapter AppRole with Hummingbird server")
+                
+        @TutorialReference(tutorial: "doc:Approle-hummingbird-pkl")
     }
     
     @Resources {
@@ -33,6 +41,7 @@
             - [Create Dynamic Role: generate dynamic credentials](https://github.com/vault-courier/vault-courier-examples/tree/main/create-dynamic-role-example)
             - [Create Static Role](https://github.com/vault-courier/vault-courier-examples/tree/main/create-static-role-example)
             - [AppRole with Hummingbird server](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example)
+            - [AppRole with Hummingbird server and Pkl](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example-with-pkl)
         }
     }
 }
