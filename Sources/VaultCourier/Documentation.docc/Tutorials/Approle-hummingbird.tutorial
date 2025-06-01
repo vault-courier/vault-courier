@@ -59,7 +59,7 @@
 
         The basic workflow is depicted in this graphic: 
         
-        ![approle-auth](approle-auth.png)
+        ![approle authentication workflow](approle-auth.png)
         
         
     }
