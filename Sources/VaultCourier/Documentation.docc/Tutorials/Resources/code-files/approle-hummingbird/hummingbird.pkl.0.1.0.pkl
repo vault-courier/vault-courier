@@ -1,0 +1,17 @@
+module TodoConfig
+
+postgresConfig: PostgresConfig
+
+class PostgresConfig {
+  /// The host url of Server
+  hostname: String
+
+  /// The port to listen
+  port: Int(isBetween(1, 65_535))
+
+  /// Database name
+  database: String
+  
+  /// Database credentials
+  credentials: String
+}

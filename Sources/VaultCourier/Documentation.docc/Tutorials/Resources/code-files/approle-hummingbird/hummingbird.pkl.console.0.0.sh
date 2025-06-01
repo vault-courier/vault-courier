@@ -1,0 +1,1 @@
+todos-postgres-tutorial % pkl-gen-swift --output-path=Sources/App/Gen TodoConfig.pkl
