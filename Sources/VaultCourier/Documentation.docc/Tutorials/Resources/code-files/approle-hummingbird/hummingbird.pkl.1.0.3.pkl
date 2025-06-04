@@ -1,0 +1,14 @@
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0#/Payloads/PostgresDatabaseConnection.pkl"
+
+connection = "pg_connection"
+host = "127.0.0.1"
+port = 5432
+databaseName = "postgres"
+sslMode = "disable"
+username = "vault_root"
+password = "root_password"
+password_authentication = "scram-sha-256"
+allowed_roles {
+  "dynamic_migrator_role"
+  "static_server_role"
+}

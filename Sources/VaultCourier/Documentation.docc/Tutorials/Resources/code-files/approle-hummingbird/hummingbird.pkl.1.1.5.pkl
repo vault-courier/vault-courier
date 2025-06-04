@@ -1,0 +1,27 @@
+amends ".../VaultAdminConfig.pkl"
+
+policies {
+  import("App/appPolicy.pkl")
+  import("Migrator/appPolicy.pkl")
+}
+
+database {
+  mount = import("databaseMount.pkl")
+  connection = import("pgConnection.pkl")
+  staticRole = import("App/staticRole.pkl")
+  dynamicRole = import("Migrator/dynamicRole.pkl")
+}
+
+authMethod {
+  config = import("authRoleConfig.pkl")
+  appRoles {
+    ["todo"] {
+      properties = import("App/appRole.pkl")
+      tokenConfig = import("App/appRoleToken.pkl")
+    }
+    ["migrator"] {
+      properties = import("Migrator/appRole.pkl")
+      tokenConfig = import("Migrator/appRoleToken.pkl")
+    }
+  }
+}

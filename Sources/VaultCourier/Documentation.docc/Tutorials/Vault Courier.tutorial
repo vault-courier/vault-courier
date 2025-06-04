@@ -41,7 +41,7 @@
             - [Create Dynamic Role: generate dynamic credentials](https://github.com/vault-courier/vault-courier-examples/tree/main/create-dynamic-role-example)
             - [Create Static Role](https://github.com/vault-courier/vault-courier-examples/tree/main/create-static-role-example)
             - [AppRole with Hummingbird server](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example)
-            - [AppRole with Hummingbird server and Pkl](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example-with-pkl)
+            - [AppRole with Hummingbird server and Pkl](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-pkl-example)
         }
     }
 }

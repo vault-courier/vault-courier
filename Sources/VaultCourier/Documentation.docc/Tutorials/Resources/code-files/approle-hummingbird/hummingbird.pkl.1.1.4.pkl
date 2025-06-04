@@ -1,0 +1,13 @@
+amends ".../VaultAdminConfig.pkl"
+
+policies {
+  import("App/appPolicy.pkl")
+  import("Migrator/appPolicy.pkl")
+}
+
+database {
+  mount = import("databaseMount.pkl")
+  connection = import("pgConnection.pkl")
+  staticRole = import("App/staticRole.pkl")
+  dynamicRole = import("Migrator/dynamicRole.pkl")
+}
