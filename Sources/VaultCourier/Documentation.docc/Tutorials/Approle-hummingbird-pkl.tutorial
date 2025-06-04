@@ -62,7 +62,7 @@
             
             @Step {
                 In particular, note how we define the credentials property. Pkl can read external resources, such as environment variables or text files.
-                To read a resource, one uses a `read` expression and passes a resource URI scheme. The `Pkl` package trait enables implementations of the external reader protocol, and we use them here to read a vault secret.
+                To read a resource, one uses a `read` expression and passes a resource URI scheme. The `Pkl` package trait in VaultCourier adds implementations of the external reader protocol, and we use them here to read a vault secret.
                 We use the default resource URI scheme "vault", but it can be customized in the initializer of the VaultReader.
                 
                 @Code(name: "todoConfig.stage.pkl", file: hummingbird.pkl.0.2.1.pkl, previousFile:  hummingbird.pkl.0.2.0.pkl)
@@ -118,169 +118,248 @@
             @Step {
                 In order to run the Todo app, we need to tell the Pkl bindings where the `pkl` binary is. You can do this by setting the env variable `PKL_EXEC` or adding the folder containing the binary into the `PATH`.
                 
-                Great! if you still have the setup lab from the previous tutorial you just need to regenerate new approle credentials and run the app with the `PKL_EXEC` env variable.
-                Otherwise, please setup the lab again following the steps in the "Run Lab" section of the _AppRole with Hummingbird server_ tutorial. The instructions are also in the [examples repository](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example-with-pkl).
+                If you still have the setup lab from the previous tutorial you just need to regenerate new approle credentials and run the app with the `PKL_EXEC` env variable.
+                Otherwise, please setup the lab again following the steps in the "Run Lab" section of the _AppRole with Hummingbird server_ tutorial. The instructions are also in the [examples repository](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-pkl-example).
                 
                 @Code(name: "Source/Vault.swift", file:  hummingbird.pkl.console.1.0.sh)
             }
         }
     }
     
-<!--    @Section(title: "Vault operations with Pkl") {-->
-<!--        In this section...-->
-<!--        -->
-<!--        @Steps {-->
-<!--            @Step {-->
-<!--                Create a new executable target with dependencies to Swift `ArgumentParser`, `VaultCourier` and `OpenAPIAsyncHTTPClient`. Create a new subfolder `Sources/Operations`.-->
-<!--                -->
-<!--                @Code(name: "Package.swift", file: hummingbird.1.0.1.swift, previousFile:  hummingbird.1.0.0.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Create a new file in `Sources/Operations/VaultAdmin.swift`. We introduce a main argument parser async command, called `vault-admin` with a vault client static function.-->
-<!--                Note that we use the token authentication method, which is usually reserved to privileged roles.-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.0.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                We'll introduce two subcommands. The first subcommand `provision` is a one time vault operation to create policies, approles, and configuring the Vault-PostgreSQL connection.-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.1.swift, previousFile:  hummingbird.1.1.0.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Add a function to define the todo and migrator policies. The todo policy grants the Todo app read access to the static database credentials required by the server. The migrator policy allows read access to dynamic credentials needed by the migrator app, which will be implemented in the next section.-->
-<!---->
-<!--                For simplicity, we're writing the configuration directly here. In a separate tutorial, we'll demonstrate how to scale this setup using [Pkl](https://pkl-lang.org).-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.2.swift, previousFile:  hummingbird.1.1.1.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Add a function to let Vault manage PostgreSQL credentials. Here we create the `static_server_role` for the Todo app (used in Section 1, Step 9),-->
-<!--                and create in advance the `dynamic_migrator_role`. We use VaultClient's method ``create(staticRole:enginePath:)`` and ``create(dynamicRole:enginePath:)``-->
-<!--                -->
-<!--                Note: in a production environment, we'd have a separate vault user different from the root user. After creating the connection, the vault user credentials can be rotated (and are thus only known by the Vault).-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.3.swift, previousFile:  hummingbird.1.1.2.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                To complete the provision, we add a function for enabling the `AppRole` authentication method, and create the approles for our apps. We used VaultClient's method ``createAppRole``. This completes the setup for the `provision` subcommand.-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.4.swift, previousFile:  hummingbird.1.1.3.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Next we add a last subcommand `AppRoleCredentials` to generate the approle credentials for our apps-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.5.swift, previousFile:  hummingbird.1.1.4.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Using VaultClient's  method ``generateAppSecretId(capabilities:)`` we add a function which generates the approle credentials depending on the app. Contrary to the `provision` subcommand we can call this function-->
-<!--                multiple times. It writes the SecretID into an output text file. The output parameter can be given. For simplicity we print the RoleID into the standard input. This finishes our command line tool.-->
-<!--                -->
-<!--                To deploy the Todo app, we first need to create the Todos table. We'll do that in the next section.-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.6.swift, previousFile:  hummingbird.1.1.5.swift)-->
-<!--            }-->
-<!--        }-->
-<!--    }-->
-
-<!--    @Section(title: "Run Lab") {-->
-<!--        This last section of this tutorial will set up the lab to run our applications. You need the HashiCorpVault or OpenBao binary installed in your system `PATH`, as well as Docker installed.-->
-<!--        -->
-<!--        @Steps {-->
-<!--            @Step {-->
-<!--                Open a terminal and start a Vault dev server with the literal string `education` as the root token value.-->
-<!--                -->
-<!--                You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.-->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 1", file: start-vault.console.0.txt, reset: true)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Open a **new terminal** and start a PostgreSQL database with docker with a root user named `vault_root` and password `root_password`.-->
-<!--                -->
-<!--                **Note**: In production, it's important to create a _dedicated role_ for Vault, separate from the general admin role. This allows you to rotate the Vault user's password after setup to avoid relying on the initial credentials — but once rotated, only Vault knows the new password.-->
-<!--                Failing to separate these roles can result in the root admin being locked out of the database.-->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.0.sh)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Create a database role for the `Todo` app, and grant access to the database.-->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.1.sh, previousFile: hummingbird.console.1.0.sh)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                In the terminal go to root folder of the modified `todos-postgres-tutorial` and run the `admin-vault` command line tool. First run the provision-->
-<!--                -->
-<!--                You can of course run this and the following commands in your favourite IDE.-->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.0.sh, reset: true)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Run the approle credentials generation for the Migrator app -->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.1.sh, previousFile: hummingbird.console.2.0.sh)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Run the the Migrator app. Don't forget to add the Env variables. -->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.2.sh, previousFile: hummingbird.console.2.1.sh)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Run the approle credentials generation for the Todo app. -->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.3.sh, previousFile: hummingbird.console.2.2.sh)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Run the the Todo app. Again, don't forget to add the Env variables. We have successfully integrated VaultCourier into the Todo app! 🥳-->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.4.sh, previousFile: hummingbird.console.2.3.sh)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Open a new Terminal and try creating a Todo. As we can see our App has access to the database.-->
-<!--                -->
-<!--                You can also open your browser `http://localhost:8080/todos`.-->
-<!--                -->
-<!--                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh, reset: true)-->
-<!--            }-->
-<!--        }-->
-<!--    }-->
-<!--    -->
-<!--    @Section(title: "(Optional) Response Wrapping") {-->
-<!--        We can enhance the security of the Todo app deployment by using Vault's response wrapping feature during AppRole credential generation. Currently, the app can be run multiple times using the same randomly generated `SECRET_ID` stored at `SECRET_ID_FILEPATH`, which isn't ideal for production.-->
-<!---->
-<!--        Instead, we can generate a one-time-use token that wraps the AppRole credentials. This wrapped token can only be used once within a limited time window to retrieve the actual `SECRET_ID`. If someone tries to reuse the wrapped token, Vault will reject it as already unwrapped.-->
-<!---->
-<!--        The unwrapped `SECRET_ID` can still be reused according to its configured limits. VaultCourier handles the response wrapping process automatically during authentication—we just need to indicate that the credentials are wrapped.-->
-<!---->
-<!--        Let's add this to the Todo app configuration.-->
-<!--        -->
-<!--        @Steps {-->
-<!--            @Step {-->
-<!--                Go To the function that generates the approle credentials in `Sources/Operations/VaultAdmin.swift` and add a wrapTimeToLive duration, say of 60 seconds.-->
-<!--                -->
-<!--                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.7.swift, previousFile:  hummingbird.1.1.6.swift)-->
-<!--            }-->
-<!--            -->
-<!--            @Step {-->
-<!--                Update `Vault.swift` to tell VaultCourier that the credential is wrapped. That's it—now regenerate the credentials using Operations credentials todo and run the app. On a second run, authentication will fail.-->
-<!---->
-<!--                This mechanism enables malfeasance detection by ensuring only one party can unwrap the token. If a client receives a token that can't be unwrapped, it can trigger an immediate security alert. -->
-<!--                -->
-<!--                @Code(name: "Sources/App/Vault.swift", file: hummingbird.0.1.4.swift, previousFile:  hummingbird.0.1.3.swift)-->
-<!--            }-->
-<!--        }-->
-<!--    }-->
+    @Section(title: "Vault operations with Pkl") {
+        In this section, we will use Pkl to structure the provision of the Vault. We will use Pkl templates available in `vault-courier-pkl` to generate the input swift types for the configuration.
+        At the end of this section we will have replaced all hardcoded configuration in the `Provision` command. The process is analogous as the previous section: first create the pkl config files, then 
+        generate the DTOs using `pkl-gen-swift`, add extensions to initialize the Swift input objects and finally load the objects via the Swift Pkl bindings. 
+        
+        @Steps {
+            @Step {
+                Create a subfolder `Pkl` where we will add all configuration. Since it won't contain swift files we can exclude it in the Package manifest. In addition, add the Swift Pkl bindings dependency. 
+                
+                @Code(name: "Package.swift", file: hummingbird.pkl.0.0.1.swift, previousFile:  hummingbird.pkl.0.0.0.swift)
+            }
+            
+            @Step {                
+                All the templates that we need for the cli tool are in the `vault-courier-pkl` repository under the Payloads folder. For instance the `MountConfiguration.pkl` template looks like this.
+                Those enumerated typealiases will be turned by `pkl-gen-swift` into swift enumerations. Optional properties are expressed in Pkl and Swift the same.
+                
+                
+                @Code(name: "https://github.com/vault-courier/vault-courier-pkl/blob/main/Payloads/MountConfiguration.pkl", file: hummingbird.pkl.1.0.0.pkl)
+            }
+            
+            @Step {
+                Create a folder in `Pkl` for a specific type of deployment environment, say `Stage` and create there a pkl file called `databaseMount.pkl`. This is our first operations config file, which amends the configuration for mounting a database secret engine.
+                
+                Here we are amending a http resource, so that's why the amending path is large. When you work with pkl projects this can be simplified.
+                
+                
+                @Code(name: "Sources/Operations/Pkl/stage/databaseMount.pkl", file: hummingbird.pkl.1.0.1.pkl, reset: true)
+            }
+            
+            @Step {
+                Amend the Authentication method configuration setting the approle path at `approle`.
+                
+                @Code(name: "Sources/Operations/Pkl/stage/authRoleConfig.pkl", file: hummingbird.pkl.1.0.2.pkl)
+            }
+            
+            @Step {
+                Next we amend the `PostgresDatabaseConnection` configuration in another pkl file.
+                
+                @Code(name: "Sources/Operations/Pkl/stage/pgConnection.pkl", file: hummingbird.pkl.1.0.3.pkl)
+            }
+            
+            @Step {
+                Begin to create the configuration for each app by creating separate folders: `App` for the Todo server and `Migrator` for the migrator app. Amend the respective database roles for each app.
+                
+                Note that we import the database connection configuration and pass the connection name to the database role config. We define a password rotation period of 28 days.
+                
+                @Code(name: "Sources/Operations/Pkl/stage/App/staticRole.pkl", file: hummingbird.pkl.1.0.4.pkl, reset: true)
+            }
+            
+            @Step {
+                Likewise for the dynamic database role (used in the Migrator) we import the database connection configuration.
+                
+                @Code(name: "Sources/Operations/Pkl/stage/Migrator/dynamicRole.pkl", file: hummingbird.pkl.1.0.5.pkl, reset: true)
+            }
+            
+            @Step {
+                Let's define our main configuration `VaultAdminConfig` module. 
+                
+                @Code(name: "Sources/Operations/Pkl/VaultAdminConfig.pkl", file: hummingbird.pkl.1.1.0.pkl, reset: true)
+            }
+            
+            @Step {
+                And amend a stage instance of `VaultAdminConfig`. Note how can amend pkl properties with imports.
+                
+                @Code(name: "Sources/Operations/Pkl/Stage/vaultAdminConfig.pkl", file: hummingbird.pkl.1.1.3.pkl, reset: true)
+            }
+            
+            @Step {
+                We can now begin to replace the hardcoded configuration in the Provision command.
+                First, let's generate the current `VaultAdminConfig` DTO.
+                
+                @Code(name: "Terminal", file: hummingbird.pkl.console.0.2.sh, reset: true)
+            }
+            
+            @Step {
+                Adapt Provision command to load the VaultAmdinConfig and pass it to the `provisionDatabase` method.
+                
+                Note that we have added a filepath argument to the tool which points to an instance of `VaultAdminConfig.pkl`. 
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.pkl.1.2.0.swift, previousFile: hummingbird.1.1.6.swift)
+            }
+            
+            @Step {
+                We've extended the initializers of the input types in the VaultClient functions with the generated DTOs. For this we created a dedicated folder called `Utilities`. 
+                For instance, here is a new initializer for `PostgresConnectionConfiguration`.
+                
+                @Code(name: "Sources/Operations/Utilities/PostgresConnectionConfiguration+init.swift", file: hummingbird.pkl.1.2.1.swift, reset: true)
+            }
+            
+            @Step {
+                Next, we'll adapt the `updatePolicies` method following the same steps. Begin by amending the `VaultPolicy.pkl` template for each App
+                
+                Here we define the `todo` policy to have read access to the  static credentials path.
+                
+                @Code(name: "Sources/Operations/Pkl/Stage/App/appPolicy.pkl", file: hummingbird.pkl.1.2.0.pkl, reset: true)
+            }
+            
+            @Step {
+                Likewise, we define the vault policy for the Migrator app.
+                
+                @Code(name: "Sources/Operations/Pkl/Stage/Migrator/appPolicy.pkl", file: hummingbird.pkl.1.2.1.pkl, reset: true)
+            }
+            
+            @Step {
+                Add policies to the main config template `VaultAdminConfig`.
+                
+                @Code(name: "Sources/Operations/Pkl/VaultAdminConfig.pkl", file: hummingbird.pkl.1.1.1.pkl, previousFile: hummingbird.pkl.1.1.0.pkl)
+            }
+            
+            @Step {
+                Import all the app policies.
+                
+                @Code(name: "Sources/Operations/Pkl/Stage/vaultAdminConfig.pkl", file: hummingbird.pkl.1.1.4.pkl, previousFile: hummingbird.1.1.3.pkl)
+            }
+            
+            @Step {
+                Adapt `updatePolicies` method to receive the `VaultAdminConfig`.
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.pkl.1.2.2.swift, previousFile: hummingbird.pkl.1.2.0.swift)
+            }
+            
+            @Step {
+                Next, we add the approle configuration for the Todo app.
+                
+                Note how we need to import two other configurations and use it to define the approle. This is an advantage over working with raw formats.
+                
+                @Code(name: "Sources/Operations/Pkl/Stage/App/appRole.pkl", file: hummingbird.pkl.1.3.0.pkl)
+            }
+            
+            @Step {
+                Add the approle for the Migrator app
+                
+                @Code(name: "Sources/Operations/Pkl/Stage/Migrator/appRole.pkl", file: hummingbird.pkl.1.3.1.pkl, reset: true)
+            }
+            
+            @Step {
+                Introduce the approle in the main config `VaultAdminConfig` and its instance
+                
+                Here we import as well the `AppRoleToken` configuration which is needed for customizing the credential generation. We leave to the reader the amending as is the same as we have shown.
+                In any case it can be compared with the result in the examples repository.
+                
+                @Code(name: "Sources/Operations/Pkl/VaultAdminConfig.pkl", file: hummingbird.pkl.1.1.2.pkl, previousFile: hummingbird.pkl.1.1.1.pkl)
+            }
+            
+            @Step {
+                Amend the `VaultAdminConfig` module with the approles
+                
+                @Code(name: "Sources/Operations/Pkl/Stage/vaultAdminConfig.pkl", file: hummingbird.pkl.1.1.5.pkl, previousFile: hummingbird.pkl.1.1.4.pkl)
+            }
+            
+            @Step {
+                Finally we generate again the input DTOs, extend the initializers and adapt the remaining method in Provision and the credential generation.
+                
+                @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.pkl.1.3.0.swift, previousFile: hummingbird.pkl.1.2.2.swift)
+            }
+        }
+    }
+    
+    @Section(title: "Run Lab") {
+        In this last section we repeat the setup to run the Pkl-modified apps. You need the HashiCorpVault or OpenBao binary installed in your system `PATH`, as well as Docker installed.
+        
+        @Steps {
+            @Step {
+                Open a terminal and start a Vault dev server with the literal string `education` as the root token value.
+                
+                You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.
+                
+                @Code(name: "Terminal Tab 1", file: start-vault.console.0.txt, reset: true)
+            }
+            
+            @Step {
+                Open a **new terminal** and start a PostgreSQL database with docker with a root user named `vault_root` and password `root_password`.
+                
+                **Note**: In production, it's important to create a _dedicated role_ for Vault, separate from the general admin role. This allows you to rotate the Vault user's password after setup to avoid relying on the initial credentials — but once rotated, only Vault knows the new password.
+                Failing to separate these roles can result in the root admin being locked out of the database.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.0.sh)
+            }
+            
+            @Step {
+                Create a database role for the `Todo` app, and grant access to the database.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.1.sh, previousFile: hummingbird.console.1.0.sh)
+            }
+            
+            @Step {
+                In the terminal go to root folder of the modified `todos-postgres-tutorial` and download the `pkl` binary if you have not done so.
+                
+                Change the architecture to yours. The available versions can be found [https://github.com/apple/pkl/releases/](https://github.com/apple/pkl/releases/). You can also change where to install the binary.
+                
+                @Code(name: "Terminal Tab 3", file: hummingbird.pkl.console.0.3.sh)
+            }
+            
+            @Step {
+                Run the `admin-vault` command line tool with the provision subcommand. This time you need to pass the path to the pkl executable if its not in `PATH`, and the filepath to the main pkl configuration.
+                
+                You can of course run this and the following commands in your favourite IDE.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.4.sh, reset: true)
+            }
+            
+            @Step {
+                Run the approle credentials generation for the Migrator app.
+                
+                This is the same as before as we did not add Pkl to this app.
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.5.sh, previousFile: hummingbird.pkl.console.0.4.sh)
+            }
+            
+            @Step {
+                Run the the Migrator app. Don't forget to add the Env variables. 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.6.sh, previousFile: hummingbird.pkl.console.0.5.sh)
+            }
+            
+            @Step {
+                Run the approle credentials generation for the Todo app. 
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.7.sh, previousFile: hummingbird.pkl.console.0.6.sh)
+            }
+            
+            @Step {
+                Run the the Todo app. Again, don't forget to add the Env variables. We have successfully integrated VaultCourier into the Todo app, and made Pkl the main config format! 🥳
+                
+                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.8.sh, previousFile: hummingbird.pkl.console.0.7.sh)
+            }
+            
+            @Step {
+                Open a new Terminal and try creating a Todo. As we can see our App has access to the database.
+                
+                You can also open your browser `http://localhost:8080/todos`.
+                
+                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh, reset: true)
+            }
+        }
+    }  
 }

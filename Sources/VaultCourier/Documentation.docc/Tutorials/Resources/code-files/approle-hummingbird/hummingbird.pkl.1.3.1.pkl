@@ -1,0 +1,20 @@
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultAppRole.pkl"
+
+import ".../authRoleConfig.pkl"
+import "appPolicy.pkl"
+
+approle_path = authRoleConfig.path
+
+role_name = "migrator_app_role"
+
+token_type = "batch"
+
+token_policies {
+  appPolicy.name
+}
+
+secret_id_ttl = 3600.s
+
+token_ttl = 60.min
+
+token_max_ttl = 24.h

@@ -1,0 +1,33 @@
+module VaultAdminConfig
+
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/MountConfiguration.pkl" as MountConfiguration
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresDatabaseConnection.pkl" as PostgresDatabaseConnection
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresStaticRole.pkl" as PostgresStaticRole
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresRole.pkl" as PostgresRole
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultPolicy.pkl"
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/AuthMethodConfig.pkl" as AuthMethodConfig
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultAppRole.pkl" as VaultAppRole
+import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/AppRoleToken.pkl" as AppRoleToken
+
+policies: Listing<VaultPolicy>
+
+database: DatabaseConfiguration
+
+authMethod: AppRoleAuth
+
+class DatabaseConfiguration {
+  mount: MountConfiguration
+  connection: PostgresDatabaseConnection
+  staticRole: PostgresStaticRole
+  dynamicRole: PostgresRole
+}
+
+class AppRoleAuth {
+  config: AuthMethodConfig
+  appRoles: Mapping<String, AppRole>
+}
+
+class AppRole {
+  properties: VaultAppRole
+  tokenConfig: AppRoleToken
+}

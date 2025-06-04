@@ -1,0 +1,14 @@
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultPolicy.pkl"
+
+import ".../databaseMount.pkl"
+
+name = "migrator"
+
+policy {
+  // Read database Secrets
+  ["\(databaseMount.path)/creds/*"] {
+    capabilities {
+      "read"
+    }
+  }
+}

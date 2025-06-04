@@ -1,0 +1,5 @@
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0#/Payloads/MountConfiguration.pkl"
+
+`type` = "database"
+
+path = "database"
