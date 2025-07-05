@@ -62,10 +62,10 @@ public enum RotationStrategy: Sendable {
 }
 
 public struct ScheduledRotation: Sendable {
-    /// This should be a "standard" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of ``0 0 * * SAT`` will set rotations to occur on Saturday at 00:00.
+    /// This should be a "standard" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of  "0 0 * * SAT" will set rotations to occur on Saturday at 00:00.
     public let schedule: String
 
-    /// Specifies the amount of time in which the rotation is allowed to occur starting from a given `schedule`. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour. Uses duration format strings.
+    /// Specifies the amount of time in which the rotation is allowed to occur starting from a given ``schedule``. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour. Uses duration format strings.
     public let window: Duration?
 
     public init(schedule: String, window: Duration?) {

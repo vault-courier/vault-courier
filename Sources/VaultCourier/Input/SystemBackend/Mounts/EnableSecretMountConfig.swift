@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
+/// Request type for enabling a new secret mount
 public struct EnableSecretMountConfig: Sendable {
     public var mountType: String
 

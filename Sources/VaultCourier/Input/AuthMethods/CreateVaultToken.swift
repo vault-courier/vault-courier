@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
+/// Request DTO for creating a Vault token
 public struct CreateVaultToken: Sendable {
     /// The ID of the client token. Can only be specified by a root token. The ID provided may not contain a . character. Otherwise, the token ID is a randomly generated value.
     ///
@@ -64,10 +64,10 @@ public struct CreateVaultToken: Sendable {
     /// The maximum uses for the given token. This can be used to create a one-time-token or limited use token. The value of `nil` has no limit to the number of uses.
     public var tokenNumberOfUses: Int?
 
-    /// If specified, the token will be periodic; it will have no maximum TTL (unless an `tokenMaxTTL` is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
+    /// If specified, the token will be periodic; it will have no maximum TTL (unless an ``CreateVaultToken/tokenMaxTTL`` is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
     public var tokenPeriod: Duration?
 
-    /// Name of the entity alias to associate with during token creation. Only works in combination with `roleName` property. If this has been specified, the entity will not be inherited from the parent.
+    /// Name of the entity alias to associate with during token creation. Only works in combination with ``VaultCourier/CreateVaultToken/roleName`` property. If this has been specified, the entity will not be inherited from the parent.
     public var entityAlias: String?
 
     public init(id: String? = nil,

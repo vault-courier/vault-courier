@@ -43,7 +43,7 @@ extension VaultClient {
                 tokenTtl: appRole.tokenTTL?.formatted(.vaultSeconds),
                 tokenMaxTtl: appRole.tokenMaxTTL?.formatted(.vaultSeconds),
                 tokenPolicies: appRole.tokenPolicies,
-                bindSecretId: appRole.bindSecretId,
+                bindSecretId: appRole.bindSecretID,
                 secretIdBoundCidrs: appRole.secretIdBoundCIDRS,
                 secretIdNumUses: appRole.secretIdNumberOfUses,
                 secretIdTtl: appRole.secretIdTTL?.formatted(.vaultSeconds),
@@ -196,9 +196,9 @@ extension VaultClient {
     
     /// Fetches the login session token and its information.
     ///
-    /// if ``bindSecretID`` is enabled (the default) on the AppRole, ``secretID`` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
+    /// if ``VaultCourier/CreateAppRole/bindSecretID`` is enabled (the default) on the AppRole, `secretID` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
     ///
-    /// - Note: this method does not set the token session of the vault client. See the ``login()`` which initiates login from the given authentication
+    /// - Note: this method does not set the token session of the vault client. See the ``VaultCourier/VaultClient/login()`` which initiates login from the given authentication
     /// method and sets the session token of the client.
     /// - Parameters:
     ///   - roleID: RoleID of the AppRole

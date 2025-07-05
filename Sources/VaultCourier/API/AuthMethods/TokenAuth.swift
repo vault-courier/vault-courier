@@ -22,7 +22,7 @@ extension VaultClient {
     /// - Parameters:
     ///   - capabilities: type with the desired token properties
     ///   - wrappTTL: Optional wrapped time to live of the token
-    /// - Returns: ``VaultTokenResponse``
+    /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func createToken(
         _ capabilities: CreateVaultToken,
         wrappTTL: Duration? = nil
@@ -137,7 +137,7 @@ extension VaultClient {
     /// - Parameters:
     ///   - token: Token to renew
     ///   - increment: An optional requested increment duration. This increment may not be honored, for instance in the case of periodic tokens. If not supplied, Vault will use the default TTL
-    /// - Returns: ``VaultTokenResponse``
+    /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func renewToken(
         _ token: String,
         by increment: Duration? = nil
@@ -168,7 +168,7 @@ extension VaultClient {
     /// This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.
     /// - Parameters:
     ///   - increment: An optional requested increment duration. This increment may not be honored, for instance in the case of periodic tokens. If not supplied, Vault will use the default TTL
-    /// - Returns: ``VaultTokenResponse``
+    /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func renewToken(
         by increment: Duration? = nil
     ) async throws -> VaultAuthResponse {
@@ -199,7 +199,7 @@ extension VaultClient {
     /// - Parameters:
     ///   - accessor: Accessor associated with the token to renew.
     ///   - increment: An optional requested lease increment can be provided. This increment may be ignored by Vault.
-    /// - Returns: ``VaultTokenResponse``
+    /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func renewToken(
         accessor: String,
         by increment: Duration? = nil

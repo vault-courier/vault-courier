@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
+/// Request type to enable a new authentication method
 public struct EnableAuthMethodConfig: Sendable {
     /// The path where this auth method should be enabled
     public let path: String
