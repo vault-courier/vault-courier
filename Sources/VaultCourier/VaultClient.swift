@@ -27,7 +27,12 @@ import struct Foundation.Data
 import protocol Foundation.LocalizedError
 #endif
 
+/// REST Client for Hashicorp Vault and OpenBao.
+///
+/// Before a client can interact with Vault, it must authenticate against an auth method. This actor protects the state of the mutating token during this process.
+/// Regardless of which authentication method was chosen during initialization, ``VaultClient`` always authenticates using the ``authenticate()`` method.
 public actor VaultClient {
+
     public struct Configuration {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
         public let apiURL: URL
@@ -159,8 +164,10 @@ public actor VaultClient {
     ///  Before a client can interact with Vault, it must authenticate against an auth method.
     ///  Upon authentication, a token is generated. This token is conceptually similar to
     ///  a session ID on a website. Here we update the internal token
+    ///
+    ///  - Returns: Whether or not authentication succeeds
     @discardableResult
-    public func authenticate() async throws -> Bool{
+    public func authenticate() async throws -> Bool {
         switch authMethod {
             case .appRole:
                 return await appRoleLogin()

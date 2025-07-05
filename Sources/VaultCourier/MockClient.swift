@@ -21,6 +21,7 @@ import protocol Foundation.LocalizedError
 import protocol Foundation.LocalizedError
 #endif
 
+/// Stub client for local development
 public struct MockClient: APIProtocol {
 
     public init() {}

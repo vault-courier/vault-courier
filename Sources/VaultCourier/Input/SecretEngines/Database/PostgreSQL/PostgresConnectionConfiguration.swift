@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
+/// Request type with the connection configuration for Vault and a database
 public struct PostgresConnectionConfiguration: Sendable, Decodable {
     /// The name of the connection
     public var connection: String

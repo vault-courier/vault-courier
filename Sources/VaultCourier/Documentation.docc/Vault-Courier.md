@@ -31,3 +31,5 @@ VaultCourier can be used to retrieve the secrets that your application needs. Th
 
 - <doc:tutorials/Vault-Courier>
 
+### API
+- <doc:VaultCourier>

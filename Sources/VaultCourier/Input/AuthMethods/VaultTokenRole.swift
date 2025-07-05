@@ -14,14 +14,14 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
+/// Token role configuration
 public struct VaultTokenRole: Sendable {
     /// The name of the token role.
     public var roleName: String
 
     /// If set, tokens can be created with any subset of the policies in this list, rather than the normal semantics of tokens being a subset of the calling token's
     /// policies. The parameter is a comma-delimited string of policy names. If at creation time ``noDefaultPolicy`` is not set and \"default\" is not
-    /// contained in ``disallowedPolicies`` or glob matched in ``disallowed_policies_glob``, the \"default\" policy will be added to the created
+    /// contained in ``disallowedPolicies`` or glob matched in ``allowedPoliciesGlob``, the \"default\" policy will be added to the created
     /// token automatically.
     public var allowedPolicies: [String]?
 
@@ -34,7 +34,7 @@ public struct VaultTokenRole: Sendable {
     /// \"default\" is not contained in ``disallowedPolicies`` or glob matched in ``disallowedPoliciesGlob``, the \"default\" policy will be
     /// added to the created token automatically. If combined with ``allowedPolicies`` policies need to only match one of the two lists to be permitted.
     /// Note that unlike ``allowedPolicies`` the policies listed in ``allowedPoliciesGlob`` will not be added to the token when no policies are
-    /// specified in the call to `/auth/token/create/:role_name`.
+    /// specified in the call to ``VaultCourier/VaultClient/createToken(_:wrappTTL:)``.
     public var allowedPoliciesGlob: [String]?
 
     /// If set, successful token creation via this role will require that no requested policies glob match any of policies in this list. The parameter is a
@@ -46,7 +46,7 @@ public struct VaultTokenRole: Sendable {
     /// revocation of any other token.
     public var orphan: Bool
 
-    /// If `true`, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in ``tokenPolicies``
+    /// If `true`, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in ``CreateVaultToken/policies``
     public var noDefaultPolicy: Bool
 
     /// Set to false to disable the ability of the token to be renewed past its initial TTL. Setting the value to true will allow the token to be renewable up to
@@ -76,7 +76,7 @@ public struct VaultTokenRole: Sendable {
     /// If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios,
     /// such as keeping the same role name in the future but revoking all tokens created against it before some point in time. The suffix can be changed,
     /// allowing new callers to have the new suffix as part of their path, and then tokens with the old suffix can be revoked via
-    /// `/sys/leases/revoke-prefix`."
+    /// `/sys/leases/revoke-prefix`.
     public var pathSufix: String?
 
     public init(roleName: String,
