@@ -1,6 +1,6 @@
 @Tutorial(time: 40) {
-    @Intro(title: "Todos App with VaultCourier and Pkl") {
-        This tutorial picks up where "AppRole with Hummingbird Server" chapter left off. It enhances the consumption of Vault secrets via a Pkl resource reader.
+    @Intro(title: "Hummingbird Todos App with VaultCourier and Pkl") {
+        This tutorial picks up where "AppRole Authentication" with Hummingbird Server chapter left off. It enhances the consumption of Vault secrets via a Pkl resource reader.
 
         We will modify the Todo app to consume the secrets via a Pkl configuration file. Furthermore, we will improve the command line tool `admin-vault` to use external configuration files to scale the management of the Vault.
 

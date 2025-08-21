@@ -1,0 +1,1 @@
+approle-vapor-pkl-example % pkl-gen-swift --output-path=Sources/App/Gen TodoConfig.pkl

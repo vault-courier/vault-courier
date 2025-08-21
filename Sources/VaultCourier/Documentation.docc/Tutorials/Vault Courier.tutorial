@@ -13,20 +13,22 @@
         @TutorialReference(tutorial: "doc:Understand-dynamic-roles")
     }
     
-    @Chapter(name: "AppRole with Hummingbird server") {
-        Understand AppRole authentication by extending [Hummingbird's Todo Application](https://docs.hummingbird.codes/2.0/tutorials/todos).
+    @Chapter(name: "AppRole Authentication") {
+        Understand AppRole authentication by extending [Hummingbird's Todo Application](https://docs.hummingbird.codes/2.0/tutorials/todos) or Vapor's start project template to use VaultCourier.
         
         @Image(source: hummingbird-todo.png, alt: "Image from chapter AppRole with Hummingbird server")
                 
         @TutorialReference(tutorial: "doc:Approle-hummingbird")
+        @TutorialReference(tutorial: "doc:Approle-vapor")
     }
     
-    @Chapter(name: "AppRole with Hummingbird server and Pkl") {
-        Scale Vault secret provisioning and consumption with Pkl. This chapter picks up where "AppRole with Hummingbird Server" left off.
+    @Chapter(name: "AppRole Authentication with Pkl") {
+        Scale Vault secret provisioning and consumption with Pkl. This chapter picks up where "AppRole Authentication" left off with any of the chosen servers.
         
         @Image(source: vault-courier-pkl.png, alt: "Image from chapter AppRole with Hummingbird server")
                 
         @TutorialReference(tutorial: "doc:Approle-hummingbird-pkl")
+        @TutorialReference(tutorial: "doc:Approle-vapor-pkl")
     }
     
     @Resources {
@@ -42,6 +44,8 @@
             - [Create Static Role](https://github.com/vault-courier/vault-courier-examples/tree/main/create-static-role-example)
             - [AppRole with Hummingbird server](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-example)
             - [AppRole with Hummingbird server and Pkl](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-pkl-example)
+            - [AppRole with Vapor server](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-vapor-example)
+            - [AppRole with Vapor server and Pkl](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-vapor-pkl-example)
         }
     }
 }
