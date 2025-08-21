@@ -21,6 +21,11 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 
+/// A type that parses an URL into a provided data type
+///
+/// A ``ResourceReaderStrategy`` allows you to customize how Pkl URI resources are parsed into path components used for calling an specific Vault endpoint
+///
+/// ``KeyValueResourceReaderStrategy`` and ``DatabaseResourceReaderStrategy`` are specializations of this protocol for the KeyValue and Database secret engines.
 public protocol ResourceReaderStrategy {
     /// The type of the data type.
     associatedtype ParseOutput: Sendable

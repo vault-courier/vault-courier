@@ -30,7 +30,7 @@ extension ModuleSource: @unchecked Sendable { }
 
 /// A Pkl resource reader for Vault
 ///
-/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient.makeResourceReader``
+/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeResourceReader(scheme:)``
 public final class VaultResourceReader<
     KeyValueStrategy: KeyValueResourceReaderStrategy,
     DatabaseStrategy: DatabaseResourceReaderStrategy
