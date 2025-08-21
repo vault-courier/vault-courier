@@ -16,6 +16,6 @@
     learn-postgres \
     psql -U vault_root -d postgres -c "CREATE ROLE \"todos_user\" LOGIN PASSWORD 'todos_user_password';"
 
-docker exec -i \
+% docker exec -i \
     learn-postgres \
     psql -U vault_root -d postgres -c "GRANT CONNECT ON DATABASE postgres TO todos_user;"

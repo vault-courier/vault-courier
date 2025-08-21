@@ -1,6 +1,6 @@
 @Tutorial(time: 40) {
-    @Intro(title: "Hummingbird Todos App with VaultCourier and Pkl") {
-        This tutorial picks up where "AppRole Authentication" with Hummingbird Server chapter left off. It enhances the consumption of Vault secrets via a Pkl resource reader.
+    @Intro(title: "Vapor Todos App with VaultCourier and Pkl") {
+        This tutorial picks up where "AppRole Authentication" with Vapor Server chapter left off. It enhances the consumption of Vault secrets via a Pkl resource reader.
 
         We will modify the Todo app to consume the secrets via a Pkl configuration file. Furthermore, we will improve the command line tool `admin-vault` to use external configuration files to scale the management of the Vault.
 
@@ -45,7 +45,7 @@
             @Step {
                 Add the Swift bindings for `Pkl` and enable the `Pkl` package trait in VaultCourier.
                 
-                @Code(name: "Package.swift", file: hummingbird.pkl.0.0.0.swift, previousFile:  hummingbird.2.0.1.swift)
+                @Code(name: "Package.swift", file: vapor.pkl.0.0.0.swift, previousFile:  vapor.2.0.0.swift)
             }
             
             @Step {
@@ -71,7 +71,7 @@
             @Step {
                 With the `TodoConfig.pkl` in the root folder, run `pkl-gen-swift` command in the listing to generate the input swift data transfer object (DTO) of TodoConfig.
                 
-                @Code(name: "Terminal", file:  hummingbird.pkl.console.0.0.sh)
+                @Code(name: "Terminal", file:  vapor.pkl.console.0.0.sh)
             }
             
             @Step {
@@ -98,7 +98,7 @@
             @Step {
                 In `Source/Vault.swift` change the signature of `connectToVault` to return `DatabaseConfig` instead of just the `DatabaseCredentials`.
                 
-                @Code(name: "Source/Vault.swift", file:  hummingbird.pkl.0.3.0.swift, previousFile:  hummingbird.0.1.3.swift)
+                @Code(name: "Source/Vault.swift", file:  vapor.pkl.0.1.3.swift, previousFile:  vapor.0.1.3.swift)
             }
             
             @Step {
@@ -106,22 +106,22 @@
                 
                 For simplicity we write directly the filepath to the main configuration file, but this can of course be given in the app arguments or in an environment variable.
                 
-                @Code(name: "Source/Vault.swift", file:  hummingbird.pkl.0.3.1.swift, previousFile:  hummingbird.pkl.0.3.0.swift)
+                @Code(name: "Source/Vault.swift", file:  vapor.pkl.0.1.4.swift, previousFile:  vapor.pkl.0.1.3.swift)
             }
             
             @Step {
                 Finally adapt the injection of the database configuration into the Postgres client. With this we have successfully integrated Pkl as our native config format.
                 
-                @Code(name: "Sources/App/Application+build.swift", file:  hummingbird.pkl.0.4.0.swift, previousFile:  hummingbird.0.2.1.swift)
+                @Code(name: "Sources/App/Application+build.swift", file:  vapor.pkl.0.2.1.swift, previousFile:  vapor.0.2.1.swift)
             }
             
             @Step {
                 In order to run the Todo app, we need to tell the Pkl bindings where the `pkl` binary is. You can do this by setting the env variable `PKL_EXEC` or adding the folder containing the binary into the `PATH`.
                 
                 If you still have the setup lab from the previous tutorial you just need to regenerate new approle credentials and run the app with the `PKL_EXEC` env variable.
-                Otherwise, please setup the lab again following the steps in the "Run Lab" section of the _AppRole with Hummingbird server_ tutorial. The instructions are also in the [examples repository](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-pkl-example).
+                Otherwise, please setup the lab again following the steps in the "Run Lab" section of the _AppRole with Vapor server_ tutorial. The instructions are also in the [examples repository](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-vapor-pkl-example).
                 
-                @Code(name: "Source/Vault.swift", file:  hummingbird.pkl.console.1.0.sh)
+                @Code(name: "Source/Vault.swift", file:  vapor.pkl.console.1.0.sh)
             }
         }
     }
@@ -135,7 +135,7 @@
             @Step {
                 Create a subfolder `Pkl` where we will add all configuration. Since it won't contain swift files we can exclude it in the Package manifest. In addition, add the Swift Pkl bindings dependency. 
                 
-                @Code(name: "Package.swift", file: hummingbird.pkl.0.0.1.swift, previousFile:  hummingbird.pkl.0.0.0.swift)
+                @Code(name: "Package.swift", file: vapor.pkl.0.0.1.swift, previousFile:  vapor.pkl.0.0.0.swift)
             }
             
             @Step {                
@@ -197,7 +197,7 @@
                 We can now begin to replace the hardcoded configuration in the Provision command.
                 First, let's generate the current `VaultAdminConfig` DTO.
                 
-                @Code(name: "Terminal", file: hummingbird.pkl.console.0.2.sh, reset: true)
+                @Code(name: "Terminal", file: vapor.pkl.console.0.2.sh, reset: true)
             }
             
             @Step {
@@ -312,11 +312,11 @@
             }
             
             @Step {
-                In the terminal go to root folder of the modified `todos-postgres-tutorial` and download the `pkl` binary if you have not done so.
+                In the terminal go to root folder of the modified `approle-vapor-example` and download the `pkl` binary if you have not done so.
                 
                 Change the architecture to yours. The available versions can be found [https://github.com/apple/pkl/releases/](https://github.com/apple/pkl/releases/). You can also change where to install the binary.
                 
-                @Code(name: "Terminal Tab 3", file: hummingbird.pkl.console.0.3.sh)
+                @Code(name: "Terminal Tab 3", file: vapor.pkl.console.0.3.sh)
             }
             
             @Step {
@@ -324,7 +324,7 @@
                 
                 You can of course run this and the following commands in your favourite IDE.
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.4.sh, reset: true)
+                @Code(name: "Terminal Tab 2", file: vapor.pkl.console.0.4.sh, reset: true)
             }
             
             @Step {
@@ -332,25 +332,25 @@
                 
                 This is the same as before as we did not add Pkl to this app.
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.5.sh, previousFile: hummingbird.pkl.console.0.4.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.pkl.console.0.5.sh, previousFile: vapor.pkl.console.0.4.sh)
             }
             
             @Step {
                 Run the the Migrator app. Don't forget to add the Env variables. 
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.6.sh, previousFile: hummingbird.pkl.console.0.5.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.pkl.console.0.6.sh, previousFile: vapor.pkl.console.0.5.sh)
             }
             
             @Step {
                 Run the approle credentials generation for the Todo app. 
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.7.sh, previousFile: hummingbird.pkl.console.0.6.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.pkl.console.0.7.sh, previousFile: vapor.pkl.console.0.6.sh)
             }
             
             @Step {
                 Run the the Todo app. Again, don't forget to add the Env variables. We have successfully integrated VaultCourier into the Todo app, and made Pkl the main config format! 🥳
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.pkl.console.0.8.sh, previousFile: hummingbird.pkl.console.0.7.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.pkl.console.0.8.sh, previousFile: vapor.pkl.console.0.7.sh)
             }
             
             @Step {
@@ -358,7 +358,7 @@
                 
                 You can also open your browser `http://localhost:8080/todos`.
                 
-                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh, reset: true)
+                @Code(name: "Terminal Tab 3", file: vapor.console.3.0.sh, reset: true)
             }
         }
     }  

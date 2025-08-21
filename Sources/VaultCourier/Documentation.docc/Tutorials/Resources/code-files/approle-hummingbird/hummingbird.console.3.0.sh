@@ -1,4 +1,4 @@
-% curl -i -X POST localhost:8080/todos -d'{"title": "Book Hotel in Cartagena"}'
+% curl -i -H "Content-Type: application/json" -X POST localhost:8080/todos -d'{"title": "Book Hotel in Cartagena"}'
 HTTP/1.1 201 Created
 Content-Type: application/json; charset=utf-8
 Content-Length: 156

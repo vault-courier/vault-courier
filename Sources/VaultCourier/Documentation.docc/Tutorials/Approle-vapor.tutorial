@@ -1,6 +1,6 @@
 @Tutorial(time: 60) {
-    @Intro(title: "Hummingbird Todos App with VaultCourier") {
-        In this tutorial, we'll demonstrate how to integrate **VaultCourier** with **Hummingbird's Todo example app**. VaultCourier will be responsible for securely retrieving the database credentials required by the Todo server.
+    @Intro(title: "Vapor Todos App with VaultCourier") {
+        In this tutorial, we'll demonstrate how to integrate **VaultCourier** with **Vapor's Todo example app**. VaultCourier will be responsible for securely retrieving the database credentials required by the Todo server.
 
         At the end of this tutorial we will have the following applications:
 
@@ -65,67 +65,59 @@
     }
     
     @Section(title: "Integrate VaultCourier in Todo App") {
-        In this section we will modify the Hummingbird Todo app and remove the hardcoded credentials. We will add VaultCourier as our mechanism to retrieve the secrets.
+        In this section we will modify the Vapor's' Todo app and remove the hardcoded credentials. We will add VaultCourier as our mechanism to retrieve the secrets.
         
         @Steps {
             @Step {
-                Clone the Hummingbird Todo example
+                Clone Vapor's Todo example template choosing Postgres as database with Fluent. Open `Package.swift`. 
                 
-                @Code(name: "Terminal", file: hummingbird.console.0.0.sh, reset: true)
+                @Code(name: "Terminal", file: vapor.console.0.0.sh, reset: true)
             }
             
             @Step {
-                Open `Package.swift`.
-
-                You can see it has dependencies for Hummingbird, Argument Parser, and PostgresNIO
+                Set the toolchain to 6.1 which is the current minimum version supported by VaultCourier. Set supported Platforms and rename the executable to just `App`. Make sure to rename the respective folder under Sources.
                 
-                @Code(name: "Terminal", file: hummingbird.console.0.1.sh)
-            }
-            
-            @Step {
-                Set the toolchain to 6.1 which is the current minimum version supported by VaultCourier. Set supported Platforms.
-                
-                @Code(name: "Package.swift", file: hummingbird.0.0.1.swift, previousFile:  hummingbird.0.0.0.swift)
+                @Code(name: "Package.swift", file: vapor.0.0.1.swift, previousFile:  vapor.0.0.0.swift)
             }
             
             @Step {
                 Then, we'll add `VaultCourier` and a Swift-OpenAPI transport dependency. Here we've selected the `AsyncHTTPClientTransport` transport dependency, but a `URLSessionTransport` would have been a good option as well.
                 
-                @Code(name: "Package.swift", file:  hummingbird.0.0.2.swift, previousFile:  hummingbird.0.0.1.swift)
+                @Code(name: "Package.swift", file:  vapor.0.0.2.swift, previousFile:  vapor.0.0.1.swift)
             }
             
             @Step {
                 Create a new file called `Vault.swift`. Here, we create a function to connect to Vault. For the moment, we return the current hardcoded database credentials.
                 
-                @Code(name: "Sources/App/Vault.swift", file: hummingbird.0.1.0.swift)
+                @Code(name: "Sources/App/Vault.swift", file: vapor.0.1.0.swift)
             }
             
             @Step {
                 We will authenticate our Vault client with approle, so we need a RoleID and a SecretID. The RoleID will be injected in the enviroment, while the SecretID will be provided in an external file.
                 
-                @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.1.swift, previousFile:  hummingbird.0.1.0.swift)
+                @Code(name: "Sources/App/Vault.swift", file: vapor.0.1.1.swift, previousFile:  vapor.0.1.0.swift)
             }
             
             @Step {
                 Import our chosen client transport `OpenAPIAsyncHTTPClient`, and create a VaultClient with VaultCourier. You may need to trust the Swift OpenAPI Generator plugin in your IDE if you have not done so.
                 Note that we initialize the vault client with the approle authentication credentials. The parameter `isWrapped` is not important at the moment. We will come back later and modify it to add an extra security layer to the authentication process.
                 
-                @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.2.swift, previousFile:  hummingbird.0.1.1.swift)
+                @Code(name: "Sources/App/Vault.swift", file:  vapor.0.1.2.swift, previousFile:  vapor.0.1.1.swift)
             }
             
             @Step {
                 Start authentication process with Vault to get a valid session token. With this token we are ready to fetch the secrets the Todos app is entitled. Finally we return our database credentials.
                 
-                @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.3.swift, previousFile:  hummingbird.0.1.2.swift)
+                @Code(name: "Sources/App/Vault.swift", file:  vapor.0.1.3.swift, previousFile:  vapor.0.1.2.swift)
             }
             
             @Step {
-                Go to `Application+build.swift`. Add the function we just created close to the application start, and replace the hardcoded credentials with the credentials from Vault.
+                Go to `configure.swift`. Add the function we just created close to the application start, and replace the hardcoded credentials with the credentials from Vault.
                 
                 Since the Todo app will have scoped access to the database, we remove the createTable migration before the server starts. The todo app will only have permissions for CRUD operations on the `todo` Table. We will introduce a separate app with higher privileges to run migrations like create a new Table.
                 In the next section, we add a new vault-operations-example app that provisions our Vault and enables our `todo` app to be deployed. 
                 
-                @Code(name: "Sources/App/Application+build.swift", file:  hummingbird.0.2.1.swift, previousFile:  hummingbird.0.2.0.swift)
+                @Code(name: "Sources/App/configure.swift", file:  vapor.0.2.1.swift, previousFile:  vapor.0.2.0.swift)
             }
         }
     }
@@ -137,7 +129,7 @@
             @Step {
                 Create a new executable target with dependencies to Swift `ArgumentParser`, `VaultCourier` and `OpenAPIAsyncHTTPClient`. Create a new subfolder `Sources/Operations`.
                 
-                @Code(name: "Package.swift", file: hummingbird.1.0.1.swift, previousFile:  hummingbird.1.0.0.swift)
+                @Code(name: "Package.swift", file: vapor.1.0.0.swift, previousFile:  vapor.0.0.2.swift)
             }
             
             @Step {
@@ -198,27 +190,29 @@
         
         @Steps {
             @Step {
-                Create a new executable target with dependencies to `VaultCourier` and `OpenAPIAsyncHTTPClient` and `PostgresNIO`. Create a new subfolder `Sources/Migrator` and add a `main.swift` file.
+                Create a new executable target with dependencies to `VaultCourier`, `OpenAPIAsyncHTTPClient` and `PostgresNIO`. Create a new subfolder `Sources/Migrator` and add a `main.swift` file.
                 
-                @Code(name: "Package.swift", file: hummingbird.2.0.1.swift, previousFile:  hummingbird.2.0.0.swift)
+                You could have used `PostgresKit` if you don't want to use `PostgresNIO` directly. The important part is that you are able to create SQL queries that grant permission. 
+                
+                @Code(name: "Package.swift", file: vapor.2.0.0.swift, previousFile:  vapor.1.0.0.swift)
             }
             
             @Step {
                 Similar to the Todo app we load the approle credentials to login with Vault.
                 
-                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.0.swift)
+                @Code(name: "Sources/Migrator/main.swift", file: vapor.2.1.0.swift)
             }
             
             @Step {
                 Next we create a VaultClient and authenticate with the migrator's approle credentials.
                 
-                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.1.swift, previousFile:  hummingbird.2.1.0.swift)
+                @Code(name: "Sources/Migrator/main.swift", file: vapor.2.1.1.swift, previousFile:  vapor.2.1.0.swift)
             }
             
             @Step {
                 Get the dynamic credentials. This will generate a temporary Postgres user that will be deleted as soon as the credentials expire. Then instante a `PostgresClient` with the retrieved credentials.
                 
-                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.2.swift, previousFile:  hummingbird.2.1.1.swift)
+                @Code(name: "Sources/Migrator/main.swift", file: vapor.2.1.2.swift, previousFile:  vapor.2.1.1.swift)
             }
             
             @Step {
@@ -227,7 +221,7 @@
                 
                 This finishes the Migrator app. We are now ready to run our applications.  We'll do this in the next section.
                 
-                @Code(name: "Sources/Migrator/main.swift", file: hummingbird.2.1.3.swift, previousFile:  hummingbird.2.1.2.swift)
+                @Code(name: "Sources/Migrator/main.swift", file: vapor.2.1.3.swift, previousFile:  vapor.2.1.2.swift)
             }
         }
     }
@@ -260,35 +254,35 @@
             }
             
             @Step {
-                In the terminal go to root folder of the modified `todos-postgres-tutorial` and run the `admin-vault` command line tool. First run the provision
+                In the terminal go to root folder of the modified `approle-vapor-example` and run the `admin-vault` command line tool. First run the provision
                 
                 You can of course run this and the following commands in your favourite IDE.
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.0.sh, reset: true)
+                @Code(name: "Terminal Tab 2", file: vapor.console.2.0.sh, reset: true)
             }
             
             @Step {
                 Run the approle credentials generation for the Migrator app 
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.1.sh, previousFile: hummingbird.console.2.0.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.console.2.1.sh, previousFile: vapor.console.2.0.sh)
             }
             
             @Step {
                 Run the the Migrator app. Don't forget to add the Env variables. 
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.2.sh, previousFile: hummingbird.console.2.1.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.console.2.2.sh, previousFile: vapor.console.2.1.sh)
             }
             
             @Step {
                 Run the approle credentials generation for the Todo app. 
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.3.sh, previousFile: hummingbird.console.2.2.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.console.2.3.sh, previousFile: vapor.console.2.2.sh)
             }
             
             @Step {
                 Run the the Todo app. Again, don't forget to add the Env variables. We have successfully integrated VaultCourier into the Todo app! 🥳
                 
-                @Code(name: "Terminal Tab 2", file: hummingbird.console.2.4.sh, previousFile: hummingbird.console.2.3.sh)
+                @Code(name: "Terminal Tab 2", file: vapor.console.2.4.sh, previousFile: vapor.console.2.3.sh)
             }
             
             @Step {
@@ -296,7 +290,7 @@
                 
                 You can also open your browser `http://localhost:8080/todos`.
                 
-                @Code(name: "Terminal Tab 3", file: hummingbird.console.3.0.sh, reset: true)
+                @Code(name: "Terminal Tab 3", file: vapor.console.3.0.sh, reset: true)
             }
         }
     }
