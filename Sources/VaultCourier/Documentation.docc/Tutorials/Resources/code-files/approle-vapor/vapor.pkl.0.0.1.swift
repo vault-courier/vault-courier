@@ -50,9 +50,11 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "VaultCourier", package: "vault-courier"),
-                .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client")
+                .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
+                .product(name: "PklSwift", package: "pkl-swift")
             ],
             path: "Sources/Operations",
+            exclude: ["Pkl"]
         ),
         .executableTarget(
             name: "Migrator",

@@ -9,7 +9,7 @@ AppRole Authentication enabled.
 AppRole 'server_app_role' created.
 AppRole 'migrator_app_role' created.
 
-todos-postgres-tutorial % swift run Operations credentials migrator
+todos-postgres-tutorial % swift run Operations credentials migrator Sources/Operations/Pkl/Stage/vaultAdminConfig.pkl
 
 Generating Approle credentials for 'migrator' app...
 SecretID successfully written to ./approle_secret_id.txt
