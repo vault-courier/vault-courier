@@ -16,7 +16,7 @@
 import PackageDescription
 
 let PklTrait: Trait = .trait(
-    name: "Pkl",
+    name: "Pkl", //name: "PKL",
     description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
 )
 
@@ -35,7 +35,8 @@ let package = Package(
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
         .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4")
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
+//        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
     ],
     targets: [
         .target(
@@ -44,10 +45,64 @@ let package = Package(
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
+                .target(name: "AuthMethods"),
+                .target(name: "ResponseWrapping"),
             ],
             plugins: [
                 .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]
+        ),
+        .target(
+            name: "AuthMethods",
+            dependencies: [
+                .target(name: "AppRoleAuth"),
+                .target(name: "TokenAuth"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/AuthMethods"
+        ),
+        .target(
+            name: "AppRoleAuth",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+//                .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/AppRole",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "TokenAuth",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+//                .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/TokenAuth",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "ResponseWrapping",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/ResponseWrapping",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "VaultUtilities",
+            dependencies: [],
+            path: "Sources/VaultUtilities"
         ),
         .testTarget(
             name: "VaultCourierTests",

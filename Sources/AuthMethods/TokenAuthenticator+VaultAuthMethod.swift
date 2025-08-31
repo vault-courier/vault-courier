@@ -14,11 +14,24 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-//extension String {
-//    func removeSlash() -> String {
-//        if self.hasPrefix("/") {
-//            return String(self.suffix(from: self.index(after: self.startIndex)))
-//        }
-//        return self
-//    }
-//}
+import TokenAuth
+import VaultUtilities
+
+extension TokenAuthenticator: VaultAuthMethod {
+    /// Authenticate with Vault
+    /// - Returns: session token
+    public func authenticate() async throws -> String {
+        guard let token else {
+            throw TokenAuthError.missingToken()
+        }
+        return token
+    }
+}
+
+extension TokenAuthenticatorMock: VaultAuthMethod {
+    /// Authenticate with Vault
+    /// - Returns: session token
+    public func authenticate() async throws -> String {
+        return token
+    }
+}

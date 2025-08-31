@@ -14,11 +14,9 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-//extension String {
-//    func removeSlash() -> String {
-//        if self.hasPrefix("/") {
-//            return String(self.suffix(from: self.index(after: self.startIndex)))
-//        }
-//        return self
-//    }
-//}
+/// A type that can authenticate with Vault
+package protocol VaultAuthMethod: Sendable {
+    /// Authenticate with Vault
+    /// - Returns: session token
+    func authenticate() async throws -> String
+}

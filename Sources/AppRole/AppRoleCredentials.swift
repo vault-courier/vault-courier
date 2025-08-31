@@ -14,11 +14,14 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-//extension String {
-//    func removeSlash() -> String {
-//        if self.hasPrefix("/") {
-//            return String(self.suffix(from: self.index(after: self.startIndex)))
-//        }
-//        return self
-//    }
-//}
+
+public struct AppRoleCredentials: Sendable {
+    public let roleID: String
+    public let secretID: String
+
+    public init(roleID: String,
+                secretID: String) {
+        self.roleID = roleID
+        self.secretID = secretID
+    }
+}

@@ -1,0 +1,60 @@
+//===----------------------------------------------------------------------===//
+//  Copyright (c) 2025 Javier Cuesta
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//===----------------------------------------------------------------------===//
+
+import OpenAPIRuntime
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+#endif
+import Synchronization
+
+import ResponseWrapping
+
+/// The `SystemBackend` is the client for all Vault endpoints under `/sys`.
+/// This client is used to configure Vault and interact with many of Vault's internal features.
+public final class SystemBackend: Sendable {
+    init(apiURL: URL,
+         clientTransport: any ClientTransport,
+         middlewares: [any ClientMiddleware] = [],
+         token: String? = nil) {
+        self.wrapping = ResponseWrapper(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            middlewares: middlewares,
+            token: token
+        )
+        self.apiURL = apiURL
+        self._token = .init(token)
+    }
+
+    let apiURL: URL
+
+    let wrapping: ResponseWrapper
+
+    let _token: Mutex<String?>
+
+    var token: String? {
+        get {
+            _token.withLock { $0 }
+        }
+        set {
+            _token.withLock {
+                $0 = newValue
+            }
+        }
+    }
+}

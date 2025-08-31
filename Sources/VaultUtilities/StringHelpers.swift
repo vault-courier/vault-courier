@@ -14,11 +14,11 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-//extension String {
-//    func removeSlash() -> String {
-//        if self.hasPrefix("/") {
-//            return String(self.suffix(from: self.index(after: self.startIndex)))
-//        }
-//        return self
-//    }
-//}
+extension String {
+    package func removeSlash() -> String {
+        if self.hasPrefix("/") {
+            return String(self.suffix(from: self.index(after: self.startIndex)))
+        }
+        return self
+    }
+}

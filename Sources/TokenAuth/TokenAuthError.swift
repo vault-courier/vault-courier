@@ -14,11 +14,10 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-//extension String {
-//    func removeSlash() -> String {
-//        if self.hasPrefix("/") {
-//            return String(self.suffix(from: self.index(after: self.startIndex)))
-//        }
-//        return self
-//    }
-//}
+public struct TokenAuthError: Error, Sendable {
+    public var message: String
+
+    public static func missingToken() -> Self {
+        .init(message: "Token has not been set in Token Authenticator")
+    }
+}

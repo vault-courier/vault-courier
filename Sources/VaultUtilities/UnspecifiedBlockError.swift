@@ -14,11 +14,21 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-//extension String {
-//    func removeSlash() -> String {
-//        if self.hasPrefix("/") {
-//            return String(self.suffix(from: self.index(after: self.startIndex)))
-//        }
-//        return self
-//    }
-//}
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+import protocol Foundation.LocalizedError
+#else
+import protocol Foundation.LocalizedError
+#endif
+
+package struct UnspecifiedBlockError: Swift.Error, LocalizedError, CustomStringConvertible {
+    package var function: StaticString
+
+    package var description: String { "Unspecified block for \(function)" }
+
+    package var errorDescription: String? { description }
+
+    package init(function: StaticString = #function) {
+        self.function = function
+    }
+}

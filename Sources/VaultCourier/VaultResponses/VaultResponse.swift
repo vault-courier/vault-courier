@@ -14,11 +14,13 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-//extension String {
-//    func removeSlash() -> String {
-//        if self.hasPrefix("/") {
-//            return String(self.suffix(from: self.index(after: self.startIndex)))
-//        }
-//        return self
-//    }
-//}
+public struct VaultResponse<
+    VaultData: Decodable & Sendable,
+    Auth: Decodable & Sendable
+>: Sendable {
+    public let requestID: String
+
+    public let data: VaultData?
+
+    public let auth: Auth?
+}

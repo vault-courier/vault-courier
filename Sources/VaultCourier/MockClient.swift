@@ -14,12 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-import protocol Foundation.LocalizedError
-#else
-import protocol Foundation.LocalizedError
-#endif
+import VaultUtilities
 
 /// Stub client for local development
 public struct MockClient: APIProtocol {
@@ -659,14 +654,26 @@ public struct MockClient: APIProtocol {
     }
 }
 
-public struct UnspecifiedBlockError: Swift.Error, LocalizedError, CustomStringConvertible {
-    public var function: StaticString
+//public struct UnspecifiedBlockError: Swift.Error, LocalizedError, CustomStringConvertible {
+//    public var function: StaticString
+//
+//    public var description: String { "Unspecified block for \(function)" }
+//
+//    public var errorDescription: String? { description }
+//
+//    public init(function: StaticString = #function) {
+//        self.function = function
+//    }
+//}
 
-    public var description: String { "Unspecified block for \(function)" }
-
-    public var errorDescription: String? { description }
-
-    public init(function: StaticString = #function) {
-        self.function = function
-    }
-}
+//package struct UnspecifiedBlockError: Swift.Error, LocalizedError, CustomStringConvertible {
+//    public var function: StaticString
+//
+//    public var description: String { "Unspecified block for \(function)" }
+//
+//    public var errorDescription: String? { description }
+//
+//    public init(function: StaticString = #function) {
+//        self.function = function
+//    }
+//}

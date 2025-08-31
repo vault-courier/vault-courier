@@ -26,6 +26,10 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 import protocol Foundation.LocalizedError
 #endif
+import AuthMethods
+import AppRoleAuth
+import TokenAuth
+import ResponseWrapping
 
 /// REST Client for Hashicorp Vault and OpenBao.
 ///
@@ -37,19 +41,26 @@ public actor VaultClient {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
         public let apiURL: URL
 
-        /// Custom AppRole engine path in Vault. Defaults to `approle` when set to `nil`.
+        /// Custom AppRole engine path in Vault.
         public let appRolePath: String
 
-        /// Custom mount path for the KeyValue v2 engine in Vault. Defaults to `secret` when set to `nil`.
+        /// Custom mount path for the KeyValue v2 engine in Vault.
         public let kvMountPath: String
 
-        /// Custom mount path for the Database engine in Vault. Defaults to `database` when set to `nil`.
+        /// Custom mount path for the Database engine in Vault.
         public let databaseMountPath: String
 
         public let backgroundActivityLogger: Logging.Logger
 
         static let loggingDisabled = Logger(label: "vault-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
-
+        
+        /// Configuration initializer
+        /// - Parameters:
+        ///   - apiURL: Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
+        ///   - appRolePath: Custom AppRole engine path in Vault. Defaults to `approle` when set to `nil`.
+        ///   - kvMountPath: Custom mount path for the KeyValue v2 engine in Vault. Defaults to `secret` when set to `nil`.
+        ///   - databaseMountPath: Custom mount path for the Database engine in Vault. Defaults to `database` when set to `nil`.
+        ///   - backgroundActivityLogger: Vault client logger
         public init(apiURL: URL,
                     appRolePath: String? = nil,
                     kvMountPath: String? = nil,
@@ -63,6 +74,28 @@ public actor VaultClient {
         }
     }
 
+
+    public struct Configuration2: Sendable {
+        /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
+        public let apiURL: URL
+
+        /// Vault client's logger
+        public let backgroundActivityLogger: Logging.Logger
+
+        static var loggingDisabled: Logger { .init(label: "vault-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
+
+        /// Configuration initializer
+        /// - Parameters:
+        ///   - apiURL: Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
+        ///   - backgroundActivityLogger: Vault client logger
+        public init(apiURL: URL,
+                    backgroundActivityLogger: Logging.Logger? = nil) {
+            self.apiURL = apiURL
+            self.backgroundActivityLogger = backgroundActivityLogger ?? Self.loggingDisabled
+        }
+    }
+
+    @available(*, deprecated, message: "AuthMethods and Secret engines will be created on demand")
     /// Mount engine paths
     struct Mounts {
         public let kv: URL
@@ -72,11 +105,19 @@ public actor VaultClient {
         public let appRole: URL
     }
 
+    let apiURL: URL
+
+    @available(*, deprecated, message: "This will be removed and we store only the transport client")
     let client: any APIProtocol
+
+    let clientTransport: any ClientTransport
 
     let logger: Logging.Logger
 
     let mounts: Mounts
+
+    /// The middlewares to be invoked before the transport.
+    public var middlewares: [any ClientMiddleware]
 
     /// Authentication state
     private var authState: AuthenticationState
@@ -96,35 +137,39 @@ public actor VaultClient {
                 self.authState = .authorized(token: token)
         }
 
+        self.apiURL = configuration.apiURL
+        self.clientTransport = clientTransport
+
         self.client = Client(
             serverURL: configuration.apiURL,
             transport: clientTransport,
             middlewares: middlewares
         )
+        self.middlewares = middlewares
         self.logger = configuration.backgroundActivityLogger
         self.mounts = .init(kv: .init(string: configuration.kvMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/secret", relativeTo: configuration.apiURL)!,
                             database: .init(string: configuration.databaseMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/database", relativeTo: configuration.apiURL)!,
                             appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)
     }
 
-    public init(configuration: Configuration,
-                client: any APIProtocol,
-                authentication: Authentication) {
-        switch authentication {
-            case let .appRole(credentials, isWrapped):
-                self.authState = isWrapped ? .wrapped(credentials) : .unwrapped(credentials)
-                self.authMethod = .appRole
-            case .token(let token):
-                self.authMethod = .token
-                self.authState = .authorized(token: token)
-        }
-
-        self.client = client
-        self.logger = configuration.backgroundActivityLogger
-        self.mounts = .init(kv: .init(string: configuration.kvMountPath, relativeTo: configuration.apiURL) ?? URL(string: "secret", relativeTo: configuration.apiURL)!,
-                            database: .init(string: configuration.databaseMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/database", relativeTo: configuration.apiURL)!,
-                            appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)
-    }
+//    public init(configuration: Configuration,
+//                client: any APIProtocol,
+//                authentication: Authentication) {
+//        switch authentication {
+//            case let .appRole(credentials, isWrapped):
+//                self.authState = isWrapped ? .wrapped(credentials) : .unwrapped(credentials)
+//                self.authMethod = .appRole
+//            case .token(let token):
+//                self.authMethod = .token
+//                self.authState = .authorized(token: token)
+//        }
+//        self.apiURL = configuration.apiURL
+//        self.client = client
+//        self.logger = configuration.backgroundActivityLogger
+//        self.mounts = .init(kv: .init(string: configuration.kvMountPath, relativeTo: configuration.apiURL) ?? URL(string: "secret", relativeTo: configuration.apiURL)!,
+//                            database: .init(string: configuration.databaseMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/database", relativeTo: configuration.apiURL)!,
+//                            appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)
+//    }
 
     enum AuthenticationState: CustomStringConvertible {
         case wrapped(AppRoleCredentials)
@@ -203,6 +248,7 @@ public actor VaultClient {
         }
     }
 
+    // Unwraps AppRole response
     public func unwrapToken() async throws {
         guard case let .wrapped(credentials) = authState else {
             throw VaultClientError.invalidState(authState.description)
@@ -274,5 +320,106 @@ public actor VaultClient {
                 logger.debug(.init(stringLiteral: "login failed with \(statusCode): "))
                 throw VaultClientError.permissionDenied()
         }
+    }
+}
+
+extension VaultClient {
+
+//     The VaultAuthMethod should be registered and the login just calls it. The reason
+//     is that The "Authenticators" not only can do login, but call the an API
+//     We don't want them to be separated from the main client
+//     UPDATE: Why is it bad to generate the sub-clients on calls? We have all the dependencies stored
+//     UPDATE: Offer withAPI: withAppRoleClient(credentials, action: appRoleClient -> () )
+//     and run the action inside the VaultClient. In addition, offer individual calls like login
+//     - The main Mock should be a separate Object and should be dependent on the other client mocks
+
+    public func login(method: NewAuthMethod, unwrap: Bool) async throws {
+        if unwrap {
+            // TODO: Call unwrap endpoint
+//            let unwrappedToken: String
+//            switch method {
+//                case .token(let inputToken):
+//                    #warning("It should unwrap a json response with a key named 'token'. This is a convention and if the data is not in this format, it should fail. Refer a client to arbitrary unwrap function for arbitrary decoding")
+//                    unwrappedToken = inputToken
+//                case let .appRole(path: _, credentials: credentials):
+//                    #warning("It should unwrap the response of the AppRole endpoint")
+//                    unwrappedToken = try await self.unwrap(token: "")
+//            }
+
+
+            // ---
+            let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
+            let sessionToken = try await authenticator.authenticate()
+            self.authState = .authorized(token: sessionToken)
+            logger.info("login authorized")
+        } else {
+            let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
+            let sessionToken = try await authenticator.authenticate()
+            self.authState = .authorized(token: sessionToken)
+            logger.info("login authorized")
+        }
+    }
+
+}
+
+extension VaultClient {
+    /// Unwraps a vault wrapped response
+    ///
+    /// - Parameter token: Wrapping token ID. This is required if the client token is not the wrapping token. Do not use the same wrapping token in this parameter and in the client token.
+    /// - Returns: Returns the original response inside the given wrapping token
+    public func unwrapResponse<
+        VaultData: Decodable & Sendable,
+        Auth: Decodable & Sendable
+    >(
+        token: String?
+    ) async throws -> VaultResponse<VaultData, Auth> {
+        let responseWrapper = ResponseWrapper(apiURL: apiURL, clientTransport: clientTransport)
+        let sessionToken = try? sessionToken()
+
+        guard sessionToken != token else {
+            throw VaultClientError.badRequest(["Do not use the wrapping token in the parameter and in client token"])
+        }
+
+        let response = try await responseWrapper.client.unwrap(
+            .init(headers: .init(xVaultToken: sessionToken),
+                  body: .json(.init(token: token)))
+        )
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                let vaultData: VaultData?
+                let auth: Auth?
+                do {
+                    let data = try JSONEncoder().encode(json.data)
+                    vaultData = try JSONDecoder().decode(VaultData.self, from: data)
+                    let authData = try JSONEncoder().encode(json.auth)
+                    auth = try JSONDecoder().decode(Auth.self, from: authData)
+                } catch  {
+                    logger.debug("Decoding of unwrap response failed: \(error).")
+                    throw VaultClientError.decodingFailed()
+                }
+                logger.info("Response unwrapping successful")
+                return VaultResponse(requestID: json.requestId, data: vaultData, auth: auth)
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.permissionDenied()
+            case .undocumented(let statusCode, _):
+                logger.debug(.init(stringLiteral: "unwrapToken failed with \(statusCode): "))
+                throw VaultClientError.permissionDenied()
+        }
+    }
+
+    public func withSystemBackend<ReturnType: Sendable>(
+        execute: (SystemBackend) async throws -> ReturnType
+    ) async throws -> ReturnType {
+        let sessionToken = try? sessionToken()
+        let client = SystemBackend(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            middlewares: middlewares,
+            token: sessionToken
+        )
+        return try await execute(client)
     }
 }
