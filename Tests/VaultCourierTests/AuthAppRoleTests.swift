@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 import Testing
 
 import OpenAPIAsyncHTTPClient
@@ -166,3 +167,4 @@ extension IntegrationTests.Auth.AppRole {
         try await vaultClient.disableAuthMethod(path)
     }
 }
+#endif

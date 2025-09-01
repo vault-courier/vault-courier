@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -391,3 +392,4 @@ extension AppRoleProvider {
         }
     }
 }
+#endif

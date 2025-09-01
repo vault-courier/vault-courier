@@ -207,6 +207,7 @@ extension VaultClient {
     }
 }
 
+#if AppRoleSupport
 extension VaultClient {
     public func withAppRoleProvider<ReturnType: Sendable>(
         mountPath: String? = nil,
@@ -223,3 +224,4 @@ extension VaultClient {
         return try await execute(client)
     }
 }
+#endif

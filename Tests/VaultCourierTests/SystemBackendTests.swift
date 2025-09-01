@@ -27,6 +27,7 @@ import VaultCourier
 
 // MARK: Wrapping
 
+#if AppRoleSupport
 extension IntegrationTests.System.Wrapping {
     struct AppRoleSecretID: Decodable, Sendable {
         let secretID: String
@@ -105,3 +106,4 @@ extension IntegrationTests.System.Wrapping {
         try await vaultClient.disableAuthMethod(path)
     }
 }
+#endif

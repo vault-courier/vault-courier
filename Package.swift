@@ -20,6 +20,11 @@ let PklTrait: Trait = .trait(
     description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
 )
 
+let AppRoleTrait: Trait = .trait(
+    name: "AppRoleSupport",
+    description: "Enable AppRole authentication"
+)
+
 let package = Package(
     name: "vault-courier",
     platforms: [.macOS(.v15)],
@@ -27,7 +32,8 @@ let package = Package(
         .library(name: "VaultCourier", targets: ["VaultCourier"]),
     ],
     traits: [
-        PklTrait
+        PklTrait,
+        AppRoleTrait
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.7.2"),
@@ -55,7 +61,7 @@ let package = Package(
         .target(
             name: "AuthMethods",
             dependencies: [
-                .target(name: "AppRoleAuth"),
+                .target(name: "AppRoleAuth", condition: .when(traits: [AppRoleTrait.name])),
                 .target(name: "TokenAuth"),
                 .target(name: "VaultUtilities")
             ],
@@ -65,7 +71,6 @@ let package = Package(
             name: "AppRoleAuth",
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
-//                .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
                 .target(name: "VaultUtilities")
             ],
@@ -78,7 +83,6 @@ let package = Package(
             name: "TokenAuth",
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
-//                .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
                 .target(name: "VaultUtilities")
             ],
@@ -107,7 +111,7 @@ let package = Package(
         .testTarget(
             name: "VaultCourierTests",
             dependencies: [
-                "VaultCourier",
+                .target(name: "VaultCourier"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
             ],

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 import protocol Foundation.LocalizedError
@@ -113,3 +114,4 @@ extension VaultClient {
         }
     }
 }
+#endif
