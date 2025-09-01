@@ -201,8 +201,7 @@
               "accessor",
               "ttl",
               "creation_time",
-              "creation_path",
-              "wrapped_accessor"
+              "creation_path"
             ]
           },
           "warnings": {

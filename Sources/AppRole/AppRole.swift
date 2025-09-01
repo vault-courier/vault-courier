@@ -29,17 +29,17 @@ package final class AppRoleAuth: Sendable {
         public let apiURL: URL
 
         /// Custom AppRole authentication path in Vault. Defaults to `approle` when set to `nil`.
-        public let basePath: String
+        public let mountPath: String
 
         public init(apiURL: URL,
-                    basePath: String? = nil) {
+                    mountPath: String? = nil) {
             self.apiURL = apiURL
-            self.basePath = basePath ?? "approle"
+            self.mountPath = mountPath ?? "approle"
         }
     }
 
     package init(configuration: Configuration,
-                clientTransport: any ClientTransport,
+                 clientTransport: any ClientTransport,
                  middlewares: [any ClientMiddleware] = [],
                  token: String? = nil,
                  credentials: AppRoleCredentials? = nil) {
@@ -48,7 +48,7 @@ package final class AppRoleAuth: Sendable {
             transport: clientTransport,
             middlewares: middlewares
         )
-        self.basePath = .init(string: configuration.basePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!
+        self.basePath = .init(string: configuration.mountPath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!
         self._token = .init(token)
         self._credentials = .init(credentials)
     }
@@ -80,5 +80,9 @@ package final class AppRoleAuth: Sendable {
                 token = newValue
             }
         }
+    }
+
+    package func header(token: String, wrapTimeToLive: String? = nil) -> Operations.AuthReadRoleId.Input.Headers {
+        return .init(xVaultToken: token, xVaultWrapTTL: wrapTimeToLive)
     }
 }

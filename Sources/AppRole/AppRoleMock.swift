@@ -16,11 +16,11 @@
 
 import VaultUtilities
 
-public struct AppRoleMock: APIProtocol {
-    public var appRolePath: String
-    public var credentials: AppRoleCredentials
+package struct AppRoleMock: APIProtocol {
+    package var appRolePath: String
+    package var credentials: AppRoleCredentials
 
-    public init(appRolePath: String,
+    package init(appRolePath: String,
                 credentials: AppRoleCredentials,
                 authReadApproleAction: AuthReadApproleSignature? = nil,
                 authCreateApproleAction: AuthCreateApproleSignature? = nil,
@@ -42,10 +42,10 @@ public struct AppRoleMock: APIProtocol {
         self.authApproleLoginAction = authApproleLoginAction
     }
 
-    public typealias AuthReadApproleSignature
+    package typealias AuthReadApproleSignature
         = @Sendable (Operations.AuthReadApprole.Input) async throws -> Operations.AuthReadApprole.Output
-    public var authReadApproleAction: AuthReadApproleSignature?
-    public func authReadApprole(
+    package var authReadApproleAction: AuthReadApproleSignature?
+    package func authReadApprole(
         _ input: Operations.AuthReadApprole.Input
     ) async throws -> Operations.AuthReadApprole.Output {
         guard let block = authReadApproleAction
@@ -54,10 +54,10 @@ public struct AppRoleMock: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthCreateApproleSignature
+    package typealias AuthCreateApproleSignature
         = @Sendable (Operations.AuthCreateApprole.Input) async throws -> Operations.AuthCreateApprole.Output
-    public var authCreateApproleAction: AuthCreateApproleSignature?
-    public func authCreateApprole(
+    package var authCreateApproleAction: AuthCreateApproleSignature?
+    package func authCreateApprole(
         _ input: Operations.AuthCreateApprole.Input
     ) async throws -> Operations.AuthCreateApprole.Output {
         guard let block = authCreateApproleAction
@@ -78,10 +78,10 @@ public struct AppRoleMock: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthReadRoleIdSignature
+    package typealias AuthReadRoleIdSignature
         = @Sendable (Operations.AuthReadRoleId.Input) async throws -> Operations.AuthReadRoleId.Output
-    public var authReadRoleIdAction: AuthReadRoleIdSignature?
-    public func authReadRoleId(
+    package var authReadRoleIdAction: AuthReadRoleIdSignature?
+    package func authReadRoleId(
         _ input: Operations.AuthReadRoleId.Input
     ) async throws -> Operations.AuthReadRoleId.Output {
         guard let block = authReadRoleIdAction
@@ -90,10 +90,10 @@ public struct AppRoleMock: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthApproleSecretIdSignature
+    package typealias AuthApproleSecretIdSignature
         = @Sendable (Operations.AuthApproleSecretId.Input) async throws -> Operations.AuthApproleSecretId.Output
-    public var authApproleSecretIdAction: AuthApproleSecretIdSignature?
-    public func authApproleSecretId(
+    package var authApproleSecretIdAction: AuthApproleSecretIdSignature?
+    package func authApproleSecretId(
         _ input: Operations.AuthApproleSecretId.Input
     ) async throws -> Operations.AuthApproleSecretId.Output {
         guard let block = authApproleSecretIdAction
@@ -102,10 +102,10 @@ public struct AppRoleMock: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthReadApproleSecretIdWithAccessorSignature
+    package typealias AuthReadApproleSecretIdWithAccessorSignature
         = @Sendable (Operations.AuthReadApproleSecretIdWithAccessor.Input) async throws -> Operations.AuthReadApproleSecretIdWithAccessor.Output
-    public var authReadApproleSecretIdWithAccessorAction: AuthReadApproleSecretIdWithAccessorSignature?
-    public func authReadApproleSecretIdWithAccessor(
+    package var authReadApproleSecretIdWithAccessorAction: AuthReadApproleSecretIdWithAccessorSignature?
+    package func authReadApproleSecretIdWithAccessor(
         _ input: Operations.AuthReadApproleSecretIdWithAccessor.Input
     ) async throws -> Operations.AuthReadApproleSecretIdWithAccessor.Output {
         guard let block = authReadApproleSecretIdWithAccessorAction
@@ -114,10 +114,10 @@ public struct AppRoleMock: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthDestroyApproleSecretIdWithAccessorSignature
+    package typealias AuthDestroyApproleSecretIdWithAccessorSignature
         = @Sendable (Operations.AuthDestroyApproleSecretIdWithAccessor.Input) async throws -> Operations.AuthDestroyApproleSecretIdWithAccessor.Output
-    public var authDestroyApproleSecretIdWithAccessorAction: AuthDestroyApproleSecretIdWithAccessorSignature?
-    public func authDestroyApproleSecretIdWithAccessor(
+    package var authDestroyApproleSecretIdWithAccessorAction: AuthDestroyApproleSecretIdWithAccessorSignature?
+    package func authDestroyApproleSecretIdWithAccessor(
         _ input: Operations.AuthDestroyApproleSecretIdWithAccessor.Input
     ) async throws -> Operations.AuthDestroyApproleSecretIdWithAccessor.Output {
         guard let block = authDestroyApproleSecretIdWithAccessorAction
@@ -126,9 +126,9 @@ public struct AppRoleMock: APIProtocol {
         return try await block(input)
     }
 
-    public typealias AuthApproleLoginSignature = @Sendable (Operations.AuthApproleLogin.Input) async throws -> Operations.AuthApproleLogin.Output
-    public var authApproleLoginAction: AuthApproleLoginSignature?
-    public func authApproleLogin(
+    package typealias AuthApproleLoginSignature = @Sendable (Operations.AuthApproleLogin.Input) async throws -> Operations.AuthApproleLogin.Output
+    package var authApproleLoginAction: AuthApproleLoginSignature?
+    package func authApproleLogin(
         _ input: Operations.AuthApproleLogin.Input
     ) async throws -> Operations.AuthApproleLogin.Output {
         guard let block = authApproleLoginAction

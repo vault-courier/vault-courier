@@ -142,7 +142,21 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadAppRoleIdResponse"
+                  "anyOf": [
+                    {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/ReadAppRoleIdResponse"
+                        },
+                        {
+                          "$ref": "#/components/schemas/VaultWrappedResponse"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             }
@@ -180,6 +194,9 @@
         },
         {
           "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
         }
       ]
     },
@@ -190,7 +207,7 @@
           "auth"
         ],
         "summary": "Generates and issues a new SecretID on an existing AppRole",
-        "description": "Creates a new AppRole or updates an existing AppRole. This endpoint supports both create and update capabilities.",
+        "description": "Generates and issues a new SecretID on an existing AppRole",
         "operationId": "auth-approle-secret-id",
         "requestBody": {
           "content": {
@@ -262,13 +279,7 @@
           "$ref": "#/components/parameters/VaultTokenHeader"
         },
         {
-          "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
-          "name": "X-Vault-Wrap-TTL",
-          "in": "header",
-          "required": false,
-          "schema": {
-            "type": "string"
-          }
+          "$ref": "#/components/parameters/WrapTTLHeader"
         }
       ]
     },
@@ -730,6 +741,15 @@
           "request_id": {
             "type": "string"
           },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
           "data": {
             "type": "object",
             "properties": {
@@ -752,9 +772,26 @@
               "secret_id_ttl",
               "secret_id_num_uses"
             ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
           }
         },
         "required": [
+          "request_id",
           "data"
         ]
       },
@@ -1030,8 +1067,7 @@
               "accessor",
               "ttl",
               "creation_time",
-              "creation_path",
-              "wrapped_accessor"
+              "creation_path"
             ]
           },
           "warnings": {

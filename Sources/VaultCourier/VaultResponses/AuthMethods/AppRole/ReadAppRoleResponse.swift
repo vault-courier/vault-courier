@@ -48,32 +48,3 @@ public struct ReadAppRoleResponse: Sendable {
 
     public let tokenType: TokenType
 }
-
-extension Components.Schemas.ReadAppRoleResponse {
-    var appRoleResponse: ReadAppRoleResponse {
-        get throws {
-            guard let tokenType = TokenType(rawValue: data.tokenType?.rawValue ?? "") else {
-                throw VaultClientError.receivedUnexpectedResponse("Unexpected token type: \(String(describing: data.tokenType))")
-            }
-
-            return .init(
-                requestID: requestId,
-                tokenPolicies: data.tokenPolicies ?? [],
-                tokenTimeToLive: data.tokenTtl.flatMap(Duration.seconds(_:)),
-                tokenMaxTimeToLive: data.tokenMaxTtl.flatMap(Duration.seconds(_:)),
-                tokenBoundCIDRS: data.tokenBoundCidrs,
-                tokenExplicitMaxTimeToLive: data.tokenExplicitMaxTtl.flatMap(Duration.seconds(_:)),
-                tokenNoDefaultPolicy: data.tokenNoDefaultPolicy ?? false,
-                tokenNumberOfUses: data.tokenNumUses ?? 0,
-                tokenPeriod: data.tokenPeriod,
-                secretIdTimeToLive: data.secretIdTtl.flatMap(Duration.seconds(_:)),
-                isRenewable: renewable,
-                secretIdNumberOfUses: data.secretIdNumUses,
-                bindSecretID: data.bindSecretId ?? true,
-                localSecretID: data.localSecretIds ?? false,
-                secretIdBoundCIDRS: data.secretIdBoundCidrs,
-                tokenType: tokenType
-            )
-        }
-    }
-}

@@ -15,41 +15,29 @@
 //===----------------------------------------------------------------------===//
 
 import OpenAPIRuntime
+import HTTPTypes
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
 import struct Foundation.URL
 #endif
-import Synchronization
 
-package final class ResponseWrapper: Sendable {
-    package init(apiURL: URL,
-                clientTransport: any ClientTransport,
-                middlewares: [any ClientMiddleware] = [],
-                token: String? = nil) {
-        self.client = Client(
-            serverURL: apiURL,
-            transport: clientTransport,
-            middlewares: middlewares
-        )
-        self.basePath = URL(string: "/wrapping", relativeTo: apiURL.appending(path: "sys"))!
-        self._token = .init(token)
+public struct ResponseWrappingMiddleware: ClientMiddleware {
+    public var timeToLive: Duration
+
+    public func intercept(
+        _ request: HTTPTypes.HTTPRequest,
+        body: OpenAPIRuntime.HTTPBody?,
+        baseURL: URL,
+        operationID: String,
+        next: @Sendable (HTTPTypes.HTTPRequest, OpenAPIRuntime.HTTPBody?, URL) async throws -> (HTTPTypes.HTTPResponse, OpenAPIRuntime.HTTPBody?)
+    ) async throws -> (HTTPTypes.HTTPResponse, OpenAPIRuntime.HTTPBody?) {
+        var wrapRequest = request
+        wrapRequest.headerFields.append(.init(name: .wrapTTL, value: String(timeToLive.components.seconds)))
+        return try await next(wrapRequest, body, baseURL)
     }
+}
 
-    package let basePath: URL
-
-    package let client: any APIProtocol
-
-    package let _token: Mutex<String?>
-
-    package var token: String? {
-        get {
-            _token.withLock { $0 }
-        }
-        set {
-            _token.withLock { token in
-                token = newValue
-            }
-        }
-    }
+extension HTTPField.Name {
+    static let wrapTTL = Self("X-VAULT-WRAP-TTL")!
 }

@@ -14,49 +14,21 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
-#endif
-
-extension SystemBackend {
+extension VaultClient {
     /// Unwraps a vault wrapped response
     ///
     /// - Parameter token: Wrapping token ID. This is required if the client token is not the wrapping token. Do not use the same wrapping token in this parameter and in the client token.
     /// - Returns: Returns the original response inside the given wrapping token
     public func unwrapResponse<
         VaultData: Decodable & Sendable,
-        AuthResponse: Decodable & Sendable
+        Auth: Decodable & Sendable
     >(
         token: String?
-    ) async throws -> VaultResponse<VaultData, AuthResponse> {
-        let sessionToken = wrapping.token
-        guard sessionToken != token else {
-            throw VaultClientError.badRequest(["Wrapping parameter token and client token cannot be the same"])
-        }
-
-        let response = try await wrapping.client.unwrap(
-            .init(headers: .init(xVaultToken: sessionToken),
-                  body: .json(.init(token: token)))
-        )
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let vaultData: VaultData?
-                let auth: AuthResponse?
-                let data = try JSONEncoder().encode(json.data)
-                vaultData = try JSONDecoder().decode(VaultData.self, from: data)
-                let authData = try JSONEncoder().encode(json.auth)
-                auth = try JSONDecoder().decode(AuthResponse.self, from: authData)
-                return VaultResponse(requestID: json.requestId, data: vaultData, auth: auth)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                throw VaultClientError.operationFailed(statusCode)
+    ) async throws -> VaultResponse<VaultData, Auth> {
+        let sessionToken = try? sessionToken()
+        return try await withSystemBackend { systemBackend in
+            let response: VaultResponse<VaultData, Auth> = try await systemBackend.unwrapResponse(token: sessionToken)
+            return response
         }
     }
 }

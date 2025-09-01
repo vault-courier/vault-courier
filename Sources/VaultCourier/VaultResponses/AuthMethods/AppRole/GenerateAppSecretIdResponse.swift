@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct GenerateAppSecretIdResponse: Sendable {
-    public let requestID: String?
+    public let requestID: String
 
     /// AppRole secret id
     public let secretID: String
@@ -25,14 +25,4 @@ public struct GenerateAppSecretIdResponse: Sendable {
     public let secretIDTimeToLive: Int
 
     public let secretIDNumberOfUses: Int
-}
-
-extension GenerateAppSecretIdResponse {
-    init(component: Components.Schemas.GenerateAppRoleSecretIdResponse) {
-        self.requestID = component.requestId
-        self.secretID = component.data.secretId
-        self.secretIDAccessor = component.data.secretIdAccessor
-        self.secretIDTimeToLive = component.data.secretIdTtl
-        self.secretIDNumberOfUses = component.data.secretIdNumUses
-    }
 }

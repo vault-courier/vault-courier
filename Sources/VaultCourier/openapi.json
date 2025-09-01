@@ -210,7 +210,8 @@
       "description": "Unwraps a response-wrapped token.",
       "post": {
         "tags": [
-          "system"
+          "system",
+          "wrapping"
         ],
         "operationId": "unwrap",
         "requestBody": {
@@ -860,263 +861,6 @@
         }
       ]
     },
-    "/auth/{engine_path}/role/{role_name}": {
-      "description": "Creates a new role",
-      "get": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Reads the properties of an existing AppRole.",
-        "description": "Reads the properties of an existing AppRole.",
-        "operationId": "auth-read-approle",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadAppRoleResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Creates a new AppRole or updates an existing AppRole. AppRole Path defined for MyApp",
-        "description": "Creates a new AppRole or updates an existing AppRole. This endpoint supports both create and update capabilities.",
-        "operationId": "auth-create-approle",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AuthCreateAppRoleRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Deletes an existing AppRole from the auth method.",
-        "description": "Deletes an existing AppRole",
-        "operationId": "auth-delete-approle",
-        "responses": {
-          "204": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "parameters": [
-        {
-          "description": "AppRole engine path",
-          "name": "engine_path",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "description": "The name of the approle. Example: \"my-app-role\"",
-          "name": "role_name",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "$ref": "#/components/parameters/VaultTokenHeader"
-        }
-      ]
-    },
-    "/auth/{engine_path}/role/{role_name}/role-id": {
-      "description": "Reads the role-id of a role",
-      "get": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Reads the RoleID of an existing AppRole.",
-        "description": "Reads the RoleID of an existing AppRole.",
-        "operationId": "auth-read-role-id",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReadAppRoleIdResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "parameters": [
-        {
-          "description": "AppRole engine path",
-          "name": "engine_path",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "description": "The name of the approle. Example: \"my-app-role\"",
-          "name": "role_name",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "$ref": "#/components/parameters/VaultTokenHeader"
-        }
-      ]
-    },
-    "/auth/{engine_path}/role/{role_name}/secret-id": {
-      "description": "Generates and issues a new SecretID on an existing AppRole",
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "Generates and issues a new SecretID on an existing AppRole",
-        "description": "Creates a new AppRole or updates an existing AppRole. This endpoint supports both create and update capabilities.",
-        "operationId": "auth-approle-secret-id",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AuthGenerateAppRoleSecretIdRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "anyOf": [
-                    {
-                      "oneOf": [
-                        {
-                          "$ref": "#/components/schemas/GenerateAppRoleSecretIdResponse"
-                        },
-                        {
-                          "$ref": "#/components/schemas/VaultWrappedResponse"
-                        }
-                      ]
-                    },
-                    {
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "parameters": [
-        {
-          "description": "AppRole engine path",
-          "name": "engine_path",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "description": "The name of the approle. Example: \"my-app-role\"",
-          "name": "role_name",
-          "in": "path",
-          "required": true,
-          "schema": {
-            "type": "string"
-          }
-        },
-        {
-          "$ref": "#/components/parameters/VaultTokenHeader"
-        },
-        {
-          "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
-          "name": "X-Vault-Wrap-TTL",
-          "in": "header",
-          "required": false,
-          "schema": {
-            "type": "string"
-          }
-        }
-      ]
-    },
     "/auth/{engine_path}/role/{role_name}/secret-id-accessor/lookup": {
       "description": "Reads out the properties of a SecretID via the secret id accessor",
       "post": {
@@ -1380,7 +1124,7 @@
                   },
                   "cas_required": {
                     "type": "boolean",
-                    "description": "If true all keys will require the cas parameter to be set on all write requests.",
+                    "description": "If true all keys will require the Compare-And-Swap (CAS) parameter to be set on all write requests.",
                     "default": "false"
                   },
                   "delete_version_after": {
@@ -4017,7 +3761,7 @@
               },
               "cas_required": {
                 "type": "boolean",
-                "description": "If true all keys will require the cas parameter to be set on all write requests.",
+                "description": "If true all keys will require the Compare-And-Swap (CAS) parameter to be set on all write requests.",
                 "default": "false"
               },
               "delete_version_after": {
@@ -4055,7 +3799,8 @@
             "type": "object",
             "properties": {
               "cas": {
-                "type": "integer"
+                "type": "integer",
+                "description": "Compare-And-Swap (CAS)"
               }
             }
           },

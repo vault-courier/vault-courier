@@ -15,8 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 
-public struct WrappedResponse: Sendable {
-    public let requestId: String?
+public struct WrappedTokenResponse: Sendable {
+    public let requestID: String
 
     /// Wrapped token
     public let token: String
@@ -29,12 +29,12 @@ public struct WrappedResponse: Sendable {
 
     public let creationPath: String
 
-    public let wrappedAccessor: String
+    public let wrappedAccessor: String?
 }
 
-extension WrappedResponse {
+extension WrappedTokenResponse {
     init(component: Components.Schemas.VaultWrappedResponse) {
-        self.requestId = nil
+        self.requestID = component.requestId
         self.token = component.wrapInfo.token
         self.accessor = component.wrapInfo.accessor
         self.timeToLive = component.wrapInfo.ttl

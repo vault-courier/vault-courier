@@ -41,12 +41,14 @@ public final class SystemBackend: Sendable {
         self._token = .init(token)
     }
 
+    /// Vault's URL
     let apiURL: URL
 
     let wrapping: ResponseWrapper
 
     let _token: Mutex<String?>
 
+    /// Client token
     var token: String? {
         get {
             _token.withLock { $0 }

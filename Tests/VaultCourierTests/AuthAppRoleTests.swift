@@ -26,11 +26,17 @@ import struct Foundation.URL
 import VaultCourier
 
 extension IntegrationTests.Auth.AppRole {
+    var randomMountPath: String {
+        let suffix = "abcdefghijklmnopqrstuvwxyz".randomSample(count: 10).map { String($0) }.joined()
+        let path = "approle_\(suffix)"
+        return path
+    }
+
     @Test
     func enable_approle_at_custom_path() async throws {
         let vaultClient = VaultClient.current
 
-        let path = "test_approle"
+        let path = randomMountPath
         try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
 
         let config = try await vaultClient.readAuthMethodConfiguration(path)
@@ -44,25 +50,27 @@ extension IntegrationTests.Auth.AppRole {
     func crud_approle() async throws {
         let vaultClient = VaultClient.current
 
-        let path = "approle"
+        let path = randomMountPath
         try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
 
-        let appRoleName = "batch_role"
+        let appRoleName = "batch_role_1"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
                                                   tokenTTL: .seconds(60*60),
-                                                  tokenType: .batch))
+                                                  tokenType: .batch),
+                                            mountPath: path)
 
-        let appRole = try await vaultClient.readAppRole(name: appRoleName)
+        let appRole = try await vaultClient.readAppRole(name: appRoleName, mountPath: path)
 
         #expect(appRole.tokenType == .batch)
 
         await #expect(throws: Never.self) {
-            _ = try await vaultClient.appRoleID(name: appRoleName)
+            _ = try await vaultClient.appRoleID(name: appRoleName, mountPath: path)
         }
 
         let generateAppSecretIdResponse = try await vaultClient.generateAppSecretId(
-            capabilities: .init(roleName: appRoleName)
+            capabilities: .init(roleName: appRoleName),
+            mountPath: path
         )
 
         switch generateAppSecretIdResponse {
@@ -72,7 +80,7 @@ extension IntegrationTests.Auth.AppRole {
                 #expect(secretIdResponse.secretIDNumberOfUses == 0)
         }
 
-        try await vaultClient.deleteAppRole(name: appRoleName)
+        try await vaultClient.deleteAppRole(name: appRoleName, mountPath: path)
 
         try await vaultClient.disableAuthMethod(path)
     }
@@ -81,17 +89,21 @@ extension IntegrationTests.Auth.AppRole {
     func unwrapped_login() async throws {
         let vaultClient = VaultClient.current
 
-        let path = "approle"
+        let path = randomMountPath
         try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
 
-        let appRoleName = "batch_role"
+        let appRoleName = "batch_role_2"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
                                                   tokenTTL: .seconds(60*60),
-                                                  tokenType: .batch))
+                                                  tokenType: .batch),
+                                            mountPath: path)
 
-        let appRoleID = try await vaultClient.appRoleID(name: appRoleName).roleId
-        let secretIDResponse = try await vaultClient.generateAppSecretId(capabilities: .init(roleName: appRoleName))
+        let appRoleID = try await vaultClient.appRoleID(name: appRoleName).roleID
+        let secretIDResponse = try await vaultClient.generateAppSecretId(
+            capabilities: .init(roleName: appRoleName),
+            mountPath: path
+        )
 
         switch secretIDResponse {
             case .wrapped(let wrappedResponse):
@@ -99,11 +111,11 @@ extension IntegrationTests.Auth.AppRole {
             case .secretId(let response):
                 // MUT
                 await #expect(throws: Never.self) {
-                    _ = try await vaultClient.loginToken(roleID: appRoleID, secretID: response.secretID)
+                    _ = try await vaultClient.loginToken(roleID: appRoleID, secretID: response.secretID, mountPath: path)
                 }
         }
 
-        try await vaultClient.deleteAppRole(name: appRoleName)
+        try await vaultClient.deleteAppRole(name: appRoleName, mountPath: path)
 
         try await vaultClient.disableAuthMethod(path)
     }
@@ -112,29 +124,29 @@ extension IntegrationTests.Auth.AppRole {
     func wrapped_authentication() async throws {
         let vaultClient = VaultClient.current
 
-        let path = "approle"
+        let path = randomMountPath
         try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
 
         let appRoleName = "test_app_role"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
                                                   tokenTTL: .seconds(60*60),
-                                                  tokenType: .batch))
+                                                  tokenType: .batch),
+                                            mountPath: path)
 
-        let appRoleID = try await vaultClient.appRoleID(name: appRoleName).roleId
-        let secretIDResponse = try await vaultClient.generateAppSecretId(capabilities: .init(
-            roleName: appRoleName,
-            wrapTTL: .seconds(60))
+        let appRoleID = try await vaultClient.appRoleID(name: appRoleName).roleID
+        let secretIDResponse = try await vaultClient.generateAppSecretId(
+            capabilities: .init(
+                roleName: appRoleName,
+                wrapTTL: .seconds(60)),
+            mountPath: path
         )
 
         switch secretIDResponse {
             case .wrapped(let wrappedResponse):
                 let sut = VaultClient(
                     configuration: .init(apiURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")),
-                    client: Client(
-                        serverURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
-                        transport: AsyncHTTPClientTransport()
-                    ),
+                    clientTransport: AsyncHTTPClientTransport(),
                     authentication: .appRole(credentials: .init(roleID: appRoleID,
                                                                 secretID: wrappedResponse.token),
                                              isWrapped: true)
@@ -148,7 +160,7 @@ extension IntegrationTests.Auth.AppRole {
                 Issue.record("Receive unexpected response: \(secretIDResponse)")
         }
 
-        try await vaultClient.deleteAppRole(name: appRoleName)
+        try await vaultClient.deleteAppRole(name: appRoleName, mountPath: path)
 
         try await vaultClient.disableAuthMethod(path)
     }

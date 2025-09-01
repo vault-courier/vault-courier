@@ -117,7 +117,9 @@ public actor VaultClient {
     let mounts: Mounts
 
     /// The middlewares to be invoked before the transport.
-    public var middlewares: [any ClientMiddleware]
+    let middlewares: [any ClientMiddleware]
+
+    var wrapTimeToLive: Duration?
 
     /// Authentication state
     private var authState: AuthenticationState
@@ -151,25 +153,6 @@ public actor VaultClient {
                             database: .init(string: configuration.databaseMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/database", relativeTo: configuration.apiURL)!,
                             appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)
     }
-
-//    public init(configuration: Configuration,
-//                client: any APIProtocol,
-//                authentication: Authentication) {
-//        switch authentication {
-//            case let .appRole(credentials, isWrapped):
-//                self.authState = isWrapped ? .wrapped(credentials) : .unwrapped(credentials)
-//                self.authMethod = .appRole
-//            case .token(let token):
-//                self.authMethod = .token
-//                self.authState = .authorized(token: token)
-//        }
-//        self.apiURL = configuration.apiURL
-//        self.client = client
-//        self.logger = configuration.backgroundActivityLogger
-//        self.mounts = .init(kv: .init(string: configuration.kvMountPath, relativeTo: configuration.apiURL) ?? URL(string: "secret", relativeTo: configuration.apiURL)!,
-//                            database: .init(string: configuration.databaseMountPath, relativeTo: configuration.apiURL) ?? URL(string: "/database", relativeTo: configuration.apiURL)!,
-//                            appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)
-//    }
 
     enum AuthenticationState: CustomStringConvertible {
         case wrapped(AppRoleCredentials)
@@ -363,53 +346,18 @@ extension VaultClient {
 }
 
 extension VaultClient {
-    /// Unwraps a vault wrapped response
-    ///
-    /// - Parameter token: Wrapping token ID. This is required if the client token is not the wrapping token. Do not use the same wrapping token in this parameter and in the client token.
-    /// - Returns: Returns the original response inside the given wrapping token
-    public func unwrapResponse<
-        VaultData: Decodable & Sendable,
-        Auth: Decodable & Sendable
-    >(
-        token: String?
-    ) async throws -> VaultResponse<VaultData, Auth> {
-        let responseWrapper = ResponseWrapper(apiURL: apiURL, clientTransport: clientTransport)
-        let sessionToken = try? sessionToken()
-
-        guard sessionToken != token else {
-            throw VaultClientError.badRequest(["Do not use the wrapping token in the parameter and in client token"])
-        }
-
-        let response = try await responseWrapper.client.unwrap(
-            .init(headers: .init(xVaultToken: sessionToken),
-                  body: .json(.init(token: token)))
-        )
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let vaultData: VaultData?
-                let auth: Auth?
-                do {
-                    let data = try JSONEncoder().encode(json.data)
-                    vaultData = try JSONDecoder().decode(VaultData.self, from: data)
-                    let authData = try JSONEncoder().encode(json.auth)
-                    auth = try JSONDecoder().decode(Auth.self, from: authData)
-                } catch  {
-                    logger.debug("Decoding of unwrap response failed: \(error).")
-                    throw VaultClientError.decodingFailed()
-                }
-                logger.info("Response unwrapping successful")
-                return VaultResponse(requestID: json.requestId, data: vaultData, auth: auth)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.permissionDenied()
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "unwrapToken failed with \(statusCode): "))
-                throw VaultClientError.permissionDenied()
-        }
+    /// Adds `X-VAULT-WRAP-TTL` header for all upcoming requests with the given duration
+    public func addResponseWrapping(timeToLive: Duration) {
+        self.wrapTimeToLive = timeToLive
     }
 
+    /// Removes the `X-VAULT-WRAP-TTL` header for all upcoming requests
+    public func removeResponseWrapping() {
+        self.wrapTimeToLive = nil
+    }
+}
+
+extension VaultClient {
     public func withSystemBackend<ReturnType: Sendable>(
         execute: (SystemBackend) async throws -> ReturnType
     ) async throws -> ReturnType {
@@ -417,6 +365,23 @@ extension VaultClient {
         let client = SystemBackend(
             apiURL: apiURL,
             clientTransport: clientTransport,
+            middlewares: middlewares,
+            token: sessionToken
+        )
+        return try await execute(client)
+    }
+}
+
+extension VaultClient {
+    public func withAppRoleProvider<ReturnType: Sendable>(
+        mountPath: String? = nil,
+        execute: (AppRoleProvider) async throws -> ReturnType
+    ) async throws -> ReturnType {
+        let sessionToken = try? sessionToken()
+        let client = AppRoleProvider(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            mountPath: mountPath,
             middlewares: middlewares,
             token: sessionToken
         )

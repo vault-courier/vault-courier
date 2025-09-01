@@ -51,7 +51,7 @@ package func makeAuthenticator(_ method: NewAuthMethod,
             return AppRoleAuth(
                 configuration: .init(
                     apiURL: apiURL,
-                    basePath: path
+                    mountPath: path
                 ),
                 clientTransport: clientTransport
             )
