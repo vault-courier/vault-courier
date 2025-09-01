@@ -361,65 +361,6 @@ public struct MockClient: APIProtocol {
 
 
     // MARK: AppRole
-//    public typealias AuthReadApproleSignature
-//        = @Sendable (Operations.AuthReadApprole.Input) async throws -> Operations.AuthReadApprole.Output
-//    public var authReadApproleAction: AuthReadApproleSignature?
-//    public func authReadApprole(
-//        _ input: Operations.AuthReadApprole.Input
-//    ) async throws -> Operations.AuthReadApprole.Output {
-//        guard let block = authReadApproleAction
-//        else { throw UnspecifiedBlockError() }
-//
-//        return try await block(input)
-//    }
-//
-//    public typealias AuthCreateApproleSignature
-//        = @Sendable (Operations.AuthCreateApprole.Input) async throws -> Operations.AuthCreateApprole.Output
-//    public var authCreateApproleAction: AuthCreateApproleSignature?
-//    public func authCreateApprole(
-//        _ input: Operations.AuthCreateApprole.Input
-//    ) async throws -> Operations.AuthCreateApprole.Output {
-//        guard let block = authCreateApproleAction
-//        else { throw UnspecifiedBlockError() }
-//
-//        return try await block(input)
-//    }
-//
-//    public typealias AuthDeleteApproleSignature
-//        = @Sendable (Operations.AuthDeleteApprole.Input) async throws -> Operations.AuthDeleteApprole.Output
-//    public var authDeleteApproleAction: AuthDeleteApproleSignature?
-//    public func authDeleteApprole(
-//        _ input: Operations.AuthDeleteApprole.Input
-//    ) async throws -> Operations.AuthDeleteApprole.Output {
-//        guard let block = authDeleteApproleAction
-//        else { throw UnspecifiedBlockError() }
-//
-//        return try await block(input)
-//    }
-//
-//    public typealias AuthReadRoleIdSignature
-//        = @Sendable (Operations.AuthReadRoleId.Input) async throws -> Operations.AuthReadRoleId.Output
-//    public var authReadRoleIdAction: AuthReadRoleIdSignature?
-//    public func authReadRoleId(
-//        _ input: Operations.AuthReadRoleId.Input
-//    ) async throws -> Operations.AuthReadRoleId.Output {
-//        guard let block = authReadRoleIdAction
-//        else { throw UnspecifiedBlockError() }
-//
-//        return try await block(input)
-//    }
-
-//    public typealias AuthApproleSecretIdSignature
-//        = @Sendable (Operations.AuthApproleSecretId.Input) async throws -> Operations.AuthApproleSecretId.Output
-//    public var authApproleSecretIdAction: AuthApproleSecretIdSignature?
-//    public func authApproleSecretId(
-//        _ input: Operations.AuthApproleSecretId.Input
-//    ) async throws -> Operations.AuthApproleSecretId.Output {
-//        guard let block = authApproleSecretIdAction
-//        else { throw UnspecifiedBlockError() }
-//
-//        return try await block(input)
-//    }
 
     public typealias AuthReadApproleSecretIdWithAccessorSignature
         = @Sendable (Operations.AuthReadApproleSecretIdWithAccessor.Input) async throws -> Operations.AuthReadApproleSecretIdWithAccessor.Output

@@ -28,8 +28,7 @@ import Logging
 extension VaultClient {
     @TaskLocal static var current = VaultClient(
         configuration: .init(apiURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")),
-        clientTransport: AsyncHTTPClientTransport(),
-        authentication: .token("integration_token")
+        clientTransport: AsyncHTTPClientTransport()
     )
 }
 
@@ -51,9 +50,8 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
                 databaseMountPath: databaseMountPath,
                 backgroundActivityLogger: logger),
             clientTransport: AsyncHTTPClientTransport(),
-            authentication: .token(token),
             middlewares: middlewares)
-        try await vaultClient.authenticate()
+        try await vaultClient.login(method: .token("integration_token"))
         return vaultClient
     }
 

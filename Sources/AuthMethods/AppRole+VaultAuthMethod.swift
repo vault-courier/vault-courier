@@ -24,7 +24,7 @@ extension AppRoleAuth: VaultAuthMethod {
         let appRolePath = basePath.relativePath.removeSlash()
 
         guard let credentials else {
-            throw AppRoleError.missingToken()
+            throw AppRoleError.missingCredentials()
         }
 
         let response = try await client.authApproleLogin(

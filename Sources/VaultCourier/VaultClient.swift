@@ -121,23 +121,23 @@ public actor VaultClient {
 
     var wrapTimeToLive: Duration?
 
-    /// Authentication state
-    private var authState: AuthenticationState
+    /// Session token
+    private var token: String?
 
-    private var authMethod: AuthMethod
+//    private var authMethod: AuthMethod
 
     public init(configuration: Configuration,
                 clientTransport: any ClientTransport,
-                authentication: Authentication,
+//                authentication: Authentication,
                 middlewares: [any ClientMiddleware] = []) {
-        switch authentication {
-            case let .appRole(credentials, isWrapped):
-                self.authState = isWrapped ? .wrapped(credentials) : .unwrapped(credentials)
-                self.authMethod = .appRole
-            case .token(let token):
-                self.authMethod = .token
-                self.authState = .authorized(token: token)
-        }
+//        switch authentication {
+//            case let .appRole(credentials, isWrapped):
+//                self.authState = isWrapped ? .wrapped(credentials) : .unwrapped(credentials)
+//                self.authMethod = .appRole
+//            case .token(let token):
+//                self.authMethod = .token
+//                self.authState = .authorized(token: token)
+//        }
 
         self.apiURL = configuration.apiURL
         self.clientTransport = clientTransport
@@ -154,155 +154,11 @@ public actor VaultClient {
                             appRole: .init(string: configuration.appRolePath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!)
     }
 
-    enum AuthenticationState: CustomStringConvertible {
-        case wrapped(AppRoleCredentials)
-        case unwrapped(AppRoleCredentials)
-        case authorized(token: String)
-
-        var description: String {
-            switch self {
-                case .wrapped: "wrapped"
-                case .unwrapped: "unwrapped"
-                case .authorized: "authorized"
-            }
-        }
-    }
-
-    public enum Authentication {
-        case appRole(credentials: AppRoleCredentials, isWrapped: Bool)
-        case token(String)
-    }
-
-    enum AuthMethod {
-        case appRole
-        case token
-    }
-
-    public struct AppRoleCredentials: Sendable {
-        public let roleID: String
-        public let secretID: String
-
-        public init(roleID: String,
-                    secretID: String) {
-            self.roleID = roleID
-            self.secretID = secretID
-        }
-    }
-
-    ///  Before a client can interact with Vault, it must authenticate against an auth method.
-    ///  Upon authentication, a token is generated. This token is conceptually similar to
-    ///  a session ID on a website. Here we update the internal token
-    ///
-    ///  - Returns: Whether or not authentication succeeds
-    @discardableResult
-    public func authenticate() async throws -> Bool {
-        switch authMethod {
-            case .appRole:
-                return await appRoleLogin()
-            case .token:
-                logger.debug("Already authorized with a token. No further authentication required.")
-                return true
-        }
-    }
-
-    private func appRoleLogin() async -> Bool {
-        switch authState {
-            case .wrapped:
-                do {
-                    try await unwrapToken()
-                    return try await authenticate()
-                } catch {
-                    logger.debug(.init(stringLiteral: "authentication failed: " + String(reflecting: error)))
-                    logger.info("Unauthorized")
-                    return false
-                }
-            case .unwrapped:
-                do {
-                    try await login()
-                    return true
-                } catch {
-                    logger.debug(.init(stringLiteral: "authentication failed: " + String(reflecting: error)))
-                    logger.info("Unauthorized")
-                    return false
-                }
-            case .authorized:
-                logger.debug("Already authorized with a token. No further authentication required.")
-                return true
-        }
-    }
-
-    // Unwraps AppRole response
-    public func unwrapToken() async throws {
-        guard case let .wrapped(credentials) = authState else {
-            throw VaultClientError.invalidState(authState.description)
-        }
-
-        let response = try await client.unwrap(
-            .init(headers: .init(xVaultToken: credentials.secretID),
-                  body: .json(.init()))
-        )
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let secretId = json.data?.secretId,
-                      !secretId.isEmpty else {
-                    logger.debug("Missing or empty secretID in response")
-                    throw VaultClientError.decodingFailed()
-                }
-
-                logger.info("Unwrap Successful!")
-                let roleID = credentials.roleID
-                self.authState = .unwrapped(.init(roleID: roleID, secretID: secretId))
-                return
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.permissionDenied()
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "unwrapToken failed with \(statusCode): "))
-                throw VaultClientError.permissionDenied()
-        }
-    }
-
-    public func login() async throws {
-        switch authState {
-        case .wrapped:
-            throw VaultClientError.invalidState(authState.description)
-        case .unwrapped(let appRoleCredentials):
-            try await appRoleLogin(credentials: appRoleCredentials)
-        case .authorized:
-            return
-        }
-    }
-
     func sessionToken() throws -> String {
-        guard case let .authorized(sessionToken) = authState else {
+        guard let token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
-        return sessionToken
-    }
-
-    func appRoleLogin(credentials: AppRoleCredentials) async throws {
-        let appRolePath = mounts.appRole.relativePath.removeSlash()
-
-        let response = try await client.authApproleLogin(
-            path: .init(enginePath: appRolePath),
-            body: .json(.init(roleId: credentials.roleID, secretId: credentials.secretID))
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                self.authState = .authorized(token: json.auth.clientToken)
-                logger.info("login authorized")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.permissionDenied()
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "login failed with \(statusCode): "))
-                throw VaultClientError.permissionDenied()
-        }
+        return token
     }
 }
 
@@ -316,31 +172,10 @@ extension VaultClient {
 //     and run the action inside the VaultClient. In addition, offer individual calls like login
 //     - The main Mock should be a separate Object and should be dependent on the other client mocks
 
-    public func login(method: NewAuthMethod, unwrap: Bool) async throws {
-        if unwrap {
-            // TODO: Call unwrap endpoint
-//            let unwrappedToken: String
-//            switch method {
-//                case .token(let inputToken):
-//                    #warning("It should unwrap a json response with a key named 'token'. This is a convention and if the data is not in this format, it should fail. Refer a client to arbitrary unwrap function for arbitrary decoding")
-//                    unwrappedToken = inputToken
-//                case let .appRole(path: _, credentials: credentials):
-//                    #warning("It should unwrap the response of the AppRole endpoint")
-//                    unwrappedToken = try await self.unwrap(token: "")
-//            }
-
-
-            // ---
-            let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
-            let sessionToken = try await authenticator.authenticate()
-            self.authState = .authorized(token: sessionToken)
-            logger.info("login authorized")
-        } else {
-            let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
-            let sessionToken = try await authenticator.authenticate()
-            self.authState = .authorized(token: sessionToken)
-            logger.info("login authorized")
-        }
+    public func login(method: NewAuthMethod) async throws {
+        let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
+        self.token = try await authenticator.authenticate()
+        logger.info("login authorized")
     }
 
 }

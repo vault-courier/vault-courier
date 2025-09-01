@@ -53,7 +53,8 @@ package func makeAuthenticator(_ method: NewAuthMethod,
                     apiURL: apiURL,
                     mountPath: path
                 ),
-                clientTransport: clientTransport
+                clientTransport: clientTransport,
+                credentials: credentials
             )
     }
 }
