@@ -171,6 +171,111 @@
           "$ref": "#/components/parameters/VaultTokenHeader"
         }
       ]
+    },
+    "/sys/wrapping/lookup": {
+      "description": "Looks up wrapping properties for the given token",
+      "post": {
+        "tags": [
+          "system",
+          "wrapping"
+        ],
+        "operationId": "lookup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "creation_path": {
+                          "type": "string"
+                        },
+                        "creation_time": {
+                          "type": "string"
+                        },
+                        "creation_ttl": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "creation_path",
+                        "creation_time",
+                        "creation_ttl"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
     }
   },
   "components": {

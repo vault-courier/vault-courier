@@ -17,10 +17,23 @@
 import VaultUtilities
 
 package struct ResponseWrapperMock: APIProtocol {
-    package init(wrapAction: WrapSignature? = nil, rewrapAction: RewrapSignature? = nil, unwrapAction: UnwrapSignature? = nil) {
+    package init(lookupAction: LookupSignature? = nil,
+                 wrapAction: WrapSignature? = nil,
+                 rewrapAction: RewrapSignature? = nil,
+                 unwrapAction: UnwrapSignature? = nil) {
+        self.lookupAction = lookupAction
         self.wrapAction = wrapAction
         self.rewrapAction = rewrapAction
         self.unwrapAction = unwrapAction
+    }
+
+    package typealias LookupSignature = @Sendable (Operations.Lookup.Input) async throws -> Operations.Lookup.Output
+    package var lookupAction: LookupSignature?
+    package func lookup(_ input: Operations.Lookup.Input) async throws -> Operations.Lookup.Output {
+        guard let block = lookupAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
     }
 
     package typealias WrapSignature = @Sendable (Operations.Wrap.Input) async throws -> Operations.Wrap.Output

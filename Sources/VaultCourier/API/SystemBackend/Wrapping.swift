@@ -53,12 +53,23 @@ extension VaultClient {
     ///  This mechanism is useful for securely storing secrets in response-wrapped tokens when periodic rotation is required.
     ///
     /// - Parameter token: response-wrapped token
-    /// - Returns: A response wrapped token with a new ID, but with the same time to live
+    /// - Returns: A response-wrapped token with a new ID, but with the same time to live
     public func rewrap(
         token: String
     ) async throws -> WrappedTokenResponse {
         try await withSystemBackend { systemBackend in
             try await systemBackend.rewrap(token: token)
+        }
+    }
+
+    /// Looks up wrapping token properties
+    /// - Parameter token: wrapping token ID
+    /// - Returns: properties of wrapping token
+    public func lookupWrapping(
+        token: String
+    ) async throws -> WrappedTokenInfo {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.lookupWrapping(token: token)
         }
     }
 }

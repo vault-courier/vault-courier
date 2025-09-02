@@ -14,20 +14,12 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
-public struct WrappedTokenResponse: Sendable {
+public struct WrappedTokenInfo: Sendable {
     public let requestID: String
-
-    /// Wrapped token ID
-    public let token: String
-
-    public let accessor: String
 
     public let timeToLive: Int
 
     public let createdAt: String
 
     public let creationPath: String
-
-    public let wrappedAccessor: String?
 }

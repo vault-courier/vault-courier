@@ -28,7 +28,7 @@ import VaultCourier
 // MARK: Wrapping
 extension IntegrationTests.System.Wrapping {
     @Test
-    func wrap_secrets() async throws {
+    func wrap_rewrap_token_and_lookup_wrapped_token() async throws {
         let vaultClient = VaultClient.current
 
         let secrets = ["foo": "bar", "zip": "zap"]
@@ -39,6 +39,8 @@ extension IntegrationTests.System.Wrapping {
             let rewrappedResponse = try await backend.rewrap(token: wrappedResponse.token)
             #expect(wrappedResponse.timeToLive == rewrappedResponse.timeToLive)
             #expect(wrappedResponse.token != rewrappedResponse.token)
+            let info = try await backend.lookupWrapping(token: rewrappedResponse.token)
+            #expect(wrappedResponse.timeToLive == info.timeToLive)
         }
     }
 }

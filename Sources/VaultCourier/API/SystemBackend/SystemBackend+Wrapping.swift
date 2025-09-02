@@ -116,7 +116,7 @@ extension SystemBackend {
     ///  This mechanism is useful for securely storing secrets in response-wrapped tokens when periodic rotation is required.
     ///
     /// - Parameter token: response-wrapped token
-    /// - Returns: A response wrapped token with a new ID, but with the same time to live 
+    /// - Returns: A response wrapped token with a new ID, but with the same time to live
     public func rewrap(
         token: String
     ) async throws -> WrappedTokenResponse {
@@ -144,6 +144,41 @@ extension SystemBackend {
                     createdAt: json.wrapInfo.creationTime,
                     creationPath: json.wrapInfo.creationPath,
                     wrappedAccessor: json.wrapInfo.wrappedAccessor
+                )
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    
+    /// Looks up wrapping token properties
+    /// - Parameter token: wrapping token ID
+    /// - Returns: properties of wrapping token
+    public func lookupWrapping(token: String) async throws -> WrappedTokenInfo {
+        guard let sessionToken = wrapping.token else {
+            throw VaultClientError.clientIsNotLoggedIn()
+        }
+
+        let response = try await wrapping.client.lookup(
+            headers: .init(
+                xVaultToken: .init(sessionToken)
+            ),
+            body: .json(.init(token: token))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return .init(
+                    requestID: json.requestId,
+                    timeToLive: json.data.creationTtl,
+                    createdAt: json.data.creationTime,
+                    creationPath: json.data.creationPath
                 )
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
