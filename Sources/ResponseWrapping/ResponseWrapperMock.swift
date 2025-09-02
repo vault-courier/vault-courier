@@ -17,8 +17,9 @@
 import VaultUtilities
 
 package struct ResponseWrapperMock: APIProtocol {
-    package init(wrapAction: WrapSignature? = nil, unwrapAction: UnwrapSignature? = nil) {
+    package init(wrapAction: WrapSignature? = nil, rewrapAction: RewrapSignature? = nil, unwrapAction: UnwrapSignature? = nil) {
         self.wrapAction = wrapAction
+        self.rewrapAction = rewrapAction
         self.unwrapAction = unwrapAction
     }
 
@@ -26,6 +27,15 @@ package struct ResponseWrapperMock: APIProtocol {
     package var wrapAction: WrapSignature?
     package func wrap(_ input: Operations.Wrap.Input) async throws -> Operations.Wrap.Output {
         guard let block = wrapAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    package typealias RewrapSignature = @Sendable (Operations.Rewrap.Input) async throws -> Operations.Rewrap.Output
+    package var rewrapAction: RewrapSignature?
+    package func rewrap(_ input: Operations.Rewrap.Input) async throws -> Operations.Rewrap.Output {
+        guard let block = rewrapAction
         else { throw UnspecifiedBlockError() }
 
         return try await block(input)

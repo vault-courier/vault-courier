@@ -46,4 +46,19 @@ extension VaultClient {
             try await systemBackend.wrap(secrets: secrets, wrapTimeToLive: wrapTimeToLive)
         }
     }
+
+    /// Rewraps a response-wrapped token
+    ///
+    ///  Rewraps an existing response-wrapped token. The newly generated token inherits the original token's creation TTL and preserves the same response data. Once rewrapped, the old token is invalidated.
+    ///  This mechanism is useful for securely storing secrets in response-wrapped tokens when periodic rotation is required.
+    ///
+    /// - Parameter token: response-wrapped token
+    /// - Returns: A response wrapped token with a new ID, but with the same time to live
+    public func rewrap(
+        token: String
+    ) async throws -> WrappedTokenResponse {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.rewrap(token: token)
+        }
+    }
 }

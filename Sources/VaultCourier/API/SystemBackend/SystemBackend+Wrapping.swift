@@ -109,4 +109,49 @@ extension SystemBackend {
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
+    
+    /// Rewraps a response-wrapped token
+    ///
+    ///  Rewraps an existing response-wrapped token. The newly generated token inherits the original token's creation TTL and preserves the same response data. Once rewrapped, the old token is invalidated.
+    ///  This mechanism is useful for securely storing secrets in response-wrapped tokens when periodic rotation is required.
+    ///
+    /// - Parameter token: response-wrapped token
+    /// - Returns: A response wrapped token with a new ID, but with the same time to live 
+    public func rewrap(
+        token: String
+    ) async throws -> WrappedTokenResponse {
+        guard let sessionToken = wrapping.token else {
+            throw VaultClientError.clientIsNotLoggedIn()
+        }
+
+        let response = try await wrapping.client.rewrap(
+            .init(
+                headers: .init(
+                    xVaultToken: .init(sessionToken)
+                ),
+                body: .json(.init(token: token))
+            )
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return .init(
+                    requestID: json.requestId,
+                    token: json.wrapInfo.token,
+                    accessor: json.wrapInfo.accessor,
+                    timeToLive: json.wrapInfo.ttl,
+                    createdAt: json.wrapInfo.creationTime,
+                    creationPath: json.wrapInfo.creationPath,
+                    wrappedAccessor: json.wrapInfo.wrappedAccessor
+                )
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
 }

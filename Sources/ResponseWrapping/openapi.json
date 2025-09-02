@@ -65,6 +65,61 @@
         }
       ]
     },
+    "/sys/wrapping/rewrap": {
+      "description": "Rewraps an existing response-wrapped token. The newly generated token inherits the original token's creation TTL and preserves the same response data. Once rewrapped, the old token is invalidated. This mechanism is useful for securely storing secrets in response-wrapped tokens when periodic rotation is required.",
+      "post": {
+        "tags": [
+          "system",
+          "wrapping"
+        ],
+        "operationId": "rewrap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultWrappedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
     "/sys/wrapping/unwrap": {
       "description": "Unwraps a wrapped response",
       "post": {

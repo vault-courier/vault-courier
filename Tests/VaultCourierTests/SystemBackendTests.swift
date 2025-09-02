@@ -34,8 +34,11 @@ extension IntegrationTests.System.Wrapping {
         let secrets = ["foo": "bar", "zip": "zap"]
 
         // MUT
-        let _ = try await vaultClient.withSystemBackend { backend in
-            try await backend.wrap(secrets: secrets, wrapTimeToLive: .seconds(120))
+        try await vaultClient.withSystemBackend { backend in
+            let wrappedResponse = try await backend.wrap(secrets: secrets, wrapTimeToLive: .seconds(120))
+            let rewrappedResponse = try await backend.rewrap(token: wrappedResponse.token)
+            #expect(wrappedResponse.timeToLive == rewrappedResponse.timeToLive)
+            #expect(wrappedResponse.token != rewrappedResponse.token)
         }
     }
 }
