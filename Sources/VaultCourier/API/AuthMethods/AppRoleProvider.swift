@@ -40,7 +40,6 @@ public final class AppRoleProvider: Sendable {
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
-//        self._wrapTimeToLive = .init(wrapTimeToLive)
         self._token = .init(token)
         self.logger = logger ?? Self.loggingDisabled
     }
@@ -238,7 +237,10 @@ extension AppRoleProvider {
 
         let response = try await auth.client.authReadRoleId(
             path: .init(enginePath: mountPath, roleName: name),
-            headers: auth.header(token: sessionToken, wrapTimeToLive: wrapTimeToLive.formatted(.vaultSeconds))
+            headers: .init(
+                xVaultToken: .init(sessionToken),
+                xVaultWrapTTL: .init(wrapTimeToLive.formatted(.vaultSeconds))
+            )
         )
         
         switch response {

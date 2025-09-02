@@ -59,6 +59,9 @@
       "parameters": [
         {
           "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
         }
       ]
     },

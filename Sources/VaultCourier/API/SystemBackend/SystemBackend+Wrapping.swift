@@ -21,6 +21,7 @@ import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
+import OpenAPIRuntime
 
 extension SystemBackend {
     /// Unwraps a vault wrapped response
@@ -60,6 +61,51 @@ extension SystemBackend {
                 let errors = (try? content.body.json.errors) ?? []
                 throw VaultClientError.badRequest(errors)
             case .undocumented(let statusCode, _):
+                throw VaultClientError.operationFailed(statusCode)
+        }
+    }
+
+    /// Wraps the given dictionary of secrets in a response-wrapped token
+    /// - Parameters:
+    ///   - secrets: dictionary of secrets
+    ///   - wrapTimeToLive: the duration of validity of the response-wrapped token
+    /// - Returns: A response-wrapped token
+    public func wrap(
+        secrets: [String: String],
+        wrapTimeToLive: Duration
+    ) async throws -> WrappedTokenResponse {
+        guard let sessionToken = wrapping.token else {
+            throw VaultClientError.clientIsNotLoggedIn()
+        }
+
+        let response = try await wrapping.client.wrap(
+            .init(
+                headers: .init(
+                    xVaultToken: .init(sessionToken),
+                    xVaultWrapTTL: .init(wrapTimeToLive.formatted(.vaultSeconds))
+                ),
+                body: .json(.init(unvalidatedValue: secrets))
+            )
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return .init(
+                    requestID: json.requestId,
+                    token: json.wrapInfo.token,
+                    accessor: json.wrapInfo.accessor,
+                    timeToLive: json.wrapInfo.ttl,
+                    createdAt: json.wrapInfo.creationTime,
+                    creationPath: json.wrapInfo.creationPath,
+                    wrappedAccessor: json.wrapInfo.wrappedAccessor
+                )
+            case .badRequest(let content):
+                let errors = (try? content.body.json.errors) ?? []
+                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+                throw VaultClientError.badRequest(errors)
+            case .undocumented(statusCode: let statusCode, _):
+                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
                 throw VaultClientError.operationFailed(statusCode)
         }
     }

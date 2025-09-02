@@ -81,8 +81,4 @@ package final class AppRoleAuth: Sendable {
             }
         }
     }
-
-    package func header(token: String, wrapTimeToLive: String? = nil) -> Operations.AuthReadRoleId.Input.Headers {
-        return .init(xVaultToken: token, xVaultWrapTTL: wrapTimeToLive)
-    }
 }

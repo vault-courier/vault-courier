@@ -31,4 +31,19 @@ extension VaultClient {
             return response
         }
     }
+
+    
+    /// Wraps the given dictionary of secrets in a response-wrapped token
+    /// - Parameters:
+    ///   - secrets: dictionary of secrets
+    ///   - wrapTimeToLive: the duration of validity of the response-wrapped token
+    /// - Returns: A response-wrapped token
+    public func wrap(
+        secrets: [String: String],
+        wrapTimeToLive: Duration
+    ) async throws -> WrappedTokenResponse {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.wrap(secrets: secrets, wrapTimeToLive: wrapTimeToLive)
+        }
+    }
 }

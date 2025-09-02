@@ -26,6 +26,20 @@ import struct Foundation.URL
 import VaultCourier
 
 // MARK: Wrapping
+extension IntegrationTests.System.Wrapping {
+    @Test
+    func wrap_secrets() async throws {
+        let vaultClient = VaultClient.current
+
+        let secrets = ["foo": "bar", "zip": "zap"]
+
+        // MUT
+        let _ = try await vaultClient.withSystemBackend { backend in
+            try await backend.wrap(secrets: secrets, wrapTimeToLive: .seconds(120))
+        }
+    }
+}
+
 
 #if AppRoleSupport
 extension IntegrationTests.System.Wrapping {
@@ -95,7 +109,7 @@ extension IntegrationTests.System.Wrapping {
                                             mountPath: path)
 
         // MUT
-        let wrappedResponse = try await vaultClient.wrapAppRoleID(
+        let _ = try await vaultClient.wrapAppRoleID(
             name: appRoleName,
             mountPath: path,
             wrapTimeToLive: .seconds(120)
