@@ -14,6 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import VaultUtilities
+
 extension VaultClient {
     public func create(
         staticRole: CreateDatabaseStaticRole,

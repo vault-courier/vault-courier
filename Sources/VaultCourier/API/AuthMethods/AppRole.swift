@@ -22,6 +22,7 @@ import protocol Foundation.LocalizedError
 import struct Foundation.URL
 import protocol Foundation.LocalizedError
 #endif
+import VaultUtilities
 
 extension VaultClient {
     /// Creates a new AppRole

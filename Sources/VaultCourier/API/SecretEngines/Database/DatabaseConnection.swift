@@ -24,6 +24,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 import protocol Foundation.LocalizedError
 #endif
+import VaultUtilities
 
 extension VaultClient {
     /// Creates a database conection between Vault and a Postgres Database

@@ -1,0 +1,247 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vault Courier System Auth API",
+    "version": "0.2.0",
+    "description": "System auth endpoints. Vault Courier is a Swift client for Hashicorp Vault and OpenBao",
+    "license": {
+      "name": "Apache License 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8200/v1",
+      "description": "Default http server url"
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
+    }
+  ],
+  "paths": {
+    "/sys/auth/{path}": {
+      "description": "Enable a new credential backend with a name.",
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Reads auth method.",
+        "description": "This endpoints returns the configuration of the auth method at the given path. This endpoint requires sudo capability on the final path, but the same functionality can be achieved without sudo via `sys/mounts/auth/[auth-path]`.",
+        "operationId": "auth-read-method",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadAuthMethodResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Enables a new auth method.",
+        "description": "After enabling, the auth method can be accessed and configured via the auth path specified as part of the URL. This auth path will be nested under the auth prefix.\n\nFor example, enable the \"foo\" auth method will make it accessible at `/auth/foo`.",
+        "operationId": "auth-enable-method",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthEnableMethodRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Disables the auth method at the given auth path.",
+        "description": "This endpoint disables the auth method at the given auth path. This endpoint requires sudo capability in addition to any path-specific capabilities.",
+        "operationId": "auth-disable-method",
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "The path to mount to. Cannot be delimited. Example: \"user\"",
+          "name": "path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthEnableMethodRequest": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "object",
+            "format": "map",
+            "description": "Configuration for this mount, such as plugin_name."
+          },
+          "description": {
+            "type": "string",
+            "description": "User-friendly description for this credential backend."
+          },
+          "local": {
+            "type": "boolean",
+            "description": "Mark the mount as a local mount, which is not replicated and is unaffected by replication.",
+            "default": false
+          },
+          "options": {
+            "type": "object",
+            "format": "kvpairs",
+            "description": "The options to pass into the backend. Should be a json object with string keys and values."
+          },
+          "seal_wrap": {
+            "type": "boolean",
+            "description": "Whether to turn on seal wrapping for the mount.",
+            "default": false
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of the backend. Example: \"userpass\""
+          }
+        }
+      },
+      "ReadAuthMethodResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "the id of the request associated with this response"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessor": {
+                "type": "string"
+              },
+              "external_entropy_access": {
+                "type": "boolean"
+              },
+              "local": {
+                "type": "boolean"
+              },
+              "config": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Configuration for this mount, such as plugin_name."
+              },
+              "options": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "The options to pass into the backend"
+              },
+              "seal_wrap": {
+                "type": "boolean",
+                "description": "Whether to turn on seal wrapping for the mount."
+              },
+              "description": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "description": "The type of the backend. Example: \"userpass\""
+              }
+            },
+            "required": [
+              "type",
+              "config"
+            ]
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "VaultErrorsResponseBody": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "List of errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "VaultTokenHeader": {
+        "description": "Vault Token required for authentication",
+        "name": "X-Vault-Token",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WrapTTLHeader": {
+        "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
+        "name": "X-Vault-Wrap-TTL",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

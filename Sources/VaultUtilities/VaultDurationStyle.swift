@@ -22,14 +22,14 @@ import Foundation
 
 extension Duration {
     /// Vault Duration Units. See [here](https://developer.hashicorp.com/vault/docs/concepts/duration-format)
-    struct VaultDurationStyle: FormatStyle {
+    package struct VaultDurationStyle: FormatStyle {
 
         var units: Unit
 
         /// The locale to use when formatting the duration.
         var locale: Locale = .init(identifier: "en_US_POSIX")
 
-        func format(_ value: Duration) -> String {
+        package func format(_ value: Duration) -> String {
             switch units {
                 case .seconds:
                     return "\(value.components.seconds.formatted(.number.grouping(.never)))s"
@@ -45,13 +45,13 @@ extension Duration {
             case hours
         }
 
-        func locale(_ locale: Locale) -> Duration.VaultDurationStyle {
+        package func locale(_ locale: Locale) -> Duration.VaultDurationStyle {
             .init(units: units, locale: locale)
         }
     }
 }
 
 extension FormatStyle where Self == Duration.VaultDurationStyle {
-    static var vaultSeconds: Self { .init(units: .seconds) }
-    static var vaultHours: Self { .init(units: .hours) }
+    package static var vaultSeconds: Self { .init(units: .seconds) }
+    package static var vaultHours: Self { .init(units: .hours) }
 }

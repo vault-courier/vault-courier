@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Vault Courier Wrapping API",
-    "version": "0.1.0",
-    "description": "API client for Hashicorp Vault and OpenBao",
+    "title": "Vault Courier System Wrapping API",
+    "version": "0.2.0",
+    "description": "Wrapping endpoints. Vault Courier is a Swift client for Hashicorp Vault and OpenBao",
     "license": {
       "name": "Apache License 2.0"
     }
@@ -11,7 +11,11 @@
   "servers": [
     {
       "url": "http://127.0.0.1:8200/v1",
-      "description": "Default server url"
+      "description": "Default http server url"
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
     }
   ],
   "paths": {
@@ -19,7 +23,6 @@
       "description": "Wraps the given user-supplied json data inside a response-wrapped token.",
       "post": {
         "tags": [
-          "system",
           "wrapping"
         ],
         "operationId": "wrap",
@@ -49,7 +52,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -69,7 +72,6 @@
       "description": "Rewraps an existing response-wrapped token. The newly generated token inherits the original token's creation TTL and preserves the same response data. Once rewrapped, the old token is invalidated. This mechanism is useful for securely storing secrets in response-wrapped tokens when periodic rotation is required.",
       "post": {
         "tags": [
-          "system",
           "wrapping"
         ],
         "operationId": "rewrap",
@@ -107,7 +109,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -124,7 +126,6 @@
       "description": "Unwraps a wrapped response",
       "post": {
         "tags": [
-          "system",
           "wrapping"
         ],
         "operationId": "unwrap",
@@ -159,7 +160,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -176,7 +177,6 @@
       "description": "Looks up wrapping properties for the given token",
       "post": {
         "tags": [
-          "system",
           "wrapping"
         ],
         "operationId": "lookup",
@@ -264,7 +264,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -386,7 +386,7 @@
           "wrap_info"
         ]
       },
-      "VaultErrorsResponse": {
+      "VaultErrorsResponseBody": {
         "type": "object",
         "properties": {
           "errors": {

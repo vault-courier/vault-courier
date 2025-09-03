@@ -14,6 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import VaultUtilities
+
 public struct KeyValueMetadata: Sendable {
     public let requestID: String
 

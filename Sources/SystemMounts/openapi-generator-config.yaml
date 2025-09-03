@@ -3,3 +3,4 @@ generate:
   - client
 namingStrategy: idiomatic
 accessModifier: package
+

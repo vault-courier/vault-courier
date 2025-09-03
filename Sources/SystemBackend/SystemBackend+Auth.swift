@@ -14,12 +14,3 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-public struct WrappedTokenInfo: Sendable {
-    public let requestID: String
-
-    public let timeToLive: Int
-
-    public let createdAt: String
-
-    public let creationPath: String
-}

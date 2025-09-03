@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 import struct OpenAPIRuntime.OpenAPIObjectContainer
+import VaultUtilities
 
 extension VaultClient {
     /// Enables authentication mount. Example AppRole, Token...

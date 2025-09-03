@@ -24,6 +24,7 @@ import struct Foundation.URL
 import Synchronization
 import Logging
 import AppRoleAuth
+import VaultUtilities
 
 public final class AppRoleProvider: Sendable {
     static var loggingDisabled: Logger { .init(label: "app-role-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }

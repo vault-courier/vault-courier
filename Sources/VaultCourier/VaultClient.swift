@@ -29,7 +29,9 @@ import protocol Foundation.LocalizedError
 import AuthMethods
 import AppRoleAuth
 import TokenAuth
-import ResponseWrapping
+import SystemWrapping
+import SystemBackend
+import VaultUtilities
 
 /// REST Client for Hashicorp Vault and OpenBao.
 ///

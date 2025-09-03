@@ -25,6 +25,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 import protocol Foundation.LocalizedError
 #endif
+import VaultUtilities
 
 extension VaultClient {
     /// Creates a new version of a secret at the specified location. If the value does not yet exist, the calling token must have an ACL policy granting the create capability.

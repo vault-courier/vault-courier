@@ -14,6 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import VaultUtilities
+
 extension VaultClient {
     
     /// Add a new or update an existing ACL policy.

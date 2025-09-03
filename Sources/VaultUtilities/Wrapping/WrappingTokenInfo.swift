@@ -14,13 +14,19 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-public struct VaultResponse<
-    VaultData: Decodable & Sendable,
-    Auth: Decodable & Sendable
->: Sendable {
+public struct WrappedTokenInfo: Sendable {
     public let requestID: String
 
-    public let data: VaultData?
+    public let timeToLive: Int
 
-    public let auth: Auth?
+    public let createdAt: String
+
+    public let creationPath: String
+
+    package init(requestID: String, timeToLive: Int, createdAt: String, creationPath: String) {
+        self.requestID = requestID
+        self.timeToLive = timeToLive
+        self.createdAt = createdAt
+        self.creationPath = creationPath
+    }
 }

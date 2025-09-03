@@ -14,6 +14,9 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import SystemBackend
+import VaultUtilities
+
 extension VaultClient {
     /// Unwraps a vault wrapped response
     ///

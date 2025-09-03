@@ -20,6 +20,7 @@ import FoundationEssentials
 //import struct Foundation.Date
 import Foundation
 #endif
+import VaultUtilities
 
 public struct LookupTokenResponse: Sendable {
     public let requestId: String?

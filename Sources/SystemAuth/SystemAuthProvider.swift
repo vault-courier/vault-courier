@@ -21,48 +21,35 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 import Synchronization
-import Logging
-import ResponseWrapping
 
-/// The `SystemBackend` is the client for all Vault endpoints under `/sys`.
-/// This client is used to configure Vault and interact with many of Vault's internal features.
-public final class SystemBackend: Sendable {
-    static var loggingDisabled: Logger { .init(label: "sys-backend-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
-
-    init(apiURL: URL,
-         clientTransport: any ClientTransport,
-         middlewares: [any ClientMiddleware] = [],
-         token: String? = nil,
-         logger: Logger? = nil) {
-        self.wrapping = ResponseWrapper(
-            apiURL: apiURL,
-            clientTransport: clientTransport,
-            middlewares: middlewares,
-            token: token
+package final class SystemAuthProvider: Sendable {
+    package init(apiURL: URL,
+                clientTransport: any ClientTransport,
+                middlewares: [any ClientMiddleware] = [],
+                token: String? = nil) {
+        self.client = Client(
+            serverURL: apiURL,
+            transport: clientTransport,
+            middlewares: middlewares
         )
-        self.apiURL = apiURL
+        self.basePath = URL(string: "/auth", relativeTo: apiURL.appending(path: "sys"))!
         self._token = .init(token)
-        self.logger = logger ?? Self.loggingDisabled
     }
 
-    /// Vault's URL
-    let apiURL: URL
+    package let basePath: URL
 
-    let wrapping: ResponseWrapper
+    package let client: any APIProtocol
 
-    let _token: Mutex<String?>
+    package let _token: Mutex<String?>
 
-    /// Client token
-    var token: String? {
+    package var token: String? {
         get {
             _token.withLock { $0 }
         }
         set {
-            _token.withLock {
-                $0 = newValue
+            _token.withLock { token in
+                token = newValue
             }
         }
     }
-
-    let logger: Logging.Logger
 }

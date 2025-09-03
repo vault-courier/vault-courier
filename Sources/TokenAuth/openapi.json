@@ -3,7 +3,7 @@
   "info": {
     "title": "Vault Courier Token Authentication Method",
     "version": "0.1.0",
-    "description": "API client for Hashicorp Vault and OpenBao",
+    "description": "Token Authentication endpoints. VaultCourier is a Swift client for Hashicorp Vault and OpenBao",
     "license": {
       "name": "Apache License 2.0"
     }
@@ -11,7 +11,11 @@
   "servers": [
     {
       "url": "http://127.0.0.1:8200/v1",
-      "description": "Default server url"
+      "description": "Default http server url"
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
     }
   ],
   "paths": {
@@ -19,9 +23,9 @@
       "description": "The token create path is used to create new tokens.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "The token create path is used to create new tokens.",
+        "summary": "Create new Token",
         "operationId": "token-create",
         "requestBody": {
           "content": {
@@ -49,7 +53,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -69,10 +73,9 @@
       "description": "Returns information about the given token.",
       "post": {
         "tags": [
-          "auth",
           "token"
         ],
-        "summary": "Returns information about the given token.",
+        "summary": "Lookup Token",
         "description": "Returns information about the given token.",
         "operationId": "lookup-token",
         "requestBody": {
@@ -101,7 +104,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -118,10 +121,9 @@
       "description": "Returns information about the current client token.",
       "post": {
         "tags": [
-          "auth",
           "token"
         ],
-        "summary": "Returns information about the current client token.",
+        "summary": "Lookup client Token",
         "description": "Returns information about the current client token.",
         "operationId": "lookup-token-self",
         "responses": {
@@ -140,7 +142,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -157,10 +159,9 @@
       "description": "Returns information about the client token from the accessor.",
       "post": {
         "tags": [
-          "auth",
           "token"
         ],
-        "summary": "Returns information about the client token from the accessor.",
+        "summary": "Lookup Token via accessor",
         "description": "Returns information about the client token from the accessor.",
         "operationId": "lookup-token-accessor",
         "requestBody": {
@@ -189,7 +190,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -206,9 +207,10 @@
       "description": "This endpoint will renew the given token and prevent expiration.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "This endpoint will renew the given token and prevent expiration.",
+        "summary": "Renew Token",
+        "description": "This endpoint will renew the given token and prevent expiration.",
         "operationId": "token-renew",
         "requestBody": {
           "content": {
@@ -236,7 +238,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -256,9 +258,10 @@
       "description": "Renews a lease associated with the calling token. This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Renews a lease associated with the calling token.",
+        "summary": "Renew client Token",
+        "description": "Renews a lease associated with the calling token.",
         "operationId": "token-renew-self",
         "requestBody": {
           "content": {
@@ -286,7 +289,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -306,9 +309,10 @@
       "description": "Renews a lease associated with a token using its accessor. This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Renews a lease associated with a token using its accessor.",
+        "summary": "Renew Token via accessor.",
+        "description": "Renews a lease associated with a token using its accessor.",
         "operationId": "token-renew-accessor",
         "requestBody": {
           "content": {
@@ -336,7 +340,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -356,9 +360,10 @@
       "description": "Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+        "summary": "Revoke Token",
+        "description": "Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
         "operationId": "token-revoke",
         "requestBody": {
           "content": {
@@ -379,7 +384,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -399,9 +404,10 @@
       "description": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+        "summary": "Revoke client Token",
+        "description": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
         "operationId": "token-revoke-self",
         "responses": {
           "204": {
@@ -412,7 +418,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -432,9 +438,10 @@
       "description": "Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.",
+        "summary": "Revoke token via accessor",
+        "description": "Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.",
         "operationId": "token-revoke-accessor",
         "requestBody": {
           "content": {
@@ -455,7 +462,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -472,12 +479,13 @@
       ]
     },
     "/auth/token/revoke-orphan": {
-      "description": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using /auth/token/revoke/. This is a root-protected endpoint.",
+      "description": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using `/auth/token/revoke/`. This is a root-protected endpoint.",
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using /auth/token/revoke/. This is a root-protected endpoint.",
+        "summary": "Revoke Orphan Token",
+        "description": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using `/auth/token/revoke/`. This is a root-protected endpoint.",
         "operationId": "token-revoke-orphan",
         "requestBody": {
           "content": {
@@ -498,7 +506,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -518,10 +526,9 @@
       "description": "Fetches the named role configuration.",
       "get": {
         "tags": [
-          "auth",
           "token"
         ],
-        "summary": "Fetches the named role configuration.",
+        "summary": "Get token role configuration",
         "description": "Fetches the named role configuration.",
         "operationId": "read-token-role",
         "responses": {
@@ -540,7 +547,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -549,9 +556,9 @@
       },
       "post": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Creates (or replaces) the named role",
+        "summary": "Create/Update token role",
         "description": "Creates (or replaces) the named role. Roles enforce specific behavior when creating tokens that allow token functionality that is otherwise not available or would require sudo/root privileges to access. Role parameters, when set, override any provided options to the create endpoints. The role name is also included in the token path, allowing all tokens created against a role to be revoked using the `/sys/leases/revoke-prefix` endpoint.",
         "operationId": "update-token-role",
         "requestBody": {
@@ -573,7 +580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -582,9 +589,9 @@
       },
       "delete": {
         "tags": [
-          "auth"
+          "token"
         ],
-        "summary": "Deletes the named token role.",
+        "summary": "Delete token role.",
         "description": "deletes the named token role.",
         "operationId": "delete-token-role",
         "responses": {
@@ -596,7 +603,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -1318,8 +1325,7 @@
               "accessor",
               "ttl",
               "creation_time",
-              "creation_path",
-              "wrapped_accessor"
+              "creation_path"
             ]
           },
           "warnings": {
@@ -1341,7 +1347,7 @@
           "wrap_info"
         ]
       },
-      "VaultErrorsResponse": {
+      "VaultErrorsResponseBody": {
         "type": "object",
         "properties": {
           "errors": {

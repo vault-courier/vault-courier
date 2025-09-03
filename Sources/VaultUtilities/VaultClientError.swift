@@ -17,42 +17,42 @@
 public struct VaultClientError: Error, Sendable {
     public var message: String
 
-    static func invalidState(_ state: String) -> VaultClientError {
+    package static func invalidState(_ state: String) -> VaultClientError {
         .init(message: "Invalid state: \(state)")
     }
 
-    static func permissionDenied() -> VaultClientError {
+    package static func permissionDenied() -> VaultClientError {
         .init(message: "Permission denied")
     }
 
-    static func decodingFailed() -> VaultClientError {
+    package static func decodingFailed() -> VaultClientError {
         .init(message: "Decoding failed")
     }
 
-    static func receivedUnexpectedResponse(_ message: String? = nil,
+    package static func receivedUnexpectedResponse(_ message: String? = nil,
                                            file: String = #filePath) -> VaultClientError {
         .init(message: "Received unexpected response. Do you mind filling a bug at https://github.com/vault-courier/vault-courier/issues 🙏?")
     }
 
-    static func clientIsNotLoggedIn() -> VaultClientError {
+    package static func clientIsNotLoggedIn() -> VaultClientError {
         .init(message: "Vault client has not authenticated")
     }
 
-    static func invalidSecretType() -> VaultClientError {
+    package static func invalidSecretType() -> VaultClientError {
         .init(message: "KV secret type must be a Dictionary or object of Codable type")
     }
 
-    static func badRequest(_ errors: [String]) -> VaultClientError {
+    package static func badRequest(_ errors: [String]) -> VaultClientError {
         let errorsDescription = errors.isEmpty ? "" : ": " + errors.joined(separator: ", ")
         return .init(message: "Vault returned a bad request \(errorsDescription)")
     }
 
-    static func internalServerError(_ errors: [String]) -> VaultClientError {
+    package static func internalServerError(_ errors: [String]) -> VaultClientError {
         let errorsDescription = errors.isEmpty ? "" : ": " + errors.joined(separator: ", ")
         return .init(message: "Internal server error \(errorsDescription)")
     }
 
-    static func operationFailed(_ statusCode: Int) -> VaultClientError {
+    package static func operationFailed(_ statusCode: Int) -> VaultClientError {
         .init(message: "operation failed with \(statusCode)")
     }
 }

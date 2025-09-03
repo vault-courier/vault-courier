@@ -12,16 +12,19 @@
     {
       "url": "http://127.0.0.1:8200/v1",
       "description": "Default http server url"
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
     }
   ],
   "paths": {
     "/auth/{engine_path}/role/{role_name}": {
-      "description": "Creates a new role",
       "get": {
         "tags": [
-          "auth"
+          "approle"
         ],
-        "summary": "Reads the properties of an existing AppRole.",
+        "summary": "Get AppRole properties.",
         "description": "Reads the properties of an existing AppRole.",
         "operationId": "auth-read-approle",
         "responses": {
@@ -40,7 +43,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -49,9 +52,9 @@
       },
       "post": {
         "tags": [
-          "auth"
+          "approle"
         ],
-        "summary": "Creates a new AppRole or updates an existing AppRole. AppRole Path defined for MyApp",
+        "summary": "Creates or updates AppRole",
         "description": "Creates a new AppRole or updates an existing AppRole. This endpoint supports both create and update capabilities.",
         "operationId": "auth-create-approle",
         "requestBody": {
@@ -73,7 +76,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -82,10 +85,10 @@
       },
       "delete": {
         "tags": [
-          "auth"
+          "approle"
         ],
-        "summary": "Deletes an existing AppRole from the auth method.",
-        "description": "Deletes an existing AppRole",
+        "summary": "Delete AppRole",
+        "description": "Deletes an existing AppRole from the auth method.",
         "operationId": "auth-delete-approle",
         "responses": {
           "204": {
@@ -96,7 +99,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -131,9 +134,9 @@
       "description": "Reads the role-id of a role",
       "get": {
         "tags": [
-          "auth"
+          "approle"
         ],
-        "summary": "Reads the RoleID of an existing AppRole.",
+        "summary": "Get RoleID",
         "description": "Reads the RoleID of an existing AppRole.",
         "operationId": "auth-read-role-id",
         "responses": {
@@ -166,7 +169,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -204,9 +207,9 @@
       "description": "Generates and issues a new SecretID on an existing AppRole",
       "post": {
         "tags": [
-          "auth"
+          "approle"
         ],
-        "summary": "Generates and issues a new SecretID on an existing AppRole",
+        "summary": "Generate AppRole SecretID",
         "description": "Generates and issues a new SecretID on an existing AppRole",
         "operationId": "auth-approle-secret-id",
         "requestBody": {
@@ -249,7 +252,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -287,9 +290,9 @@
       "description": "Reads out the properties of a SecretID via the secret id accessor",
       "post": {
         "tags": [
-          "auth"
+          "approle"
         ],
-        "summary": "Reads out the properties of a SecretID via the secret id accessor",
+        "summary": "Get SecretID properties via accessor",
         "description": "Reads out the properties of a SecretID via the secret id accessor",
         "operationId": "auth-read-approle-secret-id-with-accessor",
         "requestBody": {
@@ -326,7 +329,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -361,10 +364,9 @@
       "description": "Destroy an AppRole secret ID by its accessor.",
       "post": {
         "tags": [
-          "auth"
+          "approle"
         ],
         "summary": "Destroy an AppRole secret ID by its accessor.",
-        "description": "Destroy an AppRole secret ID by its accessor.",
         "operationId": "auth-destroy-approle-secret-id-with-accessor",
         "requestBody": {
           "content": {
@@ -393,7 +395,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -428,9 +430,9 @@
       "description": "Issues a Vault token based on the presented credentials. `role_id` is always required; if `bind_secret_id` is enabled (the default) on the AppRole, `secret_id` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.",
       "post": {
         "tags": [
-          "auth"
+          "approle"
         ],
-        "summary": "Issues a Vault token based on the presented credentials",
+        "summary": "Login with AppRole",
         "description": "Issues a Vault token based on the presented credentials. `role_id` is always required; if `bind_secret_id` is enabled (the default) on the AppRole, `secret_id` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.",
         "operationId": "auth-approle-login",
         "requestBody": {
@@ -471,7 +473,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponse"
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -1089,7 +1091,7 @@
           "wrap_info"
         ]
       },
-      "VaultErrorsResponse": {
+      "VaultErrorsResponseBody": {
         "type": "object",
         "properties": {
           "errors": {
@@ -1120,5 +1122,11 @@
         }
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "approle",
+      "description": "Authentication method"
+    }
+  ]
 }
