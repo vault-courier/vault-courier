@@ -112,26 +112,26 @@ public struct VaultTokenRole: Sendable {
     }
 }
 
-extension Components.Schemas.TokenReadRoleResponse {
-    var tokenRole: VaultTokenRole {
-        get throws {
-            return .init(
-                roleName: data.name,
-                allowedPolicies: data.allowedPolicies,
-                disallowedPolicies: data.disallowedPolicies,
-                allowedPoliciesGlob: data.allowedPoliciesGlob,
-                disallowedPoliciesGlob: data.disallowedPoliciesGlob,
-                orphan: data.orphan ?? false,
-                noDefaultPolicy: data.tokenNoDefaultPolicy ?? false,
-                isRenewable: data.renewable,
-                allowedEntityAliases: data.allowedEntityAliases,
-                tokenBoundCidrs: data.tokenBoundCidrs,
-                tokenType: .init(rawValue: data.tokenType?.rawValue ?? ""),
-                tokenExplicitMaxTTL: data.tokenExplicitMaxTtl.flatMap({.seconds($0)}),
-                tokenNumberOfUses: data.tokenNumUses,
-                tokenPeriod: data.tokenPeriod.flatMap({.seconds($0)}),
-                pathSufix: data.pathSuffix
-            )
-        }
-    }
-}
+//extension Components.Schemas.TokenReadRoleResponse {
+//    var tokenRole: VaultTokenRole {
+//        get throws {
+//            return .init(
+//                roleName: data.name,
+//                allowedPolicies: data.allowedPolicies,
+//                disallowedPolicies: data.disallowedPolicies,
+//                allowedPoliciesGlob: data.allowedPoliciesGlob,
+//                disallowedPoliciesGlob: data.disallowedPoliciesGlob,
+//                orphan: data.orphan ?? false,
+//                noDefaultPolicy: data.tokenNoDefaultPolicy ?? false,
+//                isRenewable: data.renewable,
+//                allowedEntityAliases: data.allowedEntityAliases,
+//                tokenBoundCidrs: data.tokenBoundCidrs,
+//                tokenType: .init(rawValue: data.tokenType?.rawValue ?? ""),
+//                tokenExplicitMaxTTL: data.tokenExplicitMaxTtl.flatMap({.seconds($0)}),
+//                tokenNumberOfUses: data.tokenNumUses,
+//                tokenPeriod: data.tokenPeriod.flatMap({.seconds($0)}),
+//                pathSufix: data.pathSuffix
+//            )
+//        }
+//    }
+//}

@@ -25,111 +25,111 @@ extension VaultClient {
     ///   - capabilities: type with the desired token properties
     ///   - wrappTTL: Optional wrapped time to live of the token
     /// - Returns: ``VaultCourier/VaultAuthResponse``
-    public func createToken(
-        _ capabilities: CreateVaultToken,
-        wrappTTL: Duration? = nil
-    ) async throws -> VaultAuthResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.tokenCreate(
-            headers: .init(xVaultToken: sessionToken, xVaultWrapTTL: wrappTTL?.formatted(.vaultSeconds)),
-            body: .json(.init(
-                displayName: capabilities.displayName,
-                entityAlias: capabilities.entityAlias,
-                explicitMaxTtl: capabilities.tokenMaxTTL?.formatted(.vaultSeconds),
-                id: capabilities.id,
-                meta: .init(unvalidatedValue: capabilities.meta ?? [:]),
-                noDefaultPolicy: !capabilities.hasDefaultPolicy,
-                noParent: !capabilities.hasParent,
-                numUses: capabilities.tokenNumberOfUses,
-                period: capabilities.tokenPeriod?.formatted(.vaultSeconds),
-                policies: capabilities.policies,
-                renewable: capabilities.isRenewable,
-                ttl: capabilities.ttl?.formatted(.vaultSeconds),
-                _type: .init(rawValue: capabilities.type?.rawValue ?? ""))
-            )
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.authResponse
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func createToken(
+//        _ capabilities: CreateVaultToken,
+//        wrappTTL: Duration? = nil
+//    ) async throws -> VaultAuthResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.tokenCreate(
+//            headers: .init(xVaultToken: sessionToken, xVaultWrapTTL: wrappTTL?.formatted(.vaultSeconds)),
+//            body: .json(.init(
+//                displayName: capabilities.displayName,
+//                entityAlias: capabilities.entityAlias,
+//                explicitMaxTtl: capabilities.tokenMaxTTL?.formatted(.vaultSeconds),
+//                id: capabilities.id,
+//                meta: .init(unvalidatedValue: capabilities.meta ?? [:]),
+//                noDefaultPolicy: !capabilities.hasDefaultPolicy,
+//                noParent: !capabilities.hasParent,
+//                numUses: capabilities.tokenNumberOfUses,
+//                period: capabilities.tokenPeriod?.formatted(.vaultSeconds),
+//                policies: capabilities.policies,
+//                renewable: capabilities.isRenewable,
+//                ttl: capabilities.ttl?.formatted(.vaultSeconds),
+//                _type: .init(rawValue: capabilities.type?.rawValue ?? ""))
+//            )
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.authResponse
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     // MARK: Lookup
 
-    public func lookup(token: String) async throws -> LookupTokenResponse {
-        let sessionToken = try sessionToken()
+//    public func lookup(token: String) async throws -> LookupTokenResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.lookupToken(
+//            headers: .init(xVaultToken: sessionToken),
+//            body: .json(.init(token: token))
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.tokenResponse
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
-        let response = try await client.lookupToken(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(token: token))
-        )
+//    public func lookupCurrentToken() async throws -> LookupTokenResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.lookupTokenSelf(
+//            headers: .init(xVaultToken: sessionToken)
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.tokenResponse
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.tokenResponse
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
-
-    public func lookupCurrentToken() async throws -> LookupTokenResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.lookupTokenSelf(
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.tokenResponse
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
-
-    public func lookupToken(accessor: String) async throws -> LookupTokenResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.lookupTokenAccessor(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(accessor: accessor))
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.tokenResponse
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func lookupToken(accessor: String) async throws -> LookupTokenResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.lookupTokenAccessor(
+//            headers: .init(xVaultToken: sessionToken),
+//            body: .json(.init(accessor: accessor))
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.tokenResponse
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     // MARK: Renew
 
@@ -140,30 +140,30 @@ extension VaultClient {
     ///   - token: Token to renew
     ///   - increment: An optional requested increment duration. This increment may not be honored, for instance in the case of periodic tokens. If not supplied, Vault will use the default TTL
     /// - Returns: ``VaultCourier/VaultAuthResponse``
-    public func renewToken(
-        _ token: String,
-        by increment: Duration? = nil
-    ) async throws -> VaultAuthResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.tokenRenew(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(token: token, increment: increment?.formatted(.vaultSeconds)))
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.authResponse
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func renewToken(
+//        _ token: String,
+//        by increment: Duration? = nil
+//    ) async throws -> VaultAuthResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.tokenRenew(
+//            headers: .init(xVaultToken: sessionToken),
+//            body: .json(.init(token: token, increment: increment?.formatted(.vaultSeconds)))
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.authResponse
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(statusCode: let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     /// Renews a lease associated with the calling token.
     ///
@@ -171,29 +171,29 @@ extension VaultClient {
     /// - Parameters:
     ///   - increment: An optional requested increment duration. This increment may not be honored, for instance in the case of periodic tokens. If not supplied, Vault will use the default TTL
     /// - Returns: ``VaultCourier/VaultAuthResponse``
-    public func renewToken(
-        by increment: Duration? = nil
-    ) async throws -> VaultAuthResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.tokenRenewSelf(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(increment: increment?.formatted(.vaultSeconds)))
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.authResponse
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func renewToken(
+//        by increment: Duration? = nil
+//    ) async throws -> VaultAuthResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.tokenRenewSelf(
+//            headers: .init(xVaultToken: sessionToken),
+//            body: .json(.init(increment: increment?.formatted(.vaultSeconds)))
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.authResponse
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(statusCode: let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     /// Renews a lease associated with a token using its accessor.
     ///
@@ -202,30 +202,30 @@ extension VaultClient {
     ///   - accessor: Accessor associated with the token to renew.
     ///   - increment: An optional requested lease increment can be provided. This increment may be ignored by Vault.
     /// - Returns: ``VaultCourier/VaultAuthResponse``
-    public func renewToken(
-        accessor: String,
-        by increment: Duration? = nil
-    ) async throws -> VaultAuthResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.tokenRenewAccessor(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(accessor: accessor, increment: increment?.formatted(.vaultSeconds)))
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.authResponse
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func renewToken(
+//        accessor: String,
+//        by increment: Duration? = nil
+//    ) async throws -> VaultAuthResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.tokenRenewAccessor(
+//            headers: .init(xVaultToken: sessionToken),
+//            body: .json(.init(accessor: accessor, increment: increment?.formatted(.vaultSeconds)))
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.authResponse
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(statusCode: let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     // MARK: Revoke
 
@@ -331,27 +331,27 @@ extension VaultClient {
     /// Fetches the named role configuration.
     /// - Parameter name: The name of the token role.
     /// - Returns: ``VaultTokenRole``
-    public func readTokenRole(name: String) async throws -> VaultTokenRole {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.readTokenRole(
-            path: .init(roleName: name),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.tokenRole
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func readTokenRole(name: String) async throws -> VaultTokenRole {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.readTokenRole(
+//            path: .init(roleName: name),
+//            headers: .init(xVaultToken: sessionToken)
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.tokenRole
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(statusCode: let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
     
     /// Creates (or replaces) the named token role.
     /// - Parameter capabilities: new properties of the token role

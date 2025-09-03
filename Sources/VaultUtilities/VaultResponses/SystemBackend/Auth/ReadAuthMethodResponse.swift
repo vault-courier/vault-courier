@@ -16,7 +16,7 @@
 
 /// Response from reading authentication method configuration
 public struct ReadAuthMethodResponse: Sendable {
-    public let requestId: String?
+    public let requestID: String
 
     /// Type of authentication method
     public let authMethod: String
@@ -43,32 +43,40 @@ public struct ReadAuthMethodResponse: Sendable {
     public let accessor: String?
 
     public let mountType: String?
+
+    package init(requestID: String,
+                 authMethod: String,
+                 isLocal: Bool?,
+                 sealWrap: Bool?,
+                 config: AuthMethodConfig?,
+                 description: String?,
+                 options: [String : String]?,
+                 externalEntropyAccess: Bool?,
+                 accessor: String?,
+                 mountType: String?) {
+        self.requestID = requestID
+        self.authMethod = authMethod
+        self.isLocal = isLocal
+        self.sealWrap = sealWrap
+        self.config = config
+        self.description = description
+        self.options = options
+        self.externalEntropyAccess = externalEntropyAccess
+        self.accessor = accessor
+        self.mountType = mountType
+    }
 }
 
 public struct AuthMethodConfig: Sendable {
-    let tokenType: String
-    let defaultLeaseTTL: Int
-    let maxLeaseTTL: Int
-}
+    public let tokenType: TokenType
+    public let defaultLeaseTimeToLive: Int
+    public let maxLeaseTimeToLive: Int
 
-extension ReadAuthMethodResponse {
-    init(component: Components.Schemas.ReadAuthMethodResponse) {
-        self.requestId = component.requestId
-        self.accessor = component.data.accessor
-        self.authMethod = component.data._type
-        let config = component.data.config.value
-        if let tokenType = config["token_type"] as? String {
-            self.config = .init(tokenType: tokenType,
-                                defaultLeaseTTL: (config["default_lease_ttl"] as? Int) ?? 0,
-                                maxLeaseTTL: (config["max_lease_ttl"] as? Int) ?? 0)
-        } else {
-            self.config = nil
-        }
-        self.isLocal = component.data.local
-        self.sealWrap = component.data.sealWrap
-        self.description = component.data.description
-        self.externalEntropyAccess = component.data.externalEntropyAccess
-        self.options = component.data.options.flatMap({$0.value as? [String : String]})
-        self.mountType = component.mountType
+    package init(tokenType: TokenType,
+                 defaultLeaseTimeToLive: Int,
+                 maxLeaseTimeToLive: Int) {
+        self.tokenType = tokenType
+        self.defaultLeaseTimeToLive = defaultLeaseTimeToLive
+        self.maxLeaseTimeToLive = maxLeaseTimeToLive
     }
 }

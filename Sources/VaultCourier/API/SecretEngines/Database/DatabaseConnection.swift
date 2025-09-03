@@ -73,34 +73,34 @@ extension VaultClient {
     }
 
     /// Reads vault-database conection
-    public func databaseConnection(
-        name: String,
-        enginePath: String
-    ) async throws -> DatabaseConnectionResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.readDatabaseConfiguration(
-            path: .init(enginePath: enginePath, connectionName: name),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(component: json)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func databaseConnection(
+//        name: String,
+//        enginePath: String
+//    ) async throws -> DatabaseConnectionResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.readDatabaseConfiguration(
+//            path: .init(enginePath: enginePath, connectionName: name),
+//            headers: .init(xVaultToken: sessionToken)
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return .init(component: json)
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .internalServerError(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.internalServerError(errors)
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     /// Deletes a database conection between Vault and a Postgres Database
     /// - Note: The roles in the database are not deleted

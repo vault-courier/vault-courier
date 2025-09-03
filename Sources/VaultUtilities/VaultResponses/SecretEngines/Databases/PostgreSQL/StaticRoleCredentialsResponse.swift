@@ -38,27 +38,27 @@ public struct StaticRoleCredentialsResponse: Sendable {
     public let rotation: RotationStrategy?
 }
 
-extension StaticRoleCredentialsResponse {
-    init(component: Components.Schemas.ReadStaticRoleCredentialsResponse) {
-        self.requestId = component.requestId
-        self.leaseDuration = component.leaseDuration
-        self.leaseId = component.leaseId
-        self.renewable = component.renewable
-        self.username = component.data.username
-        self.password = component.data.password
-        self.ttl = component.data.ttl
-        self.updatedAt = component.data.lastVaultRotation
-        self.rotation = if let rotationPeriod = component.data.rotationPeriod {
-            .period(.seconds(rotationPeriod))
-        } else if let schedule = component.data.rotationSchedule {
-            if let window = component.data.rotationWindow {
-                .scheduled(.init(schedule: schedule,
-                                 window: .seconds(window)))
-            } else {
-                .scheduled(.init(schedule: schedule, window: nil))
-            }
-        } else {
-            nil
-        }
-    }
-}
+//extension StaticRoleCredentialsResponse {
+//    init(component: Components.Schemas.ReadStaticRoleCredentialsResponse) {
+//        self.requestId = component.requestId
+//        self.leaseDuration = component.leaseDuration
+//        self.leaseId = component.leaseId
+//        self.renewable = component.renewable
+//        self.username = component.data.username
+//        self.password = component.data.password
+//        self.ttl = component.data.ttl
+//        self.updatedAt = component.data.lastVaultRotation
+//        self.rotation = if let rotationPeriod = component.data.rotationPeriod {
+//            .period(.seconds(rotationPeriod))
+//        } else if let schedule = component.data.rotationSchedule {
+//            if let window = component.data.rotationWindow {
+//                .scheduled(.init(schedule: schedule,
+//                                 window: .seconds(window)))
+//            } else {
+//                .scheduled(.init(schedule: schedule, window: nil))
+//            }
+//        } else {
+//            nil
+//        }
+//    }
+//}

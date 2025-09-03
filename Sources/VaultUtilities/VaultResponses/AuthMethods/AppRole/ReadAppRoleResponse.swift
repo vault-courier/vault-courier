@@ -47,4 +47,38 @@ public struct ReadAppRoleResponse: Sendable {
     public let secretIdBoundCIDRS: [String]?
 
     public let tokenType: TokenType
+
+    package init(requestID: String?,
+                 tokenPolicies: [String],
+                 tokenTimeToLive: Duration?,
+                 tokenMaxTimeToLive: Duration?,
+                 tokenBoundCIDRS: [String]?,
+                 tokenExplicitMaxTimeToLive: Duration?,
+                 tokenNoDefaultPolicy: Bool,
+                 tokenNumberOfUses: Int,
+                 tokenPeriod: Int?,
+                 secretIdTimeToLive: Duration?,
+                 isRenewable: Bool?,
+                 secretIdNumberOfUses: Int?,
+                 bindSecretID: Bool,
+                 localSecretID: Bool,
+                 secretIdBoundCIDRS: [String]?,
+                 tokenType: TokenType) {
+        self.requestID = requestID
+        self.tokenPolicies = tokenPolicies
+        self.tokenTimeToLive = tokenTimeToLive
+        self.tokenMaxTimeToLive = tokenMaxTimeToLive
+        self.tokenBoundCIDRS = tokenBoundCIDRS
+        self.tokenExplicitMaxTimeToLive = tokenExplicitMaxTimeToLive
+        self.tokenNoDefaultPolicy = tokenNoDefaultPolicy
+        self.tokenNumberOfUses = tokenNumberOfUses
+        self.tokenPeriod = tokenPeriod
+        self.secretIdTimeToLive = secretIdTimeToLive
+        self.isRenewable = isRenewable
+        self.secretIdNumberOfUses = secretIdNumberOfUses
+        self.bindSecretID = bindSecretID
+        self.localSecretID = localSecretID
+        self.secretIdBoundCIDRS = secretIdBoundCIDRS
+        self.tokenType = tokenType
+    }
 }

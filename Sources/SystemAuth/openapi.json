@@ -180,7 +180,7 @@
               "config": {
                 "type": "object",
                 "format": "kvpairs",
-                "description": "Configuration for this mount, such as plugin_name."
+                "description": "Configuration for this mount, such as `plugin_name`."
               },
               "options": {
                 "type": "object",

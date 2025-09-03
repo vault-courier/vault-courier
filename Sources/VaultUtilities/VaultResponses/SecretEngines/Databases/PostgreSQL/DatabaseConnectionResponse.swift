@@ -56,20 +56,20 @@ public struct DatabaseConnectionResponse: Sendable {
     }
 }
 
-extension DatabaseConnectionResponse {
-    init(component: Components.Schemas.ReadDatabaseConfigResponse) {
-        self.requestId = component.requestId
-        self.leaseDuration = component.leaseDuration
-        self.leaseId = component.leaseId
-        self.renewable = component.renewable
-        self.allowedRoles = component.data.allowedRoles
-        self.connectionURL = URL(string: component.data.connectionDetails.connectionUrl)
-        self.authMethod = .init(rawValue: component.data.connectionDetails.passwordAuthentication)
-        self.username = component.data.connectionDetails.username
-        let pluginVersion = component.data.pluginVersion
-        let pluginName = component.data.pluginName
-        self.plugin = pluginName.flatMap { Plugin(name: $0, version: pluginVersion) }
-        self.passwordPolicy = component.data.passwordPolicy
-        self.rotateStatements = component.data.rootCredentialsRotateStatements ?? []
-    }
-}
+//extension DatabaseConnectionResponse {
+//    init(component: Components.Schemas.ReadDatabaseConfigResponse) {
+//        self.requestId = component.requestId
+//        self.leaseDuration = component.leaseDuration
+//        self.leaseId = component.leaseId
+//        self.renewable = component.renewable
+//        self.allowedRoles = component.data.allowedRoles
+//        self.connectionURL = URL(string: component.data.connectionDetails.connectionUrl)
+//        self.authMethod = .init(rawValue: component.data.connectionDetails.passwordAuthentication)
+//        self.username = component.data.connectionDetails.username
+//        let pluginVersion = component.data.pluginVersion
+//        let pluginName = component.data.pluginName
+//        self.plugin = pluginName.flatMap { Plugin(name: $0, version: pluginVersion) }
+//        self.passwordPolicy = component.data.passwordPolicy
+//        self.rotateStatements = component.data.rootCredentialsRotateStatements ?? []
+//    }
+//}

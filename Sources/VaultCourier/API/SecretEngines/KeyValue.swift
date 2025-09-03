@@ -36,45 +36,45 @@ extension VaultClient {
     ///   - secret: value of the secret. It must be a codable object or a dictionary.
     ///   - key: It's the path of the secret to update
     /// - Returns: Metadata about the secret, like its current version and creation time
-    @discardableResult
-    public func writeKeyValue(
-        enginePath: String? = nil,
-        secret: some Codable,
-        key: String
-    ) async throws -> KeyValueMetadata {
-        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let data = try JSONEncoder().encode(secret)
-        let json: OpenAPIObjectContainer
-        do {
-            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
-        } catch {
-            throw VaultClientError.invalidSecretType()
-        }
-
-        let response = try await client.writeKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
-                options: .init(cas: nil),
-                data: json)
-            )
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return json.metadata
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    @discardableResult
+//    public func writeKeyValue(
+//        enginePath: String? = nil,
+//        secret: some Codable,
+//        key: String
+//    ) async throws -> KeyValueMetadata {
+//        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
+//        let sessionToken = try sessionToken()
+//
+//        let data = try JSONEncoder().encode(secret)
+//        let json: OpenAPIObjectContainer
+//        do {
+//            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
+//        } catch {
+//            throw VaultClientError.invalidSecretType()
+//        }
+//
+//        let response = try await client.writeKvSecrets(
+//            path: .init(kvPath: enginePath, secretKey: key),
+//            headers: .init(xVaultToken: sessionToken),
+//            body: .json(.init(
+//                options: .init(cas: nil),
+//                data: json)
+//            )
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return json.metadata
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(statusCode: let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     /// Retrieves the secret at the specified path location.
     ///
@@ -118,32 +118,32 @@ extension VaultClient {
     ///   - key: It's the path to the secret relative to the kv secret mount.
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: value of the secret with its requestID
-    public func readKeyValue<T: Decodable & Sendable>(
-        key: String,
-        version: Int? = nil
-    ) async throws -> KeyValueResponse<T> {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.readKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.secret()
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func readKeyValue<T: Decodable & Sendable>(
+//        key: String,
+//        version: Int? = nil
+//    ) async throws -> KeyValueResponse<T> {
+//        let enginePath = self.mounts.kv.relativePath.removeSlash()
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.readKvSecrets(
+//            path: .init(kvPath: enginePath, secretKey: key),
+//            query: .init(version: version),
+//            headers: .init(xVaultToken: sessionToken)
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.secret()
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(statusCode: let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     /// Retrieves the secret at the specified path location.
     /// 
@@ -229,44 +229,44 @@ extension VaultClient {
     ///   - secret: value of the secret. It must be a codable object or a dictionary.
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Returns: Metadata associated to the secret.
-    @discardableResult
-    public func patchKeyValue(
-        enginePath: String? = nil,
-        secret: some Codable,
-        key: String
-    ) async throws -> KeyValueMetadata? {
-        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let data = try JSONEncoder().encode(secret)
-        let json: OpenAPIObjectContainer
-        do {
-            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
-        } catch {
-            throw VaultClientError.invalidSecretType()
-        }
-
-        let response = try await client.patchKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .applicationMergePatchJson(.init(
-                options: .init(cas: nil),
-                data: json))
-            )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return json.metadata
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    @discardableResult
+//    public func patchKeyValue(
+//        enginePath: String? = nil,
+//        secret: some Codable,
+//        key: String
+//    ) async throws -> KeyValueMetadata? {
+//        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
+//        let sessionToken = try sessionToken()
+//
+//        let data = try JSONEncoder().encode(secret)
+//        let json: OpenAPIObjectContainer
+//        do {
+//            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
+//        } catch {
+//            throw VaultClientError.invalidSecretType()
+//        }
+//
+//        let response = try await client.patchKvSecrets(
+//            path: .init(kvPath: enginePath, secretKey: key),
+//            headers: .init(xVaultToken: sessionToken),
+//            body: .applicationMergePatchJson(.init(
+//                options: .init(cas: nil),
+//                data: json))
+//            )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return json.metadata
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                return nil
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     /// This endpoint issues a soft delete of the secret's latest version at the specified location.
     /// 
@@ -393,28 +393,28 @@ extension VaultClient {
     /// Retrieves the metadata and versions for the secret at the specified path. Metadata is version-agnostic.
     /// - Parameter key: It's the path to the secret relative to the secret mount.
     /// - Returns: All the versioned secret metadata
-    public func readMetadata(key: String) async throws -> KeyValueStoreMetadata {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-        
-        let response = try await client.readMetadataKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.metadata
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    public func readMetadata(key: String) async throws -> KeyValueStoreMetadata {
+//        let enginePath = self.mounts.kv.relativePath.removeSlash()
+//        let sessionToken = try sessionToken()
+//        
+//        let response = try await client.readMetadataKvSecrets(
+//            path: .init(kvPath: enginePath, secretKey: key),
+//            headers: .init(xVaultToken: sessionToken)
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return try json.metadata
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(statusCode: let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     
     /// Permanently deletes the key metadata _and all version data_ for the specified key.

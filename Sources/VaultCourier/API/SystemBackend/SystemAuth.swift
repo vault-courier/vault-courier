@@ -49,28 +49,28 @@ extension VaultClient {
         }
     }
 
-    /// This endpoints returns the configuration of the auth method
-    public func readAuthMethodConfiguration(_ path: String) async throws -> ReadAuthMethodResponse {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.authReadMethod(
-            path: .init(path: path),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(component: json)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
+//    /// This endpoints returns the configuration of the auth method
+//    public func readAuthMethodConfiguration(_ path: String) async throws -> ReadAuthMethodResponse {
+//        let sessionToken = try sessionToken()
+//
+//        let response = try await client.authReadMethod(
+//            path: .init(path: path),
+//            headers: .init(xVaultToken: sessionToken)
+//        )
+//
+//        switch response {
+//            case .ok(let content):
+//                let json = try content.body.json
+//                return .init(component: json)
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
 
     /// Disables authentication method at given path
     public func disableAuthMethod(_ path: String) async throws {

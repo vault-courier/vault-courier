@@ -23,6 +23,7 @@ import struct Foundation.URL
 import Synchronization
 import Logging
 import SystemWrapping
+import SystemAuth
 
 /// The `SystemBackend` is the client for all Vault endpoints under `/sys`.
 /// This client is used to configure Vault and interact with many of Vault's internal features.
@@ -40,6 +41,12 @@ public final class SystemBackend: Sendable {
             middlewares: middlewares,
             token: token
         )
+        self.auth = SystemAuthProvider(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            middlewares: middlewares,
+            token: token
+        )
         self.apiURL = apiURL
         self._token = .init(token)
         self.logger = logger ?? Self.loggingDisabled
@@ -49,6 +56,7 @@ public final class SystemBackend: Sendable {
     let apiURL: URL
 
     let wrapping: ResponseWrapper
+    let auth: SystemAuthProvider
 
     let _token: Mutex<String?>
 

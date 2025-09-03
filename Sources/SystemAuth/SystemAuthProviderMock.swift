@@ -17,10 +17,9 @@
 import VaultUtilities
 
 package struct SystemAuthProviderMock: APIProtocol {
-
-    init(disableAuthMethodAction: DisableAuthMethodSignature? = nil,
-         enableAuthMethodAction: EnableAuthMethodSignature? = nil,
-         readAuthMethodAction: ReadAuthMethodSignature? = nil) {
+    package init(disableAuthMethodAction: DisableAuthMethodSignature? = nil,
+                 enableAuthMethodAction: EnableAuthMethodSignature? = nil,
+                 readAuthMethodAction: ReadAuthMethodSignature? = nil) {
         self.disableAuthMethodAction = disableAuthMethodAction
         self.enableAuthMethodAction = enableAuthMethodAction
         self.readAuthMethodAction = readAuthMethodAction

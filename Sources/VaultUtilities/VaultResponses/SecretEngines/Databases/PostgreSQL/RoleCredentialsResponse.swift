@@ -35,15 +35,15 @@ public struct RoleCredentialsResponse: Sendable {
     public let updatedAt: String?
 }
 
-extension RoleCredentialsResponse {
-    init(component: Components.Schemas.ReadRoleCredentialsResponse) {
-        self.requestId = component.requestId
-        self.leaseDuration = component.leaseDuration
-        self.leaseId = component.leaseId
-        self.renewable = component.renewable
-        self.username = component.data.username
-        self.password = component.data.password
-        self.ttl = component.data.ttl
-        self.updatedAt = component.data.lastVaultRotation
-    }
-}
+//extension RoleCredentialsResponse {
+//    init(component: Components.Schemas.ReadRoleCredentialsResponse) {
+//        self.requestId = component.requestId
+//        self.leaseDuration = component.leaseDuration
+//        self.leaseId = component.leaseId
+//        self.renewable = component.renewable
+//        self.username = component.data.username
+//        self.password = component.data.password
+//        self.ttl = component.data.ttl
+//        self.updatedAt = component.data.lastVaultRotation
+//    }
+//}

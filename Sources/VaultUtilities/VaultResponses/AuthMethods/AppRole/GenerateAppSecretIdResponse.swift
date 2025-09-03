@@ -14,27 +14,23 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-public struct AppRoleLoginResponse: Sendable {
-    let isRenewable: Bool
+public struct GenerateAppSecretIdResponse: Sendable {
+    public let requestID: String
 
-    let leaseDuration: Int
+    /// AppRole secret id
+    public let secretID: String
 
-    let tokenPolicies: [String]
+    public let secretIDAccessor: String
 
-    let accessor: String
+    public let secretIDTimeToLive: Int
 
-    let clientToken: String
+    public let secretIDNumberOfUses: Int
 
-    let leaseId: String?
-}
-
-extension AppRoleLoginResponse {
-    init(payload: Components.Schemas.VaultAuthResponse) {
-        self.isRenewable = payload.auth.renewable
-        self.leaseDuration = payload.auth.leaseDuration
-        self.tokenPolicies = payload.auth.tokenPolicies
-        self.accessor = payload.auth.accessor
-        self.clientToken = payload.auth.clientToken
-        self.leaseId = payload.leaseId
+    package init(requestID: String, secretID: String, secretIDAccessor: String, secretIDTimeToLive: Int, secretIDNumberOfUses: Int) {
+        self.requestID = requestID
+        self.secretID = secretID
+        self.secretIDAccessor = secretIDAccessor
+        self.secretIDTimeToLive = secretIDTimeToLive
+        self.secretIDNumberOfUses = secretIDNumberOfUses
     }
 }

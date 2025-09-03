@@ -14,8 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
-
 public enum AppRoleSecretIdResponse: Sendable {
 
     case wrapped(WrappedTokenResponse)

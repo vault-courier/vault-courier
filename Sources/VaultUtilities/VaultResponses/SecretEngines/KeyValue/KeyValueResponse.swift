@@ -29,23 +29,23 @@ public struct KeyValueResponse<T: Decodable & Sendable>: Sendable {
     public let data: T
 }
 
-extension Components.Schemas.WriteSecretResponse {
-    var metadata: KeyValueMetadata {
-        .init(requestID: requestId,
-              createdAt: data.createdTime,
-              custom: data.customMetadata?.additionalProperties,
-              deletedAt: data.deletionTime,
-              isDestroyed: data.destroyed,
-              version: data.version)
-    }
-}
-
-extension Components.Schemas.ReadSecretResponse {
-    func secret<T: Decodable & Sendable>() throws -> KeyValueResponse<T> {
-        let data = try JSONEncoder().encode(self.data.data)
-        let secret = try JSONDecoder().decode(T.self, from: data)
-        return .init(requestID: requestId,
-                     data: secret)
-    }
-}
+//extension Components.Schemas.WriteSecretResponse {
+//    var metadata: KeyValueMetadata {
+//        .init(requestID: requestId,
+//              createdAt: data.createdTime,
+//              custom: data.customMetadata?.additionalProperties,
+//              deletedAt: data.deletionTime,
+//              isDestroyed: data.destroyed,
+//              version: data.version)
+//    }
+//}
+//
+//extension Components.Schemas.ReadSecretResponse {
+//    func secret<T: Decodable & Sendable>() throws -> KeyValueResponse<T> {
+//        let data = try JSONEncoder().encode(self.data.data)
+//        let secret = try JSONDecoder().decode(T.self, from: data)
+//        return .init(requestID: requestId,
+//                     data: secret)
+//    }
+//}
 
