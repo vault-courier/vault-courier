@@ -17,7 +17,7 @@
 import TokenAuth
 import VaultUtilities
 
-extension TokenAuthenticator: VaultAuthMethod {
+extension TokenAuth: VaultAuthMethod {
     /// Authenticate with Vault
     /// - Returns: session token
     public func authenticate() async throws -> String {
@@ -28,7 +28,7 @@ extension TokenAuthenticator: VaultAuthMethod {
     }
 }
 
-extension TokenAuthenticatorMock: VaultAuthMethod {
+extension TokenAuthMock: VaultAuthMethod {
     /// Authenticate with Vault
     /// - Returns: session token
     public func authenticate() async throws -> String {

@@ -191,6 +191,20 @@ extension VaultClient {
         )
         return try await execute(client)
     }
+
+
+    public func withTokenProvider<ReturnType: Sendable>(
+        execute: (TokenProvider) async throws -> ReturnType
+    ) async throws -> ReturnType {
+        let sessionToken = try? sessionToken()
+        let client = TokenProvider(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            middlewares: middlewares,
+            token: sessionToken
+        )
+        return try await execute(client)
+    }
 }
 
 #if AppRoleSupport

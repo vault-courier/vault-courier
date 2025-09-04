@@ -14,6 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import VaultUtilities
+
 public struct VaultAuthResponse: Sendable {
     public let requestID: String?
 
@@ -66,26 +68,3 @@ public struct VaultAuthResponse: Sendable {
         self.numberOfUses = numberOfUses
     }
 }
-
-//extension Components.Schemas.VaultAuthResponse {
-//    var authResponse: VaultAuthResponse {
-//        get throws {
-//            guard let tokenType = TokenType(rawValue: auth.tokenType.rawValue) else {
-//                throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: auth.tokenType))")
-//            }
-//
-//            return .init(
-//                requestID: requestId,
-//                clientToken: auth.clientToken,
-//                accessor: auth.accessor,
-//                tokenPolicies: auth.tokenPolicies,
-//                metadata: auth.metadata?.additionalProperties ?? [:],
-//                leaseDuration: .seconds(auth.leaseDuration),
-//                isRenewable: auth.renewable,
-//                entityID: auth.entityId,
-//                tokenType: tokenType,
-//                isOrphan: auth.orphan,
-//                numberOfUses: auth.numUses)
-//        }
-//    }
-//}

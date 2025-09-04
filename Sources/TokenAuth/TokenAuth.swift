@@ -22,7 +22,7 @@ import struct Foundation.URL
 #endif
 import Synchronization
 
-public final class TokenAuthenticator: Sendable {
+package final class TokenAuth: Sendable {
     public init(apiURL: URL,
                 clientTransport: any ClientTransport,
                 middlewares: [any ClientMiddleware] = [],

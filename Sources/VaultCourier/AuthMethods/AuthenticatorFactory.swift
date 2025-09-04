@@ -36,9 +36,9 @@ package func makeAuthenticator(_ method: NewAuthMethod,
     switch method {
         case .token(let token):
             guard let clientTransport else {
-                return TokenAuthenticatorMock(token: token)
+                return TokenAuthMock(token: token)
             }
-            return TokenAuthenticator(
+            return TokenAuth(
                 apiURL: apiURL,
                 clientTransport: clientTransport,
                 token: token
