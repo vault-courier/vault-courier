@@ -17,7 +17,6 @@
 import VaultUtilities
 
 package struct SystemPoliciesProviderMock: APIProtocol {
-    
     package typealias WritePolicySignature = @Sendable (Operations.PoliciesWriteAclPolicy.Input) async throws -> Operations.PoliciesWriteAclPolicy.Output
     package var writePolicyAction: WritePolicySignature?
     package func policiesWriteAclPolicy(_ input: Operations.PoliciesWriteAclPolicy.Input) async throws -> Operations.PoliciesWriteAclPolicy.Output {
@@ -27,4 +26,21 @@ package struct SystemPoliciesProviderMock: APIProtocol {
         return try await block(input)
     }
 
+    package typealias ReadPolicySignature = @Sendable (Operations.PoliciesReadAclPolicy.Input) async throws -> Operations.PoliciesReadAclPolicy.Output
+    package var readPolicyAction: ReadPolicySignature?
+    package func policiesReadAclPolicy(_ input: Operations.PoliciesReadAclPolicy.Input) async throws -> Operations.PoliciesReadAclPolicy.Output {
+        guard let block = readPolicyAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
+
+    package typealias DeletePolicySignature = @Sendable (Operations.PoliciesDeleteAclPolicy.Input) async throws -> Operations.PoliciesDeleteAclPolicy.Output
+    package var deletePolicyAction: DeletePolicySignature?
+    package func policiesDeleteAclPolicy(_ input: Operations.PoliciesDeleteAclPolicy.Input) async throws -> Operations.PoliciesDeleteAclPolicy.Output {
+        guard let block = deletePolicyAction
+        else { throw UnspecifiedBlockError() }
+
+        return try await block(input)
+    }
 }

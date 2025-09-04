@@ -14,6 +14,11 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+#endif
 import VaultUtilities
 
 extension VaultClient {
@@ -22,13 +27,42 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - name: name of the policy
-    ///   - hclPolicy: policy in hcl format
+    ///   - hcl: ACL policy in HCL format
     public func createPolicy(
-        name: String,
-        hclPolicy: String
+        hcl: ACLPolicyHCL
     ) async throws {
         try await withSystemBackend { systemBackend in
-            try await systemBackend.createPolicy(name: name, hclPolicy: hclPolicy)
+            try await systemBackend.createPolicy(hcl)
+        }
+    }
+
+    /// Add a new or update an existing ACL policy.
+    ///
+    /// - Parameters:
+    ///   - name: name of the policy
+    ///   - contentOf: URL to a ACL policy in HCL format
+    public func createPolicy(
+        name: String,
+        contentOf: URL
+    ) async throws {
+        let policy = try String(contentsOf: contentOf, encoding: .utf8)
+        try await createPolicy(hcl: .init(name: name, policy: policy))
+    }
+    
+    /// Retrieves an ACL policy
+    /// - Parameter name: name of the policy
+    /// - Returns: Named ACL policy in HCL format
+    public func readPolicy(name: String) async throws -> ACLPolicyHCL {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.readPolicy(name: name)
+        }
+    }
+
+    /// Deletes an ACL policy
+    /// - Parameter name: name of ACL policy
+    public func deletePolicy(name: String) async throws {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.deletePolicy(name: name)
         }
     }
 }

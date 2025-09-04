@@ -72,7 +72,6 @@ extension SystemBackend {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
-
                 let rawConfig = json.data.config.value
                 let config: AuthMethodConfig?
                 if let rawTokenType = rawConfig["token_type"] as? String,

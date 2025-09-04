@@ -45,7 +45,6 @@ extension IntegrationTests.System.Wrapping {
     }
 }
 
-
 #if AppRoleSupport
 extension IntegrationTests.System.Wrapping {
     struct AppRoleSecretID: Decodable, Sendable {
@@ -126,3 +125,51 @@ extension IntegrationTests.System.Wrapping {
     }
 }
 #endif
+
+// MARK: Auth
+extension IntegrationTests.System.Auth {
+    @Test
+    func enable_read_and_disable_auth_method() async throws {
+        let vaultClient = VaultClient.current
+
+        // MUT
+        try await vaultClient.withSystemBackend { backend in
+            let mountPath = "user"
+            try await backend.enableAuthMethod(configuration: .init(path: mountPath, type: "approle"))
+            let _ = try await backend.readAuthMethodConfiguration(mountPath)
+            try await backend.disableAuthMethod(mountPath)
+        }
+    }
+}
+
+// MARK: Policies
+extension IntegrationTests.System.Policies {
+    @Test
+    func create_read_delete_policy() async throws {
+        let vaultClient = VaultClient.current
+
+        // MUT
+        try await vaultClient.withSystemBackend { backend in
+            let policyName = "admin"
+            try await backend.createPolicy(name: policyName, contentOf: fixtureUrl(for: "examplePolicy.hcl"))
+            let _ = try await backend.readPolicy(name: policyName)
+            try await backend.deletePolicy(name: policyName)
+        }
+    }
+}
+
+// MARK: Policies
+extension IntegrationTests.System.Mounts {
+    @Test
+    func enable_secret_engine() async throws {
+        let vaultClient = VaultClient.current
+
+        // MUT
+        try await vaultClient.withSystemBackend { backend in
+            let mountPath = "my_kv_secrets_2"
+            try await backend.enableSecretEngine(mountConfig: .init(mountType: "kv", path: mountPath))
+            let _ = try await backend.readSecretEngineConfig(path: mountPath)
+            try await backend.disableSecretEngine(path: mountPath)
+        }
+    }
+}

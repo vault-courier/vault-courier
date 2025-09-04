@@ -55,6 +55,9 @@ extension IntegrationTests.Auth {
 
 extension IntegrationTests.System {
     @Suite struct Wrapping {}
+    @Suite struct Auth {}
+    @Suite struct Policies {}
+    @Suite struct Mounts {}
 }
 
 public func enableIntegrationTests() -> Bool {

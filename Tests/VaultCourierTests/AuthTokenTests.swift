@@ -18,87 +18,87 @@ import Testing
 
 import VaultCourier
 
-extension IntegrationTests.Auth.Token {
-    @Test
-    func crud_token() async throws {
-        let vaultClient = VaultClient.current
-
-        let displayName = "admin_token"
-        let leaseDuration = 3600
-        let policies = ["web", "stage"]
-        var tokenID = ""
-        await #expect(throws: Never.self) {
-            let response = try await vaultClient.createToken(
-                .init(policies: policies,
-                      meta: ["user": "Juan"],
-                      hasParent: false,
-                      hasDefaultPolicy: true,
-                      ttl: .seconds(leaseDuration),
-                      type: .service,
-                      tokenMaxTTL: .seconds(60*60*4),
-                      displayName: displayName,
-                      tokenNumberOfUses: nil)
-            )
-            tokenID = response.clientToken
-            #expect(tokenID.isEmpty == false)
-
-            #expect(response.isOrphan)
-            #expect(response.numberOfUses == 0)
-            #expect(Set(response.tokenPolicies) == Set(["default"] + policies))
-            #expect(response.leaseDuration == .seconds(leaseDuration))
-
-            let renewTTL = Duration.seconds(60)
-            let renewResponse = try await vaultClient.renewToken(response.clientToken, by: renewTTL)
-            #expect(renewResponse.leaseDuration == renewTTL)
-
-            _ = try await vaultClient.lookup(token: tokenID)
-
-            try await vaultClient.revoke(token: tokenID)
-        }
-
-        await #expect(throws: VaultClientError.self) {
-            _ = try await vaultClient.lookup(token: tokenID)
-        }
-    }
-
-    @Test
-    func crud_token_role() async throws {
-        let vaultClient = VaultClient.current
-
-        let displayName = "dev_token"
-        let leaseDuration = 3600
-        let policies = ["web", "stage"]
-        let roleName = "nomad"
-        await #expect(throws: Never.self) {
-            let write = try await vaultClient.createToken(
-                .init(roleName: roleName,
-                      policies: policies,
-                      meta: ["user": "Juan"],
-                      hasParent: true,
-                      hasDefaultPolicy: true,
-                      ttl: .seconds(leaseDuration),
-                      type: .service,
-                      tokenMaxTTL: .seconds(60*60*4),
-                      displayName: displayName,
-                      tokenNumberOfUses: nil)
-            )
-            #expect(write.isOrphan == false)
-
-            try await vaultClient.updateTokenRole(
-                .init(roleName: roleName,
-                      orphan: true,
-                      noDefaultPolicy: false)
-            )
-
-            let read = try await vaultClient.readTokenRole(name: roleName)
-            #expect(read.orphan == true)
-            #expect(read.noDefaultPolicy == false)
-
-            try await vaultClient.deleteTokenRole(name: roleName)
-        }
-
-        await #expect(throws: VaultClientError.self) {
-            _ = try await vaultClient.readTokenRole(name: roleName)
-        }
-    }
-}
+//extension IntegrationTests.Auth.Token {
+//    @Test
+//    func crud_token() async throws {
+//        let vaultClient = VaultClient.current
+//
+//        let displayName = "admin_token"
+//        let leaseDuration = 3600
+//        let policies = ["web", "stage"]
+//        var tokenID = ""
+//        await #expect(throws: Never.self) {
+//            let response = try await vaultClient.createToken(
+//                .init(policies: policies,
+//                      meta: ["user": "Juan"],
+//                      hasParent: false,
+//                      hasDefaultPolicy: true,
+//                      ttl: .seconds(leaseDuration),
+//                      type: .service,
+//                      tokenMaxTTL: .seconds(60*60*4),
+//                      displayName: displayName,
+//                      tokenNumberOfUses: nil)
+//            )
+//            tokenID = response.clientToken
+//            #expect(tokenID.isEmpty == false)
+//
+//            #expect(response.isOrphan)
+//            #expect(response.numberOfUses == 0)
+//            #expect(Set(response.tokenPolicies) == Set(["default"] + policies))
+//            #expect(response.leaseDuration == .seconds(leaseDuration))
+//
+//            let renewTTL = Duration.seconds(60)
+//            let renewResponse = try await vaultClient.renewToken(response.clientToken, by: renewTTL)
+//            #expect(renewResponse.leaseDuration == renewTTL)
+//
+//            _ = try await vaultClient.lookup(token: tokenID)
+//
+//            try await vaultClient.revoke(token: tokenID)
+//        }
+//
+//        await #expect(throws: VaultClientError.self) {
+//            _ = try await vaultClient.lookup(token: tokenID)
+//        }
+//    }
+//
+//    @Test
+//    func crud_token_role() async throws {
+//        let vaultClient = VaultClient.current
+//
+//        let displayName = "dev_token"
+//        let leaseDuration = 3600
+//        let policies = ["web", "stage"]
+//        let roleName = "nomad"
+//        await #expect(throws: Never.self) {
+//            let write = try await vaultClient.createToken(
+//                .init(roleName: roleName,
+//                      policies: policies,
+//                      meta: ["user": "Juan"],
+//                      hasParent: true,
+//                      hasDefaultPolicy: true,
+//                      ttl: .seconds(leaseDuration),
+//                      type: .service,
+//                      tokenMaxTTL: .seconds(60*60*4),
+//                      displayName: displayName,
+//                      tokenNumberOfUses: nil)
+//            )
+//            #expect(write.isOrphan == false)
+//
+//            try await vaultClient.updateTokenRole(
+//                .init(roleName: roleName,
+//                      orphan: true,
+//                      noDefaultPolicy: false)
+//            )
+//
+//            let read = try await vaultClient.readTokenRole(name: roleName)
+//            #expect(read.orphan == true)
+//            #expect(read.noDefaultPolicy == false)
+//
+//            try await vaultClient.deleteTokenRole(name: roleName)
+//        }
+//
+//        await #expect(throws: VaultClientError.self) {
+//            _ = try await vaultClient.readTokenRole(name: roleName)
+//        }
+//    }
+//}

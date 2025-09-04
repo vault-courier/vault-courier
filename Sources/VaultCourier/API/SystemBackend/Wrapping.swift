@@ -14,7 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import SystemBackend
 import VaultUtilities
 
 extension VaultClient {

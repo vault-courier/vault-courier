@@ -26,11 +26,9 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 import protocol Foundation.LocalizedError
 #endif
-import AuthMethods
 import AppRoleAuth
 import TokenAuth
 import SystemWrapping
-import SystemBackend
 import VaultUtilities
 
 /// REST Client for Hashicorp Vault and OpenBao.
@@ -121,8 +119,6 @@ public actor VaultClient {
     /// The middlewares to be invoked before the transport.
     let middlewares: [any ClientMiddleware]
 
-    var wrapTimeToLive: Duration?
-
     /// Session token
     private var token: String?
 
@@ -180,18 +176,6 @@ extension VaultClient {
         logger.info("login authorized")
     }
 
-}
-
-extension VaultClient {
-    /// Adds `X-VAULT-WRAP-TTL` header for all upcoming requests with the given duration
-    public func addResponseWrapping(timeToLive: Duration) {
-        self.wrapTimeToLive = timeToLive
-    }
-
-    /// Removes the `X-VAULT-WRAP-TTL` header for all upcoming requests
-    public func removeResponseWrapping() {
-        self.wrapTimeToLive = nil
-    }
 }
 
 extension VaultClient {

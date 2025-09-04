@@ -18,38 +18,29 @@ import struct OpenAPIRuntime.OpenAPIObjectContainer
 import VaultUtilities
 
 extension VaultClient {
+    /// Enables secret engine
+    /// - Parameter mountConfig: mount configuration including path of secret engine
     public func enableSecretEngine(
         mountConfig: EnableSecretMountConfig
     ) async throws {
-        let sessionToken = try sessionToken()
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.enableSecretEngine(mountConfig: mountConfig)
+        }
+    }
 
-        let configuration = try mountConfig.config.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
-        let options = try mountConfig.options.flatMap(OpenAPIObjectContainer.init(unvalidatedValue:))
-        
-        let response = try await client.mountsEnableSecretsEngine(
-            path: .init(path: mountConfig.path),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
-                config: configuration,
-                externalEntropyAccess: mountConfig.externalEntropyAccess,
-                local: mountConfig.local,
-                options: options,
-                sealWrap: mountConfig.sealWrap,
-                _type: mountConfig.mountType)
-            )
-        )
-        
-        switch response {
-            case .noContent:
-                logger.info("\(mountConfig.mountType) engine enabled.")
-                return
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+    /// Get configuration for secret engine
+    /// - Parameter path: mount path of secret engine
+    public func readSecretEngineConfig(path: String) async throws -> SecretEngineConfigResponse {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.readSecretEngineConfig(path: path)
+        }
+    }
+
+    /// Disables secret engine
+    /// - Parameter path: mount path to secret engine
+    public func disableSecretEngine(path: String) async throws {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.disableAuthMethod(path)
         }
     }
 }

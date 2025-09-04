@@ -21,6 +21,36 @@
   "paths": {
     "/sys/policies/acl/{name}": {
       "description": "Read, Modify, or Delete an access control policy.",
+      "get": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Read ACL policy.",
+        "description": "Retrieves information about the named ACL policy",
+        "operationId": "policies-read-acl-policy",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadACLPolicyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "policies"
@@ -38,6 +68,29 @@
           },
           "required": true
         },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Delete Policy",
+        "description": "Deletes the ACL policy with the given name. This will immediately affect all users associated with this policy. (A deleted policy set on a token acts as an empty policy.)",
+        "operationId": "policies-delete-acl-policy",
         "responses": {
           "204": {
             "description": "NoContent"
@@ -80,6 +133,60 @@
             "description": "The rules of the policy."
           }
         }
+      },
+      "ReadACLPolicyResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the policy."
+              },
+              "policy": {
+                "type": "string",
+                "description": "The rules of the policy."
+              }
+            },
+            "required": [
+              "name",
+              "policy"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
       },
       "VaultErrorsResponseBody": {
         "type": "object",
