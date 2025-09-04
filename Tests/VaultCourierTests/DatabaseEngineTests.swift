@@ -30,7 +30,7 @@ import struct Foundation.Data
 import PklSwift
 #endif
 
-extension IntegrationTests.Database {
+extension IntegrationTests.SecretEngine.Database {
     static let connectionName = "postgres_db"
     static let enginePath = "my-postgres-db"
 

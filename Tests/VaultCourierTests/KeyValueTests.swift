@@ -23,7 +23,7 @@ import class Foundation.JSONDecoder
 import struct Foundation.Data
 #endif
 
-extension IntegrationTests.KeyValue {
+extension IntegrationTests.SecretEngine.KeyValue {
 //    @Test
 //    func write_and_read_kv_secret() async throws {
 //        struct Secret: Codable {

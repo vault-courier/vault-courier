@@ -1,0 +1,1114 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vault Courier KeyValue Secret Engine API",
+    "version": "0.2.0",
+    "description": "KeyValue endpoints. Vault Courier is a Swift client for Hashicorp Vault and OpenBao",
+    "license": {
+      "name": "Apache License 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "{protocol}://127.0.0.1:8200/v1",
+      "description": "Default server url",
+      "variables": {
+        "protocol": {
+          "enum": [
+            "http",
+            "https"
+          ],
+          "default": "https"
+        }
+      }
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
+    }
+  ],
+  "paths": {
+    "/{kv_path}/config": {
+      "description": "This path configures backend level settings that are applied to every key in the key-value store",
+      "get": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Get Configuration",
+        "description": "This path retrieves the current configuration for the secrets backend at the given path.",
+        "operationId": "read-kv-secrets-config",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KVSecretConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Configure Engine",
+        "description": "This path configures backend level settings that are applied to every key in the key-value store.",
+        "operationId": "config-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "max_versions": {
+                    "type": "integer",
+                    "description": "The number of versions to keep per key. This value applies to all keys, but a key's metadata setting can overwrite this value. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted. When 0 is used or the value is unset, Vault will keep 10 versions."
+                  },
+                  "cas_required": {
+                    "type": "boolean",
+                    "description": "If true all keys will require the Compare-And-Swap (CAS) parameter to be set on all write requests.",
+                    "default": "false"
+                  },
+                  "delete_version_after": {
+                    "type": "string",
+                    "description": " If set, specifies the length of time before a version is deleted. Accepts Vault's duration format strings."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "/{kv_path}/data/{secret_key}": {
+      "description": "Server secrets endpoint",
+      "get": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Read Secret",
+        "description": "Reads an existing secret",
+        "operationId": "read-kv-secrets",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadSecretResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Write Secret",
+        "description": "Writes a kv secret",
+        "operationId": "write-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteOrPatchKVSecretRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteSecretResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Soft delete Secret",
+        "description": "This endpoint issues a soft delete of the secret's latest version at the specified location. This marks the version as deleted and will stop it from being returned from reads, but the underlying data will not be removed. A delete can be undone using the undelete path.",
+        "operationId": "delete-latest-kv-secrets",
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Patch Secret",
+        "description": "This endpoint provides the ability to patch an existing secret at the specified location. The secret must neither be deleted nor destroyed. The calling token must have an ACL policy granting the patch capability. A new version will be created upon successfully applying a patch with the provided data.",
+        "operationId": "patch-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteOrPatchKVSecretRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteSecretResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Specifies the version to return. If not set the latest version is returned.",
+          "name": "version",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{kv_path}/delete/{secret_key}": {
+      "description": "This endpoint issues a soft delete of the specified versions of the secret. This marks the versions as deleted and will stop them from being returned from reads, but the underlying data will not be removed. A delete can be undone using the undelete path.",
+      "post": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Soft delete versioned secret.",
+        "description": "This endpoint issues a soft delete of the specified versions of the secret. This marks the version as deleted and will stop it from being returned from reads, but the underlying data will not be removed. A delete can be undone using the undelete path.",
+        "operationId": "delete-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "versions": {
+                    "type": "array",
+                    "description": "The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in normal get requests.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "versions"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{kv_path}/undelete/{secret_key}": {
+      "description": "Undeletes the data for the provided version and path in the key-value store. This restores the data, allowing it to be returned on get requests.",
+      "post": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Restore Secret",
+        "description": "Undeletes the data for the provided version and path in the key-value store. This restores the data, allowing it to be returned on get requests.",
+        "operationId": "undelete-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "versions": {
+                    "type": "array",
+                    "description": "The versions to undelete. The versions will be restored and their data will be returned on normal get requests.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "versions"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{kv_path}/destroy/{secret_key}": {
+      "description": "Permanently removes the specified version data for the provided key and version numbers from the key-value store.",
+      "put": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Destroy Secret",
+        "description": "Permanently removes the specified version data for the provided key and version numbers from the key-value store.",
+        "operationId": "destroy-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "versions": {
+                    "type": "array",
+                    "description": "The versions to destroy. Their data will be permanently deleted.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "versions"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{kv_path}/subkeys/{secret_key}": {
+      "description": "This endpoint provides the subkeys within a secret entry that exists at the requested path.",
+      "get": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Get subkeys within a secret",
+        "description": "The secret entry at this path will be retrieved and stripped of all data by replacing underlying values of leaf keys (i.e. non-map keys or map keys with no underlying subkeys) with null.",
+        "operationId": "subkeys-kv-secrets",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "subkeys": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "subkeys"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Specifies the version to return. If not set the latest version is returned.",
+          "name": "version",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        {
+          "description": "Specifies the deepest nesting level to provide in the output. The default value 0 will not impose any limit. If non-zero, keys that reside at the specified depth value will be artificially treated as leaves and will thus be null even if further underlying subkeys exist.",
+          "name": "depth",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{kv_path}/metadata/{secret_key}": {
+      "description": "This endpoint retrieves the metadata and versions for the secret at the specified path. Metadata is version-agnostic.",
+      "get": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Get Metadata",
+        "description": "This endpoint retrieves the metadata and versions for the secret at the specified path",
+        "operationId": "read-metadata-kv-secrets",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "cas_required": {
+                          "type": "boolean"
+                        },
+                        "custom_metadata": {
+                          "type": "object",
+                          "format": "kvpairs",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "delete_version_after": {
+                          "type": "string",
+                          "description": "Set the delete_version_after value to a duration to specify the deletion_time for all new versions written to this key. If not set, the backend's delete_version_after will be used. If the value is greater than the backend's delete_version_after, the backend's delete_version_after will be used. 0s is equivalent to not set",
+                          "default": "0s"
+                        },
+                        "max_versions": {
+                          "type": "integer"
+                        },
+                        "created_time": {
+                          "type": "string"
+                        },
+                        "current_version": {
+                          "type": "integer"
+                        },
+                        "oldest_version": {
+                          "type": "integer"
+                        },
+                        "updated_time": {
+                          "type": "string"
+                        },
+                        "versions": {
+                          "type": "object",
+                          "format": "kvpairs",
+                          "description": "List of version metadata",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "created_time": {
+                                "type": "string"
+                              },
+                              "deletion_time": {
+                                "type": "string"
+                              },
+                              "destroyed": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "created_time",
+                              "destroyed"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "cas_required",
+                        "delete_version_after",
+                        "max_versions",
+                        "created_time",
+                        "current_version",
+                        "updated_time",
+                        "versions"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Create or Update metadata",
+        "description": "This endpoint creates or updates the metadata of a secret at the specified location. It does not create a new version.",
+        "operationId": "update-metadata-kv-secrets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cas_required": {
+                    "type": "boolean"
+                  },
+                  "custom_metadata": {
+                    "type": "object",
+                    "format": "kvpairs",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "delete_version_after": {
+                    "type": "string",
+                    "description": "Set the delete_version_after value to a duration to specify the deletion_time for all new versions written to this key. If not set, the backend's delete_version_after will be used. If the value is greater than the backend's delete_version_after, the backend's delete_version_after will be used. 0s is equivalent to not set",
+                    "default": "0s"
+                  },
+                  "max_versions": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "cas_required",
+                  "delete_version_after",
+                  "max_versions"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Metadata updated"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "key-value"
+        ],
+        "summary": "Delete Metadata",
+        "description": "This endpoint permanently deletes the key metadata and all version data for the specified key. All version history will be removed.",
+        "operationId": "delete-metadata-kv-secrets",
+        "responses": {
+          "204": {
+            "description": "All metadata has been deleted"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Key-value engine path",
+          "name": "kv_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "KVSecretConfigResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "max_versions": {
+                "type": "integer",
+                "description": "The number of versions to keep per key. This value applies to all keys, but a key's metadata setting can overwrite this value. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted. When 0 is used or the value is unset, Vault will keep 10 versions."
+              },
+              "cas_required": {
+                "type": "boolean",
+                "description": "If true all keys will require the Compare-And-Swap (CAS) parameter to be set on all write requests.",
+                "default": "false"
+              },
+              "delete_version_after": {
+                "type": "string",
+                "description": " If set, specifies the length of time before a version is deleted. Accepts Vault's duration format strings."
+              }
+            }
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "WriteOrPatchKVSecretRequest": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "type": "object",
+            "properties": {
+              "cas": {
+                "type": "integer",
+                "description": "Compare-And-Swap (CAS)"
+              }
+            }
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "WriteSecretResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "created_time": {
+                "type": "string"
+              },
+              "custom_metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "deletion_time": {
+                "type": "string"
+              },
+              "destroyed": {
+                "type": "boolean"
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "created_time",
+              "destroyed",
+              "version"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "ReadSecretResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object"
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "created_time": {
+                    "type": "string"
+                  },
+                  "custom_metadata": {
+                    "type": "object",
+                    "format": "kvpairs",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "deletion_time": {
+                    "type": "string"
+                  },
+                  "destroyed": {
+                    "type": "boolean"
+                  },
+                  "version": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "created_time",
+                  "destroyed",
+                  "version"
+                ]
+              }
+            }
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "VaultErrorsResponseBody": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "List of errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "VaultTokenHeader": {
+        "description": "Vault Token required for authentication",
+        "name": "X-Vault-Token",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WrapTTLHeader": {
+        "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
+        "name": "X-Vault-Wrap-TTL",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

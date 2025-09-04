@@ -42,15 +42,19 @@ extension Tag {
 enum IntegrationTests {}
 
 extension IntegrationTests {
-    @Suite struct KeyValue {}
-    @Suite(.serialized) struct Database {}
     @Suite struct Auth {}
+    @Suite struct SecretEngine {}
     @Suite struct System {}
 }
 
 extension IntegrationTests.Auth {
     @Suite struct Token {}
     @Suite(.serialized) struct AppRole {}
+}
+
+extension IntegrationTests.SecretEngine {
+    @Suite struct KeyValue {}
+    @Suite(.serialized) struct Database {}
 }
 
 extension IntegrationTests.System {
