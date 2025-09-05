@@ -44,12 +44,15 @@ public final class KeyValueSecretProvider: Sendable {
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
+        self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
         self.logger = logger ?? Self.loggingDisabled
     }
 
-    /// Vault's URL
+    /// Vault's base URL
     let apiURL: URL
+
+    let mountPath: String
 
     /// Engine client
     let engine: KeyValueEngine
@@ -82,11 +85,11 @@ extension KeyValueSecretProvider {
     /// - Returns: Metadata about the secret, like its current version and creation time
     @discardableResult
     public func writeKeyValue(
-        enginePath: String,
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let data = try JSONEncoder().encode(secret)
         let json: OpenAPIObjectContainer
@@ -134,11 +137,11 @@ extension KeyValueSecretProvider {
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: value of the secret
     public func readKeyValueSecret<T: Decodable & Sendable>(
-        enginePath: String,
         key: String,
         version: Int? = nil
     ) async throws -> T {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.readKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
@@ -168,11 +171,11 @@ extension KeyValueSecretProvider {
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: value of the secret with its requestID
     public func readKeyValue<T: Decodable & Sendable>(
-        enginePath: String,
         key: String,
         version: Int? = nil
     ) async throws -> KeyValueResponse<T> {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.readKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
@@ -208,12 +211,12 @@ extension KeyValueSecretProvider {
     ///   - subkeysDepth: Specifies the deepest nesting level to provide in the output. The default value `nil` will not impose any limit.
     /// - Returns: Data of the secret
     public func readKeyValueSecretData(
-        enginePath: String,
         key: String,
         version: Int? = nil,
         subkeysDepth: Int? = nil
     ) async throws -> Data {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.readKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
@@ -245,12 +248,12 @@ extension KeyValueSecretProvider {
     ///   - depth: Specifies the deepest nesting level to provide in the output. The default value `nil` will not impose any limit. If non-zero, keys that reside at the specified depth value will be artificially treated as leaves and will thus be null even if further underlying subkeys exist.
     /// - Returns: Data corresponding to stripped subkeys
     public func readSecretSubkeys(
-        enginePath: String,
         key: String,
         version: Int? = nil,
         depth: Int? = nil
     ) async throws -> Data? {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.subkeysKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
@@ -283,11 +286,11 @@ extension KeyValueSecretProvider {
     /// - Returns: Metadata associated to the secret.
     @discardableResult
     public func patchKeyValue(
-        enginePath: String,
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata? {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let data = try JSONEncoder().encode(secret)
         let json: OpenAPIObjectContainer
@@ -334,11 +337,11 @@ extension KeyValueSecretProvider {
     /// - Parameter key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Parameter versions: The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in the read secret operations. Defaults to empty array, which deletes the latest version.
     public func delete(
-        enginePath: String,
         key: String,
         versions: [String] = []
     ) async throws {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         if versions.isEmpty {
             let response = try await engine.client.deleteLatestKvSecrets(
@@ -386,11 +389,11 @@ extension KeyValueSecretProvider {
     ///   - key: It's the path to the secret relative to the secret mount.
     ///   - versions: The versions to undelete. The versions will be restored and their data will be returned on normal read secret requests.
     public func undelete(
-        enginePath: String,
         key: String,
         versions: [String]
     ) async throws {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.undeleteKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
@@ -421,14 +424,14 @@ extension KeyValueSecretProvider {
     ///   - deleteVersionAfter: Specify the deletion time for all new versions written to this key.
     ///   - versionLimit: The number of versions to keep per key. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted.
     public func writeMetadata(
-        enginePath: String,
         key: String,
         isCasRequired: Bool = false,
         customMetadata: [String: String],
         deleteVersionAfter: String? = nil,
         versionLimit: Int = 10
     ) async throws {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.updateMetadataKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
@@ -458,10 +461,10 @@ extension KeyValueSecretProvider {
     /// - Parameter key: It's the path to the secret relative to the secret mount.
     /// - Returns: All the versioned secret metadata
     public func readMetadata(
-        enginePath: String,
         key: String
     ) async throws -> KeyValueStoreMetadata {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.readMetadataKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),
@@ -505,10 +508,10 @@ extension KeyValueSecretProvider {
     /// All version history will be removed.
     /// - Parameter key: It's the path to the secret relative to the secret mount.
     public func deleteAllMetadata(
-        enginePath: String,
         key: String
     ) async throws {
-        let sessionToken = engine.token
+        let sessionToken = self.engine.token
+        let enginePath = self.engine.mountPath
 
         let response = try await engine.client.deleteMetadataKvSecrets(
             path: .init(kvPath: enginePath, secretKey: key),

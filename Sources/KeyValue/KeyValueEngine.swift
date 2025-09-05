@@ -47,11 +47,15 @@ package final class KeyValueEngine: Sendable {
             transport: clientTransport,
             middlewares: middlewares
         )
-        self.basePath = URL(string: configuration.mountPath, relativeTo: configuration.apiURL)
+        self.apiRUL = configuration.apiURL
+        self.mountPath = configuration.mountPath
         self._token = .init(token)
     }
 
-    package let basePath: URL?
+    package let apiRUL: URL
+
+    /// The relative mount path, e.g. "secrets"
+    package let mountPath: String
 
     package let client: any APIProtocol
 

@@ -191,8 +191,27 @@ extension VaultClient {
         )
         return try await execute(client)
     }
+}
+
+extension VaultClient {
+    public func withKeyValueProvider<ReturnType: Sendable>(
+        mountPath: String,
+        execute: (KeyValueSecretProvider) async throws -> ReturnType
+    ) async throws -> ReturnType {
+        let sessionToken = try? sessionToken()
+        let client = KeyValueSecretProvider(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            mountPath: mountPath,
+            middlewares: middlewares,
+            token: sessionToken
+        )
+        return try await execute(client)
+    }
+}
 
 
+extension VaultClient {
     public func withTokenProvider<ReturnType: Sendable>(
         execute: (TokenProvider) async throws -> ReturnType
     ) async throws -> ReturnType {
@@ -205,10 +224,8 @@ extension VaultClient {
         )
         return try await execute(client)
     }
-}
 
 #if AppRoleSupport
-extension VaultClient {
     public func withAppRoleProvider<ReturnType: Sendable>(
         mountPath: String? = nil,
         execute: (AppRoleProvider) async throws -> ReturnType
@@ -223,5 +240,6 @@ extension VaultClient {
         )
         return try await execute(client)
     }
-}
 #endif
+}
+
