@@ -126,6 +126,7 @@ extension VaultClient {
     /// This marks the version as deleted and will stop it from being returned from reads, but the underlying data will not be removed.
     ///
     /// A delete can be undone using the ``VaultCourier/VaultClient/undelete(key:versions:)`` operation.
+    /// - Parameter enginePath: mount path of secret engine
     /// - Parameter key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Parameter versions: The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in the read secret operations. Defaults to empty array, which deletes the latest version.
     public func delete(
@@ -143,6 +144,7 @@ extension VaultClient {
     /// This reverses the  ``VaultCourier/VaultClient/delete(key:versions:)`` operation.
     ///
     /// - Parameters:
+    ///   - enginePath: mount path of secret engine
     ///   - key: It's the path to the secret relative to the secret mount.
     ///   - versions: The versions to undelete. The versions will be restored and their data will be returned on normal read secret requests.
     public func undelete(
@@ -158,11 +160,12 @@ extension VaultClient {
     
     /// Creates or updates the metadata of a secret at the specified location. It does not create a new version of the secret.
     /// - Parameters:
-    ///   - key: It's the path to the secret relative to the secret mount.
-    ///   - isCasRequired: If `true`, the key will require the cas parameter to be set on all write requests. If `false`, the backend’s configuration will be used. Defaults to `false`
-    ///   - customMetadata: A Dictionary of user-provided metadata meant to describe the secret.
-    ///   - deleteVersionAfter: Specify the deletion time for all new versions written to this key.
-    ///   - versionLimit: The number of versions to keep per key. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted.
+    /// - Parameter enginePath: mount path of secret engine
+    /// - Parameter key: It's the path to the secret relative to the secret mount.
+    /// - Parameter isCasRequired: If `true`, the key will require the cas parameter to be set on all write requests. If `false`, the backend’s configuration will be used. Defaults to `false`
+    /// - Parameter customMetadata: A Dictionary of user-provided metadata meant to describe the secret.
+    /// - Parameter deleteVersionAfter: Specify the deletion time for all new versions written to this key.
+    /// - Parameter versionLimit: The number of versions to keep per key. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted.
     public func writeMetadata(
         enginePath: String,
         key: String,
@@ -183,6 +186,7 @@ extension VaultClient {
     }
     
     /// Retrieves the metadata and versions for the secret at the specified path. Metadata is version-agnostic.
+    /// - Parameter enginePath: mount path of secret engine
     /// - Parameter key: It's the path to the secret relative to the secret mount.
     /// - Returns: All the versioned secret metadata
     public func readMetadata(
@@ -196,6 +200,7 @@ extension VaultClient {
     
     /// Permanently deletes the key metadata _and all version data_ for the specified key.
     /// All version history will be removed.
+    /// - Parameter enginePath: mount path of secret engine
     /// - Parameter key: It's the path to the secret relative to the secret mount.
     public func deleteAllMetadata(
         enginePath: String,
