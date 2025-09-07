@@ -37,6 +37,7 @@ import VaultUtilities
 /// Regardless of which authentication method was chosen during initialization, ``VaultClient`` always authenticates using the ``authenticate()`` method.
 public actor VaultClient {
 
+    @available(*, deprecated, message: "use a leaner configuration without mount paths")
     public struct Configuration {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
         public let apiURL: URL
@@ -161,15 +162,6 @@ public actor VaultClient {
 }
 
 extension VaultClient {
-
-//     The VaultAuthMethod should be registered and the login just calls it. The reason
-//     is that The "Authenticators" not only can do login, but call the an API
-//     We don't want them to be separated from the main client
-//     UPDATE: Why is it bad to generate the sub-clients on calls? We have all the dependencies stored
-//     UPDATE: Offer withAPI: withAppRoleClient(credentials, action: appRoleClient -> () )
-//     and run the action inside the VaultClient. In addition, offer individual calls like login
-//     - The main Mock should be a separate Object and should be dependent on the other client mocks
-
     public func login(method: NewAuthMethod) async throws {
         let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
         self.token = try await authenticator.authenticate()

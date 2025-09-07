@@ -44,12 +44,12 @@ public struct VaultClientError: Error, Sendable {
 
     package static func badRequest(_ errors: [String]) -> VaultClientError {
         let errorsDescription = errors.isEmpty ? "" : ": " + errors.joined(separator: ", ")
-        return .init(message: "Vault returned a bad request \(errorsDescription)")
+        return .init(message: "Vault returned a bad request\(errorsDescription)")
     }
 
     package static func internalServerError(_ errors: [String]) -> VaultClientError {
         let errorsDescription = errors.isEmpty ? "" : ": " + errors.joined(separator: ", ")
-        return .init(message: "Internal server error \(errorsDescription)")
+        return .init(message: "Internal server error\(errorsDescription)")
     }
 
     package static func operationFailed(_ statusCode: Int) -> VaultClientError {

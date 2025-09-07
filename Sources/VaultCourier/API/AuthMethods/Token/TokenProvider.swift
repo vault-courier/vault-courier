@@ -172,7 +172,7 @@ extension TokenProvider {
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
                 throw VaultClientError.badRequest(errors)
             case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
+                logger.debug(.init(stringLiteral: "operation failed with status code \(statusCode)"))
                 throw VaultClientError.operationFailed(statusCode)
         }
     }

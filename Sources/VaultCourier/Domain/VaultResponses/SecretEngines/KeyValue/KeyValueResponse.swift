@@ -22,7 +22,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 
-public struct KeyValueResponse<T: Decodable & Sendable>: Sendable {
+public struct KeyValueResponse<T: Decodable & Sendable>: Sendable, Decodable {
     public let requestID: String
 
     /// Key-Value secret data
