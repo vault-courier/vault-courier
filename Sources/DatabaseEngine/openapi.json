@@ -1,0 +1,1372 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vault Courier Database Secret Engine API",
+    "version": "0.2.0",
+    "description": "KeyValue endpoints. Vault Courier is a Swift client for Hashicorp Vault and OpenBao",
+    "license": {
+      "name": "Apache License 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "{protocol}://127.0.0.1:8200/v1",
+      "description": "Default server url",
+      "variables": {
+        "protocol": {
+          "enum": [
+            "http",
+            "https"
+          ],
+          "default": "https"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/{engine_path}/config/{connection_name}": {
+      "description": "This endpoint configures the connection string used to communicate with the desired database. In addition to the parameters listed here, each Database plugin has additional, database plugin specific, parameters for this endpoint. Please read the HTTP API for the plugin you'd wish to configure to see the full list of additional parameters.",
+      "get": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "This endpoint returns the configuration settings for a connection.",
+        "description": "Read database connection configuration",
+        "operationId": "read-database-configuration",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadDatabaseConfigResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "This endpoint configures the connection string used to communicate with the desired database",
+        "description": "This endpoint configures the connection string used to communicate with the desired database",
+        "operationId": "configure-database",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatabaseConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Deletes a vault database connection",
+        "description": "This endpoint deletes a connection",
+        "operationId": "delete-database-connection",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name for this database connection. This is specified as part of the URL.",
+          "name": "connection_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/reset/{connection_name}": {
+      "description": "This endpoint closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.",
+      "post": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "This endpoint closes a connection",
+        "description": "This endpoint closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.",
+        "operationId": "database-reset",
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the connection to reset",
+          "name": "connection_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/reload/{plugin_name}": {
+      "description": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name. This can be useful to restart a specific plugin after it's been upgraded in the plugin catalog.",
+      "post": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name",
+        "description": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name. This can be useful to restart a specific plugin after it's been upgraded in the plugin catalog.",
+        "operationId": "reload-database-plugin",
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the plugin for which all connections should be reset.",
+          "name": "plugin_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/rotate-root/{connection_name}": {
+      "description": "This endpoint is used to rotate the \"root\" user credentials stored for the database connection. This user must have permissions to update its own password.",
+      "post": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Rotate the vaults 'root' postgres role credentials",
+        "description": "the root user's password will not be accessible once rotated so it is highly recommended that you create a user for Vault to utilize rather than using the actual root user.",
+        "operationId": "database-rotate-root",
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "rotate the 'root' user credentials stored for the database connection.",
+          "name": "connection_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/static-roles/{role_name}": {
+      "description": "This endpoint creates or updates a static role definition. Static Roles are a 1-to-1 mapping of a Vault Role to a user in a database which are automatically rotated based on the configured 'rotation_period' or 'rotation_schedule'.",
+      "get": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Creates or updates a static role definition",
+        "description": "This endpoint queries the static role definition.",
+        "operationId": "database-read-static-role",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStaticRoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Creates or updates a static role definition",
+        "description": "Vault will rotate the password when creating a static role. Vault must do this in order to know the password.",
+        "operationId": "database-create-static-role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteStaticRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Deletes a static role definition",
+        "description": "This endpoint deletes the static role definition. The user, having been defined externally, must be cleaned up manually.",
+        "operationId": "database-delete-static-role",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the role to create. It has to be in the allowed list",
+          "name": "role_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/static-creds/{role_name}": {
+      "description": "This endpoint returns the current credentials based on the named static role.",
+      "get": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Read current credentials based on the named static role.",
+        "description": "returns the current credentials based on the named static role.",
+        "operationId": "database-read-static-role-credentials",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadStaticRoleCredentialsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the static role. It has to be in the allowed list",
+          "name": "role_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/roles/{role_name}": {
+      "description": "This endpoint creates or updates a dynamic role definition.",
+      "get": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Queries the role definition",
+        "description": "This endpoint queries the role definition.",
+        "operationId": "database-read-role",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadRoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Creates or updates a role definition",
+        "description": "Creates or updates a dynamic role definition. This endpoint distinguishes between create and update ACL capabilities.",
+        "operationId": "database-create-role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Deletes a role definition",
+        "description": "This endpoint deletes the dynamic role definition. The user, having been defined externally, must be cleaned up manually.",
+        "operationId": "database-delete-role",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the role to create. It has to be in the allowed list",
+          "name": "role_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{engine_path}/creds/{role_name}": {
+      "description": "This endpoint returns the current credentials based on the named role.",
+      "get": {
+        "tags": [
+          "database/postgres"
+        ],
+        "summary": "Read current credentials based on the named role.",
+        "description": "returns the current credentials based on the named role.",
+        "operationId": "database-read-role-credentials",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadRoleCredentialsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Database engine path",
+          "name": "engine_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the role. It has to be in the allowed list",
+          "name": "role_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "ReadStaticRoleResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "db_name": {
+                "type": "string"
+              },
+              "credential_type": {
+                "type": "string"
+              },
+              "last_vault_rotation": {
+                "type": "string"
+              },
+              "rotation_period": {
+                "type": "string"
+              },
+              "rotation_schedule": {
+                "type": "string"
+              },
+              "rotation_window": {
+                "type": "integer"
+              },
+              "rotation_statements": {
+                "type": "array",
+                "description": "Database statements to be executed to rotate the password for the configured database user",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "db_name",
+              "credential_type",
+              "last_vault_rotation",
+              "username"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "ReadStaticRoleCredentialsResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "last_vault_rotation": {
+                "type": "string"
+              },
+              "rotation_schedule": {
+                "type": "string"
+              },
+              "rotation_period": {
+                "type": "integer"
+              },
+              "rotation_window": {
+                "type": "integer"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "password": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "last_vault_rotation",
+              "username",
+              "password",
+              "ttl"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "ReadRoleResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "db_name": {
+                "type": "string"
+              },
+              "credential_type": {
+                "type": "string"
+              },
+              "last_vault_rotation": {
+                "type": "string"
+              },
+              "rotation_period": {
+                "type": "string"
+              },
+              "rotation_schedule": {
+                "type": "string"
+              },
+              "rotation_window": {
+                "type": "integer"
+              },
+              "creation_statements": {
+                "type": "array",
+                "description": "Database statements executed to create and configure a user",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "revocation_statements": {
+                "type": "array",
+                "description": "Database statements to be executed to revoke a user",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "rollback_statements": {
+                "type": "array",
+                "description": "Database statements to be executed rollback a create operation in the event of an error",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "renew_statements": {
+                "type": "array",
+                "description": "Database statements to be executed to renew a user.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "rotation_statements": {
+                "type": "array",
+                "description": "Database statements to be executed to rotate the password for the configured database user",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "db_name",
+              "creation_statements"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "WriteRoleRequest": {
+        "type": "object",
+        "properties": {
+          "db_name": {
+            "type": "string",
+            "description": "The name of the database connection to use for this role."
+          },
+          "default_ttl": {
+            "type": "string",
+            "description": "Specifies the TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to system/engine default TTL time."
+          },
+          "max_ttl": {
+            "type": "string",
+            "description": "Specifies the maximum TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to sys/mounts's default TTL time; this value is allowed to be less than the mount max TTL (or, if not set, the system max TTL), but it is not allowed to be longer. See also The TTL General Case."
+          },
+          "creation_statements": {
+            "type": "array",
+            "description": "Specifies the database statements executed to create and configure a user.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "revocation_statements": {
+            "type": "array",
+            "description": "Specifies the database statements to be executed to revoke a user.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rollback_statements": {
+            "type": "array",
+            "description": "Specifies the database statements to be executed rollback a create operation in the event of an error.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "renew_statements": {
+            "type": "array",
+            "description": "Specifies the database statements to be executed to renew a user.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rotation_statements": {
+            "type": "array",
+            "description": "Specifies the database statements to be executed to rotate the password for a given username.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "credential_type": {
+            "type": "string",
+            "description": "Specifies the type of credential that will be generated for the role. Options include: password, rsa_private_key, client_certificate. See the plugin's API page for credential types supported by individual databases."
+          },
+          "credential_config": {
+            "type": "object",
+            "format": "kvpairs",
+            "description": "Specifies the configuration for the given 'credential_type'. See documentation for details"
+          }
+        },
+        "required": [
+          "db_name",
+          "creation_statements"
+        ]
+      },
+      "WriteStaticRoleRequest": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Specifies the database username that this Vault role corresponds to."
+          },
+          "db_name": {
+            "type": "string",
+            "description": "The name of the database connection to use for this role."
+          },
+          "rotation_period": {
+            "type": "string",
+            "description": "Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds. Uses duration format strings. Mutually exclusive with rotation_schedule."
+          },
+          "rotation_schedule": {
+            "type": "string",
+            "description": "A cron-style string that will define the schedule on which rotations should occur. This should be a \"standard\" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of '0 0 * * SAT' will set rotations to occur on Saturday at 00:00. Mutually exclusive with rotation_period."
+          },
+          "rotation_window": {
+            "type": "string",
+            "description": "Specifies the amount of time in which the rotation is allowed to occur starting from a given rotation_schedule. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour. Uses duration format strings. Optional when rotation_schedule is set and disallowed when rotation_period is set."
+          },
+          "rotation_statements": {
+            "type": "array",
+            "description": "Specifies the database statements to be executed to rotate the password for the configured database user. Not every plugin type will support this functionality. See the plugin's API page for more information on support and formatting for this parameter.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "credential_type": {
+            "type": "string",
+            "description": "Specifies the type of credential that will be generated for the role. Options include: password, rsa_private_key, client_certificate. See the plugin's API page for credential types supported by individual databases."
+          },
+          "credential_config": {
+            "type": "object",
+            "format": "kvpairs",
+            "description": "Specifies the configuration for the given 'credential_type'. See documentation for details"
+          }
+        },
+        "required": [
+          "username",
+          "db_name"
+        ]
+      },
+      "DatabaseConfigRequest": {
+        "type": "object",
+        "properties": {
+          "plugin_name": {
+            "type": "string"
+          },
+          "verify_connection": {
+            "type": "boolean"
+          },
+          "allowed_roles": {
+            "type": "array",
+            "description": "List of the roles allowed to use this connection. Defaults to empty (no roles), if contains a * any role can use this connection.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "connection_url": {
+            "type": "string",
+            "description": "Specifies the PostgreSQL DSN. This field can be templated and supports passing the username and password parameters in the following format {{field_name}}. Certificate authentication can be used by setting ?sslmode= to be any of the applicable values as outlined in the Postgres SQL documentation and giving the SSL credentials in the sslrootcert, sslcert and sslkey credentials. A templated connection URL is required when using root credential rotation. This field supports both format string types, URI and keyword/value. Both formats support multiple host connection strings. Due to how pgx works, parameters such as sslrootcert, sslcert, sslkey are treated as paths on the Vault server."
+          },
+          "max_open_connections": {
+            "type": "integer",
+            "description": "Specifies the maximum number of open connections to the database. Defaults to 4 in v1.18.x"
+          },
+          "max_idle_connections": {
+            "type": "integer",
+            "description": "Specifies the maximum number of idle connections to the database. A zero uses the value of max_open_connections and a negative value disables idle connections. If larger than 'max_open_connections' it will be reduced to be equal. Defaults to zero"
+          },
+          "max_connection_lifetime": {
+            "type": "string",
+            "description": "Specifies the maximum amount of time a connection may be reused. If <= 0s, connections are reused forever. Defaults to '0s'"
+          },
+          "username": {
+            "type": "string",
+            "description": "The root credential username used in the connection URL."
+          },
+          "password": {
+            "type": "string",
+            "description": "The root credential password used in the connection URL"
+          },
+          "tls_ca": {
+            "type": "string",
+            "description": "The x509 CA file for validating the certificate presented by the PostgreSQL server. Must be PEM encoded."
+          },
+          "tls_certificate": {
+            "type": "string",
+            "description": "The x509 client certificate for connecting to the database. Must be PEM encoded."
+          },
+          "private_key": {
+            "type": "string",
+            "description": "The secret key used for the x509 client certificate. Must be PEM encoded."
+          },
+          "username_template": {
+            "type": "string",
+            "description": "Template describing how dynamic usernames are generated."
+          },
+          "disable_escaping": {
+            "type": "boolean",
+            "description": "Turns off the escaping of special characters inside of the username and password fields. See the databases secrets engine docs for more information. Defaults to false."
+          },
+          "password_authentication": {
+            "type": "string",
+            "description": "When set to 'scram-sha-256', passwords will be hashed by Vault and stored as-is by PostgreSQL. Using \"scram-sha-256\" requires a minimum version of PostgreSQL 10. Available options are \"scram-sha-256\" and \"password\". The default is \"password\". When set to \"password\", passwords will be sent to PostgreSQL in plaintext format and may appear in PostgreSQL logs as-is. For more information, please refer to the PostgreSQL documentation.",
+            "enum": [
+              "password",
+              "scram-sha-256"
+            ]
+          },
+          "root_rotation_statements": {
+            "type": "array",
+            "description": "Specifies the database statements to be executed to rotate the root user's credentials. See the plugin's API page for more information on support and formatting for this parameter.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "plugin_name",
+          "connection_url"
+        ]
+      },
+      "ReadDatabaseConfigResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "allowed_roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "connection_details": {
+                "type": "object",
+                "properties": {
+                  "connection_url": {
+                    "type": "string"
+                  },
+                  "password_authentication": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "connection_url",
+                  "password_authentication",
+                  "username"
+                ]
+              },
+              "password_policy": {
+                "type": "string"
+              },
+              "plugin_name": {
+                "type": "string"
+              },
+              "plugin_version": {
+                "type": "string"
+              },
+              "root_credentials_rotate_statements": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "allowed_roles",
+              "connection_details"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "ReadRoleCredentialsResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "last_vault_rotation": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "password": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "username",
+              "password"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "VaultErrorsResponseBody": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "List of errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "VaultTokenHeader": {
+        "description": "Vault Token required for authentication",
+        "name": "X-Vault-Token",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WrapTTLHeader": {
+        "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
+        "name": "X-Vault-Wrap-TTL",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

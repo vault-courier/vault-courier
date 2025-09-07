@@ -54,30 +54,3 @@ public struct LookupTokenResponse: Sendable {
     /// A value of zero means unlimited number of uses
     public let numberOfUses: Int
 }
-
-//extension Components.Schemas.TokenLookupResponse {
-//    var tokenResponse: LookupTokenResponse {
-//        get throws {
-//            guard let tokenType = TokenType(rawValue: data._type.rawValue) else {
-//                throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: data._type))")
-//            }
-//
-//            return .init(
-//                requestId: requestId,
-//                clientToken: data.id,
-//                accessor: data.accessor,
-//                createdAt: Date(timeIntervalSince1970: TimeInterval(data.creationTime)),
-//                creationTimeToLive: .seconds(data.creationTtl),
-//                expiresAt: data.expireTime,
-//                explicitMaxTimeToLive: .seconds(data.explicitMaxTtl ?? 0),
-//                timeToLive: .seconds(data.ttl),
-//                policies: data.policies,
-//                metadata: data.meta?.additionalProperties ?? [:],
-//                isRenewable: data.renewable,
-//                tokenType: tokenType,
-//                isOrphan: data.orphan,
-//                numberOfUses: data.numUses
-//            )
-//        }
-//    }
-//}

@@ -22,8 +22,8 @@ import struct Foundation.URL
 #endif
 import Synchronization
 
-/// KeyValue secret engine client
-package final class KeyValueEngine: Sendable {
+/// Database secret engine client
+package final class DatabaseEngine: Sendable {
     package struct Configuration: Sendable {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
         public let apiURL: URL
@@ -54,7 +54,7 @@ package final class KeyValueEngine: Sendable {
 
     package let apiRUL: URL
 
-    /// The relative mount path, e.g. "secrets"
+    /// The relative mount path, e.g. "database"
     package let mountPath: String
 
     package let client: any APIProtocol

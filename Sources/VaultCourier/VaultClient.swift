@@ -200,6 +200,23 @@ extension VaultClient {
         )
         return try await execute(client)
     }
+
+    #if DatabaseEngineSupport
+    public func withDatabaseClient<ReturnType: Sendable>(
+        mountPath: String,
+        execute: (DatabaseEngineClient) async throws -> ReturnType
+    ) async throws -> ReturnType {
+        let sessionToken = try? sessionToken()
+        let client = DatabaseEngineClient(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            mountPath: mountPath,
+            middlewares: middlewares,
+            token: sessionToken
+        )
+        return try await execute(client)
+    }
+    #endif
 }
 
 

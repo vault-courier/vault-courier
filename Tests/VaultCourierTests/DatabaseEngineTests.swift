@@ -61,7 +61,7 @@ extension IntegrationTests.SecretEngine.Database {
 //            // MUT
 //            try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, enginePath: enginePath)
 //        }
-//
+
 //        @Test
 //        func create_dynamic_role_and_read_credentials() async throws {
 //            let vaultClient = VaultClient.current
