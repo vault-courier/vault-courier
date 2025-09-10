@@ -16,7 +16,7 @@
 
 services:
   openbao:
-    image: openbao/openbao
+    image: 'openbao/openbao:latest'
     container_name: openbao
     command: server -dev -dev-root-token-id="integration_token"
     ports:
@@ -55,6 +55,22 @@ services:
       - vaultnet
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  valkey:
+    image: 'valkey/valkey:latest'
+    container_name: valkey-cache
+    command: valkey-server /usr/local/etc/valkey/valkey.conf
+    environment:
+      VALKEY_EXTRA_FLAGS: '--loglevel debug --aclfile /etc/valkey/users.acl'
+      SKIP_FIX_PERMS: '1'
+    ports:
+      - "6379:6379"
+    networks:
+      - vaultnet
+    volumes:
+      - ./valkey/valkey.conf:/usr/local/etc/valkey/valkey.conf
+      - ./valkey/data:/data
+      - ./valkey/users.acl:/etc/valkey/users.acl
 
 networks:
   vaultnet:

@@ -15,10 +15,10 @@
 //===----------------------------------------------------------------------===//
 
 public struct CreateDatabaseStaticRole: Sendable {
-    /// The corresponfing role in the database of `db_username`
+    /// The corresponding role in the database of ``databaseUsername``
     public var vaultRoleName: String
 
-    /// Specifies the database username that this Vault role corresponds to. See `vault_role_name`.
+    /// Specifies the database username that this Vault role corresponds to. See ``vaultRoleName``.
     public var databaseUsername: String
 
     /// The name of the database connection to use for this role.
@@ -30,10 +30,10 @@ public struct CreateDatabaseStaticRole: Sendable {
     /// Specifies the database statements to be executed to rotate the password for the configured database user. Not every plugin type will support this functionality. See the plugin's API page for more information on support and formatting for this parameter.
     public var rotationStatements: [String]?
 
-    /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsa_private_key`, `client_certificate`. See the plugin's API page for credential types supported by individual databases.
+    /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsaPrivateKey`, `clientCertificate`. See the plugin's API page for credential types supported by individual databases.
     public var credentialType: DatabaseCredentialMethod
 
-    /// Specifies the configuration for the given `credentialType`. See documentation for details
+    /// Specifies the configuration for the given ``credentialType``. See documentation for details
     public var credentialConfig: [String: String]?
 
     public init(vaultRoleName: String,

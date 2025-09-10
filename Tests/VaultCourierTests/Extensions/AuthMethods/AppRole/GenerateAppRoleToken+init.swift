@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
+#if PklSupport
 import VaultCourier
 #if canImport(FoundationEssentials)
 import FoundationEssentials

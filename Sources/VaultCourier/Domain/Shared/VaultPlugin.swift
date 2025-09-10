@@ -14,17 +14,12 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-public struct RoleCredentialsResponse: Sendable {
-    public let requestID: String
+public struct VaultPlugin: Sendable {
+    public let name: String
+    public let version: String?
 
-    /// Username of generated dynamic role
-    public let username: String
-
-    /// Password of generated dynamic role
-    public let password: String
-
-    public let timeToLive: Duration?
-
-    /// Last Vault rotation
-    public let updatedAt: String?
+    public init(name: String, version: String?) {
+        self.name = name
+        self.version = version
+    }
 }

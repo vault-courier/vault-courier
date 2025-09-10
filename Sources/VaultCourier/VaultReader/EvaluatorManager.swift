@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
+#if PklSupport
 import PklSwift
 
 /// Perfoms `action`, returns its result and then closes the manager.

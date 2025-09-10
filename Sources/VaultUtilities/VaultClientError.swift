@@ -55,4 +55,8 @@ public struct VaultClientError: Error, Sendable {
     package static func operationFailed(_ statusCode: Int) -> VaultClientError {
         .init(message: "operation failed with \(statusCode)")
     }
+
+    package init(message: String) {
+        self.message = message
+    }
 }

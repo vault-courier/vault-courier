@@ -1118,6 +1118,9 @@
           "plugin_name": {
             "type": "string"
           },
+          "plugin_version": {
+            "type": "string"
+          },
           "verify_connection": {
             "type": "boolean"
           },
@@ -1186,11 +1189,22 @@
             "items": {
               "type": "string"
             }
+          },
+          "password_policy": {
+            "type": "string",
+            "description": "The name of the password policy to use when generating passwords for this database. If not specified, this will use a default policy defined as: 20 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 dash character."
+          },
+          "host": {
+            "type": "string",
+            "description": "Valkey host"
+          },
+          "port": {
+            "type": "string",
+            "description": "Valkey port"
           }
         },
         "required": [
-          "plugin_name",
-          "connection_url"
+          "plugin_name"
         ]
       },
       "ReadDatabaseConfigResponse": {

@@ -54,8 +54,18 @@ extension IntegrationTests.Auth {
 
 extension IntegrationTests.SecretEngine {
     @Suite struct KeyValue {}
+}
+
+#if DatabaseEngineSupport
+extension IntegrationTests.SecretEngine {
     @Suite(.serialized) struct Database {}
 }
+
+extension IntegrationTests.SecretEngine.Database {
+    @Suite struct Postgres {}
+    @Suite struct Valkey {}
+}
+#endif
 
 extension IntegrationTests.System {
     @Suite struct Wrapping {}
@@ -71,7 +81,7 @@ public func enableIntegrationTests() -> Bool {
     return rawValue.lowercased() == "yes"
 }
 
-#if Pkl
+#if PklSupport
 extension IntegrationTests {
     @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
 }

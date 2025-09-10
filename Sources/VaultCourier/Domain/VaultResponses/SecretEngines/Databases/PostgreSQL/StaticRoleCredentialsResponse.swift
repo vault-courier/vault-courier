@@ -15,13 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct StaticRoleCredentialsResponse: Sendable {
-    public let requestId: String
-
-    public let leaseId: String?
-
-    public let leaseDuration: Int?
-
-    public let renewable: Bool?
+    public let requestID: String
 
     /// Database username
     public let username: String
@@ -29,7 +23,7 @@ public struct StaticRoleCredentialsResponse: Sendable {
     /// Database password
     public let password: String
 
-    public let ttl: Int
+    public let timeToLive: Duration
 
     /// Last Vault rotation
     public let updatedAt: String
@@ -37,28 +31,3 @@ public struct StaticRoleCredentialsResponse: Sendable {
     /// Rotation strategy of credentials
     public let rotation: RotationStrategy?
 }
-
-//extension StaticRoleCredentialsResponse {
-//    init(component: Components.Schemas.ReadStaticRoleCredentialsResponse) {
-//        self.requestId = component.requestId
-//        self.leaseDuration = component.leaseDuration
-//        self.leaseId = component.leaseId
-//        self.renewable = component.renewable
-//        self.username = component.data.username
-//        self.password = component.data.password
-//        self.ttl = component.data.ttl
-//        self.updatedAt = component.data.lastVaultRotation
-//        self.rotation = if let rotationPeriod = component.data.rotationPeriod {
-//            .period(.seconds(rotationPeriod))
-//        } else if let schedule = component.data.rotationSchedule {
-//            if let window = component.data.rotationWindow {
-//                .scheduled(.init(schedule: schedule,
-//                                 window: .seconds(window)))
-//            } else {
-//                .scheduled(.init(schedule: schedule, window: nil))
-//            }
-//        } else {
-//            nil
-//        }
-//    }
-//}

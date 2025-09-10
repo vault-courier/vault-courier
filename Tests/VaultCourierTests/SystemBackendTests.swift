@@ -158,16 +158,29 @@ extension IntegrationTests.System.Policies {
     }
 }
 
-// MARK: Policies
+// MARK: Mounts
 extension IntegrationTests.System.Mounts {
     @Test
-    func enable_secret_engine() async throws {
+    func enable_kv_secret_engine() async throws {
         let vaultClient = VaultClient.current
 
         // MUT
         try await vaultClient.withSystemBackend { backend in
             let mountPath = "my_kv_secrets_2"
             try await backend.enableSecretEngine(mountConfig: .init(mountType: "kv", path: mountPath))
+            let _ = try await backend.readSecretEngineConfig(path: mountPath)
+            try await backend.disableSecretEngine(path: mountPath)
+        }
+    }
+
+    @Test
+    func enable_database_secret_engine() async throws {
+        let vaultClient = VaultClient.current
+
+        // MUT
+        try await vaultClient.withSystemBackend { backend in
+            let mountPath = "my_database_secrets_2"
+            try await backend.enableSecretEngine(mountConfig: .init(mountType: "database", path: mountPath))
             let _ = try await backend.readSecretEngineConfig(path: mountPath)
             try await backend.disableSecretEngine(path: mountPath)
         }

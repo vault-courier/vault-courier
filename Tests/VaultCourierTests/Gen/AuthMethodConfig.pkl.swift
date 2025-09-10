@@ -1,4 +1,4 @@
-#if Pkl
+#if PklSupport
 // Code generated from Pkl module `AuthMethodConfig`. DO NOT EDIT.
 import PklSwift
 

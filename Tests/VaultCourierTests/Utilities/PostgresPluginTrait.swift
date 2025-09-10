@@ -1,5 +1,5 @@
 //
-//  DatabaseEngineTrait.swift
+//  PostgresPluginTrait.swift
 //  vault-courier
 //
 //  Created by Javier Cuesta on 30.04.25.
@@ -8,7 +8,7 @@
 import Testing
 import VaultCourier
 
-struct DatabaseEngineTrait: SuiteTrait, TestScoping {
+struct PostgresPluginTrait: SuiteTrait, TestScoping {
     let connectionName: String
     let enginePath: String
 
@@ -44,8 +44,8 @@ struct DatabaseEngineTrait: SuiteTrait, TestScoping {
     }
 }
 
-extension SuiteTrait where Self == DatabaseEngineTrait {
-    static func setupDatabaseConnection(name: String = "postgres_db",
+extension SuiteTrait where Self == PostgresPluginTrait {
+    static func setupPostgresConnection(name: String = "postgres_db",
                                         enginePath: String = "my-postgres-db") -> Self {
         return Self(connectionName: name, enginePath: enginePath)
     }

@@ -14,16 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-import protocol Foundation.LocalizedError
-#else
-import struct Foundation.URL
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
-import protocol Foundation.LocalizedError
-#endif
+#if DatabaseEngineSupport
 import VaultUtilities
 
 extension VaultClient {
@@ -33,35 +24,14 @@ extension VaultClient {
     ///   - staticRole: static role name
     ///   - enginePath: path to database mount
     /// - Returns: Static database credentials
-//    public func databaseCredentials(
-//        staticRole: String,
-//        enginePath: String? = nil
-//    ) async throws -> StaticRoleCredentialsResponse {
-//        let enginePath = enginePath ?? self.mounts.database.relativePath.removeSlash()
-//        let sessionToken = try sessionToken()
-//
-//        let response = try await client.databaseReadStaticRoleCredentials(
-//            path: .init(enginePath: enginePath, roleName: staticRole),
-//            headers: .init(xVaultToken: sessionToken)
-//        )
-//
-//        switch response {
-//            case .ok(let content):
-//                let json = try content.body.json
-//                return StaticRoleCredentialsResponse(component: json)
-//            case .badRequest(let content):
-//                let errors = (try? content.body.json.errors) ?? []
-//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-//                throw VaultClientError.badRequest(errors)
-//            case .internalServerError(let content):
-//                let errors = (try? content.body.json.errors) ?? []
-//                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-//                throw VaultClientError.internalServerError(errors)
-//            case .undocumented(let statusCode, _):
-//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-//                throw VaultClientError.operationFailed(statusCode)
-//        }
-//    }
+    public func databaseCredentials(
+        staticRole: String,
+        enginePath: String
+    ) async throws -> StaticRoleCredentialsResponse {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.databaseCredentials(staticRole: staticRole)
+        }
+    }
 
     
     /// Read current credentials for a dynamic role
@@ -69,33 +39,13 @@ extension VaultClient {
     ///   - dynamicRole: dynamic role name
     ///   - enginePath: path to database mount
     /// - Returns: Dynamic role credentials
-//    public func databaseCredentials(
-//        dynamicRole: String,
-//        enginePath: String? = nil
-//    ) async throws -> RoleCredentialsResponse {
-//        let enginePath = enginePath ?? self.mounts.database.relativePath.removeSlash()
-//        let sessionToken = try sessionToken()
-//
-//        let response = try await client.databaseReadRoleCredentials(
-//            path: .init(enginePath: enginePath, roleName: dynamicRole),
-//            headers: .init(xVaultToken: sessionToken)
-//        )
-//
-//        switch response {
-//            case .ok(let content):
-//                let json = try content.body.json
-//                return RoleCredentialsResponse(component: json)
-//            case .badRequest(let content):
-//                let errors = (try? content.body.json.errors) ?? []
-//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-//                throw VaultClientError.badRequest(errors)
-//            case .internalServerError(let content):
-//                let errors = (try? content.body.json.errors) ?? []
-//                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-//                throw VaultClientError.internalServerError(errors)
-//            case .undocumented(let statusCode, _):
-//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-//                throw VaultClientError.operationFailed(statusCode)
-//        }
-//    }
+    public func databaseCredentials(
+        dynamicRole: String,
+        enginePath: String
+    ) async throws -> RoleCredentialsResponse {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.databaseCredentials(dynamicRole: dynamicRole)
+        }
+    }
 }
+#endif

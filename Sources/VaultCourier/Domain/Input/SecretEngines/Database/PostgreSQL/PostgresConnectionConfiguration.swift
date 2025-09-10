@@ -46,7 +46,7 @@ public struct PostgresConnectionConfiguration: Sendable, Decodable {
     /// Vault database ("Root") user.
     public var username: String?
 
-    /// This password is usually overriden after first set. See `rotateRoot`
+    /// This password is usually overridden after first set. See `rotateRoot`
     public var password: String?
 
     /// The x509 CA file for validating the certificate presented by the PostgreSQL server. Must be PEM encoded.

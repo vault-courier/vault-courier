@@ -30,7 +30,7 @@ func fixturesDirectory(path: String = #filePath) -> URL {
     return testsDir.appending(path: "Fixtures", directoryHint: .isDirectory)
 }
 
-#if Pkl
+#if PklSupport
 /// Returns URL of a pkl fixture file
 /// - Parameter fixture: name of pkl file with extension, e.g. `test_static_role.pkl`
 ///

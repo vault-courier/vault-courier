@@ -14,7 +14,9 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
+#if PklSupport
+import VaultUtilities
+
 public struct VaultReaderError: Error, Sendable {
     public var message: String
 
