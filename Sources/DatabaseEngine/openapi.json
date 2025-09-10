@@ -1232,22 +1232,58 @@
                 }
               },
               "connection_details": {
-                "type": "object",
-                "properties": {
-                  "connection_url": {
-                    "type": "string"
+                "anyOf": [
+                  {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "connection_url": {
+                            "type": "string"
+                          },
+                          "password_authentication": {
+                            "type": "string"
+                          },
+                          "username": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "connection_url",
+                          "password_authentication",
+                          "username"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "username": {
+                            "type": "string"
+                          },
+                          "host": {
+                            "type": "string"
+                          },
+                          "port": {
+                            "type": "string"
+                          },
+                          "insecure_tls": {
+                            "type": "boolean"
+                          },
+                          "tls": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "port",
+                          "host",
+                          "username"
+                        ]
+                      }
+                    ]
                   },
-                  "password_authentication": {
-                    "type": "string"
-                  },
-                  "username": {
-                    "type": "string"
+                  {
+                    "type": "object"
                   }
-                },
-                "required": [
-                  "connection_url",
-                  "password_authentication",
-                  "username"
                 ]
               },
               "password_policy": {
@@ -1267,8 +1303,7 @@
               }
             },
             "required": [
-              "allowed_roles",
-              "connection_details"
+              "allowed_roles"
             ]
           },
           "wrap_info": {

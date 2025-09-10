@@ -16,8 +16,6 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
         // Host name inside container
         let host = env("VALKEY_HOST") ?? "valkey-cache"
         let port = env("VALKEY_PORT").flatMap(Int.init(_:)) ?? 6379
-        let databaseName = env("VALKEY_DB") ?? "test_database"
-        let useTLS = false
 
         let vaultUsername = env("VAULT_DB_USERNAME") ?? "vault_user"
         let vaultPassword = env("VAULT_DB_PASSWORD") ?? "init_password"
@@ -30,7 +28,8 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
             port: UInt16(port),
             username: vaultUsername,
             password: vaultPassword,
-            tls: nil
+            tls: nil,
+            rootRotationStatements: ["+@admin"]
         )
         return config
     }

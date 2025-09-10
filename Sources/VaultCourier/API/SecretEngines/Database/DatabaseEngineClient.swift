@@ -185,12 +185,33 @@ extension DatabaseEngineClient {
                 let json = try content.body.json
                 let pluginVersion = json.data.pluginVersion
                 let pluginName = json.data.pluginName
+
+                let connectionURL: URL?
+                let authMethod: PostgresAuthMethod?
+                let username: String
+                if let value = json.data.connectionDetails?.value1 {
+                    switch value {
+                        case .case1(let details):
+                            connectionURL = URL(string: details.connectionUrl)
+                            authMethod = .init(rawValue: details.passwordAuthentication)
+                            username = details.username
+                        case .case2(let dictionary):
+                            logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(dictionary)"))
+                            throw VaultClientError.decodingFailed()
+                    }
+                } else if let value = json.data.connectionDetails?.value2 {
+                    logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(value.value.description)"))
+                    throw VaultClientError.decodingFailed()
+                } else {
+                    preconditionFailure("Unreachable path \(#function)")
+                }
+
                 return .init(
                     requestID: json.requestId,
                     allowedRoles: json.data.allowedRoles,
-                    connectionURL: URL(string: json.data.connectionDetails.connectionUrl),
-                    authMethod: .init(rawValue: json.data.connectionDetails.passwordAuthentication),
-                    username: json.data.connectionDetails.username,
+                    connectionURL: connectionURL,
+                    authMethod: authMethod,
+                    username: username,
                     plugin: pluginName.flatMap { VaultPlugin(name: $0, version: pluginVersion) },
                     passwordPolicy: json.data.passwordPolicy,
                     rotateStatements: json.data.rootCredentialsRotateStatements ?? []
@@ -231,13 +252,40 @@ extension DatabaseEngineClient {
                 let json = try content.body.json
                 let pluginVersion = json.data.pluginVersion
                 let pluginName = json.data.pluginName
-                print(json.data.connectionDetails)
+
+                let username: String
+                let host: String
+                let port: UInt16
+                let useTLS: Bool
+                if let value = json.data.connectionDetails?.value1 {
+                    switch value {
+                        case let .case1(unexpected):
+                            logger.debug(.init(stringLiteral: "\(#function) Unexpected body response: \(unexpected)"))
+                            throw VaultClientError.decodingFailed()
+                        case .case2(let details):
+                            username = details.username
+                            host = details.host
+                            guard let portNumber = UInt16(details.port) else {
+                                logger.debug(.init(stringLiteral: "\(#function) Fail to decode port '\(details.port)'"))
+                                throw VaultClientError.decodingFailed()
+                            }
+                            port =  portNumber
+                            useTLS = details.tls ?? false
+                    }
+                } else if let value = json.data.connectionDetails?.value2 {
+                    logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(value.value.description)"))
+                    throw VaultClientError.decodingFailed()
+                } else {
+                    preconditionFailure("Unreachable path \(#function)")
+                }
+
                 return .init(
                         requestID: json.requestId,
                         allowedRoles: json.data.allowedRoles,
-                        host: "<not set>",
-                        port: 0,
-                        username: json.data.connectionDetails.username,
+                        host: host,
+                        port: port,
+                        useTLS: useTLS,
+                        username: username,
                         plugin: pluginName.flatMap { VaultPlugin(name: $0, version: pluginVersion) },
                         passwordPolicy: json.data.passwordPolicy,
                         rotateStatements: json.data.rootCredentialsRotateStatements ?? []

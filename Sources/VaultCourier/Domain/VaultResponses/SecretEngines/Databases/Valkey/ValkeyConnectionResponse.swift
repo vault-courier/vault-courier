@@ -29,10 +29,14 @@ public struct ValkeyConnectionResponse: Sendable {
     /// Currently, roles and connections are bounded if this parameter is different than `*`. This means credentials cannot be generated and accessed by a role which is not on the list.
     public let allowedRoles: [String]
 
-    /// Specifies the PostgreSQL DSN
+    /// Valkey's host
     public let host: String
 
+    /// Valkey's port
     public let port: UInt16
+
+    /// Specifies if the connection is using TLS
+    public let useTLS: Bool
 
     /// Vault database ("Root") user.
     public let username: String
@@ -40,6 +44,7 @@ public struct ValkeyConnectionResponse: Sendable {
     /// Plugin information
     public let plugin: VaultPlugin?
 
+    /// The name of the password policy to use when generating passwords for this database. If not specified, this will use a default policy defined as: 20 characters with at least 1 uppercase, 1 lowercase, 1 number, and 1 dash character.
     public let passwordPolicy: String?
 
     /// Root credential rotate statements
