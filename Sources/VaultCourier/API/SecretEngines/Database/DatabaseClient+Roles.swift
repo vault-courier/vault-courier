@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if DatabaseEngineSupport
+import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
@@ -61,7 +62,7 @@ extension DatabaseEngineClient {
                                   rotationSchedule: rotationSchedule,
                                   rotationWindow: rotationWindow,
                                   rotationStatements: staticRole.rotationStatements,
-                                  credentialType: staticRole.credentialType.rawValue,
+                                  credentialType: staticRole.credentialType?.rawValue,
                                   credentialConfig: .init(unvalidatedValue: staticRole.credentialConfig ?? [:]))))
         )
 
@@ -124,20 +125,29 @@ extension DatabaseEngineClient {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
 
+        let data = dynamicRole.creationStatements
+//        let data: [Base64EncodedData] = dynamicRole.creationStatements.map({ .init($0.utf8) })
+
+//        let encodedData: Data = try JSONEncoder().encode(dynamicRole.creationStatements)
+//        let data = try JSONDecoder().decode(Base64EncodedData.self, from: encodedData)
+
+//        let encodedData: Data = ...
+//        let decoded = try JSONDecoder().decode(Base64EncodedData.self, from: encodedData)
+
         let response = try await engine.client.databaseCreateRole(
             .init(
                 path: .init(enginePath: enginePath, roleName: dynamicRole.vaultRoleName),
                 headers: .init(xVaultToken: sessionToken),
                 body: .json(.init(
                     dbName: dynamicRole.databaseConnectionName,
-                    defaultTtl: dynamicRole.defaultTTL?.formatted(.vaultSeconds),
-                    maxTtl: dynamicRole.maxTTL?.formatted(.vaultSeconds),
-                    creationStatements: dynamicRole.creationStatements,
+                    defaultTtl: dynamicRole.defaultTimeToLive?.formatted(.vaultSeconds),
+                    maxTtl: dynamicRole.maxTimeToLive?.formatted(.vaultSeconds),
+                    creationStatements: data, //dynamicRole.creationStatements,
                     revocationStatements: dynamicRole.revocationStatements,
                     rollbackStatements: dynamicRole.rollbackStatements,
                     renewStatements: dynamicRole.renewStatements,
                     rotationStatements: dynamicRole.rotationStatements,
-                    credentialType: dynamicRole.credentialType.rawValue,
+                    credentialType: dynamicRole.credentialType?.rawValue,
                     credentialConfig: .init(unvalidatedValue: dynamicRole.credentialConfig ?? [:]))))
         )
 
@@ -158,7 +168,55 @@ extension DatabaseEngineClient {
                 throw VaultClientError.operationFailed(statusCode)
         }
     }
-    
+
+    #if ValkeyPluginSupport
+    #warning("Decide how to unify this call with different request bodies ... or remove")
+    /// Creates a Valkey dynamic database role
+    /// - Parameter dynamicRole: properties of dynamic role
+//    public func createValkey(
+//        dynamicRole: CreateDatabaseRole
+//    ) async throws {
+//        let sessionToken = self.engine.token
+//        let enginePath = self.engine.mountPath
+//
+//        let data = [dynamicRole.creationStatements]
+//
+//        let response = try await engine.client.databaseCreateRole(
+//            .init(
+//                path: .init(enginePath: enginePath, roleName: dynamicRole.vaultRoleName),
+//                headers: .init(xVaultToken: sessionToken),
+//                body: .json(.init(
+//                    dbName: dynamicRole.databaseConnectionName,
+//                    defaultTtl: dynamicRole.defaultTimeToLive?.formatted(.vaultSeconds),
+//                    maxTtl: dynamicRole.maxTimeToLive?.formatted(.vaultSeconds),
+//                    creationStatements: data, //dynamicRole.creationStatements,
+//                    revocationStatements: dynamicRole.revocationStatements,
+//                    rollbackStatements: dynamicRole.rollbackStatements,
+//                    renewStatements: dynamicRole.renewStatements,
+//                    rotationStatements: dynamicRole.rotationStatements,
+//                    credentialType: dynamicRole.credentialType?.rawValue,
+//                    credentialConfig: .init(unvalidatedValue: dynamicRole.credentialConfig ?? [:]))))
+//        )
+//
+//        switch response {
+//            case .noContent:
+//                logger.info("Database dynamic role written")
+//                return
+//            case .badRequest(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.badRequest(errors)
+//            case .internalServerError(let content):
+//                let errors = (try? content.body.json.errors) ?? []
+//                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
+//                throw VaultClientError.internalServerError(errors)
+//            case .undocumented(let statusCode, _):
+//                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
+//                throw VaultClientError.operationFailed(statusCode)
+//        }
+//    }
+    #endif
+
     /// Deletes a dynamic database role
     /// - Parameters:
     ///   - name: name of dynamic database role

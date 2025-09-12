@@ -63,7 +63,6 @@ func mapVaultError(statusCode: Int, payload: UndocumentedPayload) async -> Vault
     let errors: String?
     if let body = payload.body {
         do {
-            //                    let errors = try await ArraySlice<UInt8>(collecting: body, upTo: 1024*1024)
             let data = try await Data(collecting: body, upTo: 1024*1024)
             errors = try JSONDecoder().decode(VaultErrorBody.self, from: data).errors.joined(separator: ", ")
         } catch {
@@ -90,6 +89,6 @@ func mapVaultError(statusCode: Int, payload: UndocumentedPayload) async -> Vault
         case 503:
             return VaultServerError.VaultIsSealed(errors: errors)
         default:
-            return VaultServerError.forbidden(errors: errors)
+            return VaultServerError.undocumentedError(statusCode, errors: errors)
     }
 }

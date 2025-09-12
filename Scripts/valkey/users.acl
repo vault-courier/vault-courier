@@ -1,2 +1,3 @@
 user default off
-user vault_user on >init_password allcommands allkeys
+user vault_user on >init_password ~* +@all
+user test_static_role_username on >test_password ~* +@all

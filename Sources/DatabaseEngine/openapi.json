@@ -30,7 +30,7 @@
         "tags": [
           "database/postgres"
         ],
-        "summary": "This endpoint returns the configuration settings for a connection.",
+        "summary": "Get Connection Config",
         "description": "Read database connection configuration",
         "operationId": "read-database-configuration",
         "responses": {
@@ -290,7 +290,7 @@
         "tags": [
           "database/postgres"
         ],
-        "summary": "Rotate the vaults 'root' postgres role credentials",
+        "summary": "Rotate Vault's 'root' role credentials",
         "description": "the root user's password will not be accessible once rotated so it is highly recommended that you create a user for Vault to utilize rather than using the actual root user.",
         "operationId": "database-rotate-root",
         "responses": {
@@ -804,7 +804,6 @@
             },
             "required": [
               "db_name",
-              "credential_type",
               "last_vault_rotation",
               "username"
             ]
@@ -940,7 +939,8 @@
                 "type": "array",
                 "description": "Database statements executed to create and configure a user",
                 "items": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "byte"
                 }
               },
               "revocation_statements": {

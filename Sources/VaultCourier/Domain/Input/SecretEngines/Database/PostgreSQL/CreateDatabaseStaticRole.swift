@@ -31,9 +31,10 @@ public struct CreateDatabaseStaticRole: Sendable {
     public var rotationStatements: [String]?
 
     /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsaPrivateKey`, `clientCertificate`. See the plugin's API page for credential types supported by individual databases.
-    public var credentialType: DatabaseCredentialMethod
+    /// `PostgreSQL` plugin supports this, but the `Valkey` plugin does not.
+    public var credentialType: DatabaseCredentialMethod?
 
-    /// Specifies the configuration for the given ``credentialType``. See documentation for details
+    /// Specifies the configuration for the given ``credentialType``. See Vault/OpenBao documentation for details
     public var credentialConfig: [String: String]?
 
     public init(vaultRoleName: String,
@@ -41,7 +42,7 @@ public struct CreateDatabaseStaticRole: Sendable {
                 databaseConnectionName: String,
                 rotation: RotationStrategy,
                 rotationStatements: [String]? = nil,
-                credentialType: DatabaseCredentialMethod = .password,
+                credentialType: DatabaseCredentialMethod? = nil,
                 credentialConfig: [String : String]? = nil) {
         self.vaultRoleName = vaultRoleName
         self.databaseUsername = databaseUsername

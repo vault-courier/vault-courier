@@ -322,7 +322,7 @@ extension DatabaseEngineClient {
 
         switch response {
             case .noContent:
-                logger.info("Postgres database connection deleted")
+                logger.info("database connection '\(connectionName)' deleted")
             case .badRequest(let content):
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
@@ -359,9 +359,10 @@ extension DatabaseEngineClient {
                 let errors = (try? content.body.json.errors) ?? []
                 logger.debug("Bad request: \(errors.joined(separator: ", ")).")
                 throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 

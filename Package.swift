@@ -16,13 +16,30 @@
 import PackageDescription
 
 let PklTrait: Trait = .trait(
-    name: "Pkl", //name: "PKL",
+    name: "PklSupport",
     description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
 )
 
 let AppRoleTrait: Trait = .trait(
     name: "AppRoleSupport",
     description: "Enable AppRole authentication"
+)
+
+let DatabaseEngineTrait: Trait = .trait(
+    name: "DatabaseEngineSupport",
+    description: "Enable support for database engine clients"
+)
+
+let PostgresDatabasePluginTrait: Trait = .trait(
+    name: "PostgresPluginSupport",
+    description: "Enable support for Vault's PostgreSQL database plugin HTTP API",
+    enabledTraits: .init(arrayLiteral: DatabaseEngineTrait.name)
+)
+
+let ValkeyDatabasePluginTrait: Trait = .trait(
+    name: "ValkeyPluginSupport",
+    description: "Enable support for Vault's Valkey database plugin HTTP API",
+    enabledTraits: .init(arrayLiteral: DatabaseEngineTrait.name)
 )
 
 let package = Package(
@@ -33,7 +50,17 @@ let package = Package(
     ],
     traits: [
         PklTrait,
-        AppRoleTrait
+        AppRoleTrait,
+        DatabaseEngineTrait,
+        PostgresDatabasePluginTrait,
+        ValkeyDatabasePluginTrait,
+        .default(enabledTraits: [
+            AppRoleTrait.name,
+            DatabaseEngineTrait.name,
+            PostgresDatabasePluginTrait.name,
+            ValkeyDatabasePluginTrait.name,
+            PklTrait.name,
+        ])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.7.2"),
@@ -51,22 +78,29 @@ let package = Package(
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "AuthMethods"),
-                .target(name: "ResponseWrapping"),
+                .target(name: "VaultUtilities"),
+                // Vault System backend
+                .target(name: "SystemWrapping"),
+                .target(name: "SystemAuth"),
+                .target(name: "SystemPolicies"),
+                .target(name: "SystemMounts"),
+                // Authentication Methods
+                .target(name: "TokenAuth"),
+                .target(name: "AppRoleAuth", condition: .when(traits: [AppRoleTrait.name])),
+                // Secrets
+                .target(name: "KeyValue"),
+                .target(name: "DatabaseEngine", condition: .when(traits: [DatabaseEngineTrait.name])),
             ],
             plugins: [
                 .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]
         ),
         .target(
-            name: "AuthMethods",
-            dependencies: [
-                .target(name: "AppRoleAuth", condition: .when(traits: [AppRoleTrait.name])),
-                .target(name: "TokenAuth"),
-                .target(name: "VaultUtilities")
-            ],
-            path: "Sources/AuthMethods"
+            name: "VaultUtilities",
+            dependencies: [],
+            path: "Sources/VaultUtilities"
         ),
+        // Auth Methods Targets
         .target(
             name: "AppRoleAuth",
             dependencies: [
@@ -91,22 +125,79 @@ let package = Package(
                 .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]
         ),
+        // Backend System Targets
         .target(
-            name: "ResponseWrapping",
+            name: "SystemWrapping",
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
                 .target(name: "VaultUtilities")
             ],
-            path: "Sources/ResponseWrapping",
+            path: "Sources/SystemWrapping",
             plugins: [
                 .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]
         ),
         .target(
-            name: "VaultUtilities",
-            dependencies: [],
-            path: "Sources/VaultUtilities"
+            name: "SystemAuth",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/SystemAuth",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "SystemPolicies",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/SystemPolicies",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "SystemMounts",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/SystemMounts",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        // Secret Engines
+        .target(
+            name: "KeyValue",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/KeyValue",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "DatabaseEngine",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "VaultUtilities")
+            ],
+            path: "Sources/DatabaseEngine",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
         ),
         .testTarget(
             name: "VaultCourierTests",

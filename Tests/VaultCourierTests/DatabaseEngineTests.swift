@@ -31,6 +31,8 @@ import struct Foundation.Data
 import PklSwift
 #endif
 
+// MARK: Postgres
+
 extension IntegrationTests.SecretEngine.Database.Postgres {
     static var connectionName: String { "postgres_db" }
     static var enginePath: String { "my_databases" }
@@ -140,6 +142,8 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
     }
 }
 
+// MARK: Valkey
+
 extension IntegrationTests.SecretEngine.Database.Valkey {
     static var connectionName: String { "valkey_db" }
     static var enginePath: String { "caches" }
@@ -170,6 +174,25 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
 
             // MUT
             try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, enginePath: enginePath)
+        }
+
+        @Test
+        func create_dynamic_role_and_read_credentials() async throws {
+            let vaultClient = VaultClient.current
+            let dynamicRoleName = "test_dynamic_role"
+            let dynamicRole = CreateDatabaseRole(vaultRoleName: dynamicRoleName,
+                                                 databaseConnectionName: connectionName,
+                                                 creationStatements: [
+                                                    "+@admin",
+                                                 ])
+            // MUT
+            try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+
+            // MUT
+            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, enginePath: enginePath)
+
+            // MUT
+            try await vaultClient.deleteRole(name: dynamicRole.vaultRoleName, enginePath: enginePath)
         }
     }
 }

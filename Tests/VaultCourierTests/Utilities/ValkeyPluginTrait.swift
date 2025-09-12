@@ -23,13 +23,13 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
         let config = ValkeyConnection(
             connection: name,
             verifyConnection: false,
-            allowedRoles: ["my-valkey-*-role", "test_static_role"],
+            allowedRoles: ["*"],
             host: host,
             port: UInt16(port),
             username: vaultUsername,
             password: vaultPassword,
             tls: nil,
-            rootRotationStatements: ["+@admin"]
+            rootRotationStatements: ["+@all", "+@admin"]
         )
         return config
     }
@@ -40,8 +40,6 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
         let config = Self.valkeyConnectionConfiguration(connectionName)
         try await vaultClient.enableSecretEngine(mountConfig: mountConfig)
         try await vaultClient.valkeyConnection(configuration: config, enginePath: enginePath)
-        let r = try await vaultClient.valkeyConnection(name: connectionName, enginePath: enginePath)
-        print(r)
         try await vaultClient.rotateRoot(connection: connectionName, enginePath: enginePath)
 
         try await function()
