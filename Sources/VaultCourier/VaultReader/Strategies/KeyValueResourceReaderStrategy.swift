@@ -65,7 +65,8 @@ public struct KeyValueReaderParser: KeyValueResourceReaderStrategy, Sendable {
     public func parse(_ url: URL) throws -> (mount: String, key: String, version: Int?)? {
         let relativePath = url.relativePath.removeSlash()
 
-        if relativePath.starts(with: mount) {
+        if !mount.isEmpty,
+           relativePath.starts(with: mount) {
             let query = url.query()
             let key = String(relativePath.suffix(from: mount.endIndex).dropFirst())
             guard !key.isEmpty else {

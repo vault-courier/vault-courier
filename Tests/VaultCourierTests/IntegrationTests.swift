@@ -92,10 +92,7 @@ extension IntegrationTests.Pkl {
             "https://github.com/swiftlang/swift-package-manager/issues/8394",
             "swift test is hanging on GitHub Actions, started in Swift 6.0+"
         )
-    ) struct ModuleSourceReader {
-        let localApiURL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
-        var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
-    }
+    ) struct ModuleSourceReader {}
 }
 
 public func isPklEnabled() -> Bool {

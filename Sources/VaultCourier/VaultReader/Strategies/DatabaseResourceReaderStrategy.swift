@@ -45,7 +45,9 @@ public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
 
     public func parse(_ url: URL) throws -> (mount: String, role: DatabaseRole)? {
         let relativePath = url.relativePath.removeSlash()
-        if relativePath.starts(with: mount) {
+
+        if !mount.isEmpty,
+           relativePath.starts(with: mount) {
             let databasePath = relativePath.suffix(from: mount.endIndex)
             if databasePath.hasPrefix("/static-creds/") {
                 let roleName = try split(url: url, separator: "/static-creds/")

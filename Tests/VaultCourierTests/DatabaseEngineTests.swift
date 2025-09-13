@@ -85,7 +85,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
         }
 
         #if PklSupport
-        @Suite(.setupVaultClient(databaseMountPath: enginePath),
+        @Suite(.setupVaultClient(),
                .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl"))
         struct Pkl {
             @Test
@@ -99,7 +99,11 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                           rotation: .period(.seconds(28 * 24 * 60 * 60)))
                 try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
 
-                let sut = await vaultClient.makeResourceReader()
+                let sut = await vaultClient.makeResourceReader(
+                    scheme: "vault",
+                    keyValueReaderParser: KeyValueReaderParser(mount: ""),
+                    databaseReaderParser: DatabaseReaderParser(mount: enginePath)
+                )
                 // MUT
                 let output = try await sut.readConfiguration(
                     source: .url(pklFixtureUrl(for: "Sample1/appConfig2.pkl")),
@@ -125,7 +129,11 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                      ])
                 try await vaultClient.createPostgres(dynamicRole: dynamicRole, enginePath: enginePath)
 
-                let sut = await vaultClient.makeResourceReader()
+                let sut = await vaultClient.makeResourceReader(
+                    scheme: "vault",
+                    keyValueReaderParser: KeyValueReaderParser(mount: ""),
+                    databaseReaderParser: DatabaseReaderParser(mount: enginePath)
+                )
                 // MUT
                 let output = try await sut.readConfiguration(
                     source: .url(pklFixtureUrl(for: "Sample1/appConfig3.pkl")),
