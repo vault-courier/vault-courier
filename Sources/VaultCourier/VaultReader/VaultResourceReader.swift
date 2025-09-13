@@ -208,6 +208,7 @@ extension VaultResourceReader {
 }
 
 extension VaultClient {
+
     /// Creates a custom resource reader for Pkl configuration files using this `VaultClient` instance.
     /// The reader uses the client's token and configured secret engine mounts to fetch resources from Vault.
     ///
@@ -220,6 +221,7 @@ extension VaultClient {
     ///
     /// - Parameter scheme: The URL scheme this reader handles. Defaults to `vault`.
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
+    @available(*, deprecated, message: "Use makeResourceReader(scheme:keyValueReaderParser:databaseReaderParser:) instead as we do not have the mounts anymore.")
     public func makeResourceReader(
         scheme: String = "vault"
     ) -> VaultResourceReader<KeyValueReaderParser, DatabaseReaderParser> {
