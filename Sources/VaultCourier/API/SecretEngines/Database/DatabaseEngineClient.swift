@@ -110,17 +110,10 @@ extension DatabaseEngineClient {
         switch response {
             case .noContent:
                 logger.info("Postgres database connection configured")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
     #endif
@@ -149,17 +142,10 @@ extension DatabaseEngineClient {
         switch response {
             case .noContent:
                 logger.info("Valkey database connection configured")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
     #endif
@@ -216,17 +202,10 @@ extension DatabaseEngineClient {
                     passwordPolicy: json.data.passwordPolicy,
                     rotateStatements: json.data.rootCredentialsRotateStatements ?? []
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
     #endif
@@ -290,17 +269,10 @@ extension DatabaseEngineClient {
                         passwordPolicy: json.data.passwordPolicy,
                         rotateStatements: json.data.rootCredentialsRotateStatements ?? []
                     )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
     #endif
@@ -323,17 +295,10 @@ extension DatabaseEngineClient {
         switch response {
             case .noContent:
                 logger.info("database connection '\(connectionName)' deleted")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -355,10 +320,6 @@ extension DatabaseEngineClient {
         switch response {
             case .noContent:
                 logger.info("Vault root credentials rotated")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
             case let .undocumented(statusCode, payload):
                 let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
@@ -386,17 +347,10 @@ extension DatabaseEngineClient {
         switch response {
             case .noContent:
                 logger.info("Connection \(connectionName) reset successfully.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.operationFailed(500)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 }

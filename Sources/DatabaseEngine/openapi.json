@@ -28,7 +28,7 @@
       "description": "This endpoint configures the connection string used to communicate with the desired database. In addition to the parameters listed here, each Database plugin has additional, database plugin specific, parameters for this endpoint. Please read the HTTP API for the plugin you'd wish to configure to see the full list of additional parameters.",
       "get": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
         "summary": "Get Connection Config",
         "description": "Read database connection configuration",
@@ -43,34 +43,14 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
       "post": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "This endpoint configures the connection string used to communicate with the desired database",
+        "summary": "Configures vault database connection",
         "description": "This endpoint configures the connection string used to communicate with the desired database",
         "operationId": "configure-database",
         "requestBody": {
@@ -86,32 +66,12 @@
         "responses": {
           "204": {
             "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
       "delete": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
         "summary": "Deletes a vault database connection",
         "description": "This endpoint deletes a connection",
@@ -119,26 +79,6 @@
         "responses": {
           "204": {
             "description": "No Content"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -170,34 +110,14 @@
       "description": "This endpoint closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.",
       "post": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "This endpoint closes a connection",
+        "summary": "Reset database connection",
         "description": "This endpoint closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.",
         "operationId": "database-reset",
         "responses": {
           "204": {
             "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -229,34 +149,14 @@
       "description": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name. This can be useful to restart a specific plugin after it's been upgraded in the plugin catalog.",
       "post": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name",
+        "summary": "Reload database plugin",
         "description": "This endpoint performs the same operation as reset connection but for all connections that reference a specific plugin name. This can be useful to restart a specific plugin after it's been upgraded in the plugin catalog.",
         "operationId": "reload-database-plugin",
         "responses": {
           "204": {
             "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -288,7 +188,7 @@
       "description": "This endpoint is used to rotate the \"root\" user credentials stored for the database connection. This user must have permissions to update its own password.",
       "post": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
         "summary": "Rotate Vault's 'root' role credentials",
         "description": "the root user's password will not be accessible once rotated so it is highly recommended that you create a user for Vault to utilize rather than using the actual root user.",
@@ -296,16 +196,6 @@
         "responses": {
           "204": {
             "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -337,9 +227,9 @@
       "description": "This endpoint creates or updates a static role definition. Static Roles are a 1-to-1 mapping of a Vault Role to a user in a database which are automatically rotated based on the configured 'rotation_period' or 'rotation_schedule'.",
       "get": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "Creates or updates a static role definition",
+        "summary": "Creates or updates a static role",
         "description": "This endpoint queries the static role definition.",
         "operationId": "database-read-static-role",
         "responses": {
@@ -352,34 +242,14 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
       "post": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "Creates or updates a static role definition",
+        "summary": "Creates or updates a static role",
         "description": "Vault will rotate the password when creating a static role. Vault must do this in order to know the password.",
         "operationId": "database-create-static-role",
         "requestBody": {
@@ -398,59 +268,19 @@
           },
           "204": {
             "description": "No Content"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
       "delete": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "Deletes a static role definition",
+        "summary": "Deletes a static role",
         "description": "This endpoint deletes the static role definition. The user, having been defined externally, must be cleaned up manually.",
         "operationId": "database-delete-static-role",
         "responses": {
           "204": {
             "description": "No Content"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -484,7 +314,7 @@
         "tags": [
           "database/postgres"
         ],
-        "summary": "Read current credentials based on the named static role.",
+        "summary": "Read static role credentials",
         "description": "returns the current credentials based on the named static role.",
         "operationId": "database-read-static-role-credentials",
         "responses": {
@@ -494,26 +324,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReadStaticRoleCredentialsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -548,9 +358,9 @@
       "description": "This endpoint creates or updates a dynamic role definition.",
       "get": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "Queries the role definition",
+        "summary": "Read role",
         "description": "This endpoint queries the role definition.",
         "operationId": "database-read-role",
         "responses": {
@@ -563,34 +373,15 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
       "post": {
         "tags": [
-          "database/postgres"
+          "database/postgres",
+          "database/valkey"
         ],
-        "summary": "Creates or updates a role definition",
+        "summary": "Creates or updates a dynamic role",
         "description": "Creates or updates a dynamic role definition. This endpoint distinguishes between create and update ACL capabilities.",
         "operationId": "database-create-role",
         "requestBody": {
@@ -613,59 +404,19 @@
         "responses": {
           "204": {
             "description": "No Content"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
       "delete": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "Deletes a role definition",
+        "summary": "Delete role",
         "description": "This endpoint deletes the dynamic role definition. The user, having been defined externally, must be cleaned up manually.",
         "operationId": "database-delete-role",
         "responses": {
           "204": {
             "description": "No Content"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -697,9 +448,9 @@
       "description": "This endpoint returns the current credentials based on the named role.",
       "get": {
         "tags": [
-          "database/postgres"
+          "database"
         ],
-        "summary": "Read current credentials based on the named role.",
+        "summary": "Read dynamic role credentials.",
         "description": "returns the current credentials based on the named role.",
         "operationId": "database-read-role-credentials",
         "responses": {
@@ -709,26 +460,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReadRoleCredentialsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
