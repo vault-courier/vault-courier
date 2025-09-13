@@ -30,6 +30,7 @@ import struct Foundation.Data
 #if PklSupport
 import PklSwift
 #endif
+import class Foundation.ProcessInfo
 
 // MARK: Postgres
 #if PostgresPluginSupport
@@ -84,7 +85,8 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
         }
 
         #if PklSupport
-        @Suite(.setupVaultClient(databaseMountPath: enginePath))
+        @Suite(.setupVaultClient(databaseMountPath: enginePath),
+               .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl"))
         struct Pkl {
             @Test
             func read_static_database_secret_from_module_source() async throws {

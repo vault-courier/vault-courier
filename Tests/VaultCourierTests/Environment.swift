@@ -34,3 +34,9 @@ import Foundation
 func env(_ name: String) -> String? {
     getenv(name).flatMap { String(cString: $0) }
 }
+
+#if PklSupport
+func setupPklEnv(execPath: String) {
+    setenv("PKL_EXEC", execPath, 1)
+}
+#endif
