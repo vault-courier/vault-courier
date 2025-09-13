@@ -120,11 +120,16 @@ extension DatabaseEngineClient {
     #if PostgresPluginSupport
     /// Creates a dynamic database role
     /// - Parameter dynamicRole: properties of dynamic role
-    public func create(
+    public func createPostgres(
         dynamicRole: CreatePostgresRole
     ) async throws {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
+
+        let data = try JSONEncoder().encode(dynamicRole.creationStatements)
+        guard let statements = String(data: data, encoding: .utf8) else {
+            throw VaultClientError.invalidRole(statements: dynamicRole.creationStatements)
+        }
 
         let response = try await engine.client.databaseCreateRole(
             .init(
@@ -134,7 +139,7 @@ extension DatabaseEngineClient {
                     dbName: dynamicRole.databaseConnectionName,
                     defaultTtl: dynamicRole.defaultTimeToLive?.formatted(.vaultSeconds),
                     maxTtl: dynamicRole.maxTimeToLive?.formatted(.vaultSeconds),
-                    creationStatements: dynamicRole.creationStatements,
+                    creationStatements: [statements],
                     revocationStatements: dynamicRole.revocationStatements,
                     rollbackStatements: dynamicRole.rollbackStatements,
                     renewStatements: dynamicRole.renewStatements,
