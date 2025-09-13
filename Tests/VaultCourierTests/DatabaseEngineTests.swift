@@ -32,7 +32,7 @@ import PklSwift
 #endif
 
 // MARK: Postgres
-
+#if PostgresPluginSupport
 extension IntegrationTests.SecretEngine.Database.Postgres {
     static var connectionName: String { "postgres_db" }
     static var enginePath: String { "my_databases" }
@@ -69,13 +69,13 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
         func create_dynamic_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
             let dynamicRoleName = "test_dynamic_role"
-            let dynamicRole = CreateDatabaseRole(vaultRoleName: dynamicRoleName,
+            let dynamicRole = CreatePostgresRole(vaultRoleName: dynamicRoleName,
                                                  databaseConnectionName: connectionName,
                                                  creationStatements: [
                                                     "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
                                                  ])
             // MUT
-            try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+            try await vaultClient.createPostgres(dynamicRole: dynamicRole, enginePath: enginePath)
 
             let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, enginePath: enginePath)
 
@@ -116,12 +116,12 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
             func read_dynamic_database_secret_from_module_source() async throws {
                 let vaultClient = VaultClient.current
                 let dynamicRoleName = "test_dynamic_role"
-                let dynamicRole = CreateDatabaseRole(vaultRoleName: dynamicRoleName,
+                let dynamicRole = CreatePostgresRole(vaultRoleName: dynamicRoleName,
                                                      databaseConnectionName: connectionName,
                                                      creationStatements: [
                                                         "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
                                                      ])
-                try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+                try await vaultClient.createPostgres(dynamicRole: dynamicRole, enginePath: enginePath)
 
                 let sut = await vaultClient.makeResourceReader()
                 // MUT
@@ -141,9 +141,10 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
         #endif
     }
 }
+#endif
 
 // MARK: Valkey
-
+#if ValkeyPluginSupport
 extension IntegrationTests.SecretEngine.Database.Valkey {
     static var connectionName: String { "valkey_db" }
     static var enginePath: String { "caches" }
@@ -180,13 +181,13 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
         func create_dynamic_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
             let dynamicRoleName = "test_dynamic_role"
-            let dynamicRole = CreateDatabaseRole(vaultRoleName: dynamicRoleName,
+            let dynamicRole = CreateValkeyRole(vaultRoleName: dynamicRoleName,
                                                  databaseConnectionName: connectionName,
                                                  creationStatements: [
                                                     "+@admin",
                                                  ])
             // MUT
-            try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+            try await vaultClient.createValkey(dynamicRole: dynamicRole, enginePath: enginePath)
 
             // MUT
             let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, enginePath: enginePath)
@@ -196,5 +197,5 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
         }
     }
 }
-
+#endif
 #endif

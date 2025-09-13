@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 /// Database dynamic role creation configuration
-public struct CreateDatabaseRole: Sendable {
+public struct CreatePostgresRole: Sendable {
     /// The vault role name which maps to a dynamically generated database username
     public var vaultRoleName: String
 

@@ -44,18 +44,34 @@ extension VaultClient {
             try await client.deleteStaticRole(name: name)
         }
     }
-    
+
+    #if PostgresPluginSupport
     /// Creates a dynamic database role
     /// - Parameter dynamicRole: properties of dynamic role
     /// - Parameter enginePath: mount path of secret engine
-    public func create(
-        dynamicRole: CreateDatabaseRole,
+    public func createPostgres(
+        dynamicRole: CreatePostgresRole,
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
             try await client.create(dynamicRole: dynamicRole)
         }
     }
+    #endif
+
+    #if ValkeyPluginSupport
+    /// Creates a dynamic database role
+    /// - Parameter dynamicRole: properties of dynamic role
+    /// - Parameter enginePath: mount path of secret engine
+    public func createValkey(
+        dynamicRole: CreateValkeyRole,
+        enginePath: String
+    ) async throws {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.createValkey(dynamicRole: dynamicRole)
+        }
+    }
+    #endif
 
     /// Deletes a dynamic database role
     /// - Parameters:

@@ -597,7 +597,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WriteRoleRequest"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/WritePostgresRoleRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/WriteValkeyRoleRequest"
+                  }
+                ]
               }
             }
           },
@@ -1002,7 +1009,7 @@
           "data"
         ]
       },
-      "WriteRoleRequest": {
+      "WritePostgresRoleRequest": {
         "type": "object",
         "properties": {
           "db_name": {
@@ -1060,6 +1067,34 @@
             "type": "object",
             "format": "kvpairs",
             "description": "Specifies the configuration for the given 'credential_type'. See documentation for details"
+          }
+        },
+        "required": [
+          "db_name",
+          "creation_statements"
+        ]
+      },
+      "WriteValkeyRoleRequest": {
+        "type": "object",
+        "properties": {
+          "db_name": {
+            "type": "string",
+            "description": "The name of the database connection to use for this role."
+          },
+          "default_ttl": {
+            "type": "string",
+            "description": "Specifies the TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to system/engine default TTL time."
+          },
+          "max_ttl": {
+            "type": "string",
+            "description": "Specifies the maximum TTL for the leases associated with this role. Accepts time suffixed strings (1h) or an integer number of seconds. Defaults to sys/mounts's default TTL time; this value is allowed to be less than the mount max TTL (or, if not set, the system max TTL), but it is not allowed to be longer. See also The TTL General Case."
+          },
+          "creation_statements": {
+            "type": "array",
+            "description": "Specifies the database statements executed to create and configure a user.",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [

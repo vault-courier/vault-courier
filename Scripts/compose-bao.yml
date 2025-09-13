@@ -69,7 +69,6 @@ services:
     networks:
       - vaultnet
     volumes:
-      #- ./valkey/valkey.conf:/usr/local/etc/valkey/valkey.conf
       - ./valkey/data:/data
       - ./valkey/users.acl:/etc/valkey/users.acl
 

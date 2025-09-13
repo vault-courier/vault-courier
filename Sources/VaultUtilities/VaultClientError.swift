@@ -42,6 +42,10 @@ public struct VaultClientError: Error, Sendable {
         .init(message: "KV secret type must be a Dictionary or object of Codable type")
     }
 
+    package static func invalidRole(statements: [String]) -> VaultClientError {
+        .init(message: "Invalid role statements: \(statements.joined(separator: ", "))")
+    }
+
     package static func badRequest(_ errors: [String]) -> VaultClientError {
         let errorsDescription = errors.isEmpty ? "" : ": " + errors.joined(separator: ", ")
         return .init(message: "Vault returned a bad request\(errorsDescription)")
