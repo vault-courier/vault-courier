@@ -16,6 +16,7 @@
 
 /// Request type for enabling a new secret mount
 public struct EnableSecretMountConfig: Sendable {
+    /// Type of mount, e.g. `kv` or `database`
     public var mountType: String
 
     /// The path where the secret mount should be enabled

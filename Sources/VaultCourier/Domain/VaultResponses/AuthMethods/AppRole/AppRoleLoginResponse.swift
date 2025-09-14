@@ -27,14 +27,3 @@ public struct AppRoleLoginResponse: Sendable {
 
     let leaseId: String?
 }
-
-//extension AppRoleLoginResponse {
-//    init(payload: Components.Schemas.VaultAuthResponse) {
-//        self.isRenewable = payload.auth.renewable
-//        self.leaseDuration = payload.auth.leaseDuration
-//        self.tokenPolicies = payload.auth.tokenPolicies
-//        self.accessor = payload.auth.accessor
-//        self.clientToken = payload.auth.clientToken
-//        self.leaseId = payload.leaseId
-//    }
-//}

@@ -90,9 +90,6 @@ let package = Package(
                 // Secrets
                 .target(name: "KeyValue"),
                 .target(name: "DatabaseEngine", condition: .when(traits: [DatabaseEngineTrait.name])),
-            ],
-            plugins: [
-                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]
         ),
         .target(

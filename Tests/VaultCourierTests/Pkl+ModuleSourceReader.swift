@@ -72,11 +72,7 @@ extension IntegrationTests.Pkl {
                     """))
             }
 
-            let config = VaultClient.Configuration(
-                    apiURL: localApiURL,
-                    kvMountPath: "/path/to/secrets"
-            )
-            let vaultClient = VaultClient(configuration: config,
+            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 
@@ -126,12 +122,7 @@ extension IntegrationTests.Pkl {
             }
 
             let databaseMount = "path/to/database/secrets"
-
-            let config = VaultClient.Configuration(
-                    apiURL: localApiURL,
-                    databaseMountPath: "path/to/database/secrets"
-            )
-            let vaultClient = VaultClient(configuration: config,
+            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 
@@ -182,11 +173,7 @@ extension IntegrationTests.Pkl {
                     """))
             }
 
-            let config = VaultClient.Configuration(
-                    apiURL: localApiURL,
-                    databaseMountPath: databaseMount
-            )
-            let vaultClient = VaultClient(configuration: config,
+            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 

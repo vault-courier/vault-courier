@@ -34,7 +34,7 @@ public struct VaultClientError: Error, Sendable {
     }
 
     package static func receivedUnexpectedResponse(_ message: String? = nil,
-                                           file: String = #filePath) -> VaultClientError {
+                                                   file: String = #filePath) -> VaultClientError {
         .init(message: "Received unexpected response. Do you mind filling a bug at https://github.com/vault-courier/vault-courier/issues 🙏?")
     }
 

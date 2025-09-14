@@ -35,9 +35,6 @@ extension VaultClient {
 struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
     let apiURL: URL
     let token: String
-    let appRolePath: String?
-    let kvMountPath: String?
-    let databaseMountPath: String?
     let logger: Logger?
     let middlewares: [any ClientMiddleware]
 
@@ -45,9 +42,6 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
         let vaultClient = VaultClient(
             configuration: .init(
                 apiURL: apiURL,
-                appRolePath: appRolePath,
-                kvMountPath: kvMountPath,
-                databaseMountPath: databaseMountPath,
                 backgroundActivityLogger: logger),
             clientTransport: AsyncHTTPClientTransport(),
             middlewares: middlewares)
@@ -66,17 +60,11 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
 extension SuiteTrait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
                                  token: String = "integration_token",
-                                 appRolePath: String? = nil,
-                                 kvMountPath: String? = nil,
-                                 databaseMountPath: String? = nil,
                                  logger: Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
     ) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
-                    appRolePath: appRolePath,
-                    kvMountPath: kvMountPath,
-                    databaseMountPath: databaseMountPath,
                     logger: logger,
                     middlewares: middlewares)
     }
@@ -85,17 +73,11 @@ extension SuiteTrait where Self == VaultClientTrait {
 extension TestTrait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
                                  token: String = "integration_token",
-                                 appRolePath: String? = nil,
-                                 kvMountPath: String? = nil,
-                                 databaseMountPath: String? = nil,
                                  logger: Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
     ) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
-                    appRolePath: appRolePath,
-                    kvMountPath: kvMountPath,
-                    databaseMountPath: databaseMountPath,
                     logger: logger,
                     middlewares: middlewares)
     }

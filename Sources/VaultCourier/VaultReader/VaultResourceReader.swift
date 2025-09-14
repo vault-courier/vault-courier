@@ -209,32 +209,6 @@ extension VaultResourceReader {
 }
 
 extension VaultClient {
-
-    /// Creates a custom resource reader for Pkl configuration files using this `VaultClient` instance.
-    /// The reader uses the client's token and configured secret engine mounts to fetch resources from Vault.
-    ///
-    /// For example, if a `VaultClient` is initialized with a Key-Value mount at `/path/to/secrets`,
-    /// you can access version 2 of the secret at the path `key` from a Pkl file like this:
-    ///
-    /// ```
-    /// appKeys = read("vault:/path/to/secrets/key?version=2").text
-    /// ```
-    ///
-    /// - Parameter scheme: The URL scheme this reader handles. Defaults to `vault`.
-    /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
-    @available(*, deprecated, message: "Use makeResourceReader(scheme:keyValueReaderParser:databaseReaderParser:) instead as we do not have the mounts anymore.")
-    public func makeResourceReader(
-        scheme: String = "vault"
-    ) -> VaultResourceReader<KeyValueReaderParser, DatabaseReaderParser> {
-        .init(
-            client: self,
-            scheme: scheme,
-            keyValueReaderParser: useClientKeyValueMount(),
-            databaseReaderParser: useClientDatabaseMount()
-        )
-    }
-
-    
     /// Creates a custom resource reader for Pkl configuration files using this `VaultClient` instance.
     ///
     /// The reader uses the client's session token, and the respective ``ResourceReaderStrategy`` to parse the secret mounts. These parsed mounts are used in the requests.
@@ -261,14 +235,6 @@ extension VaultClient {
             keyValueReaderParser: keyValueReaderParser,
             databaseReaderParser: databaseReaderParser
         )
-    }
-
-    public func useClientKeyValueMount() -> KeyValueReaderParser {
-        .mount(mounts.kv.relativePath.removeSlash())
-    }
-
-    public func useClientDatabaseMount() -> DatabaseReaderParser {
-        .mount(mounts.database.relativePath.removeSlash())
     }
 }
 #endif
