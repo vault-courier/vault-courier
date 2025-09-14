@@ -293,14 +293,14 @@ extension AppRoleProvider {
             path: .init(enginePath: mountPath, roleName: capabilities.roleName),
             headers: .init(
                 xVaultToken: .init(sessionToken),
-                xVaultWrapTTL: capabilities.wrapTTL.flatMap({ $0.formatted(.vaultSeconds) }).flatMap(String.init(_:))
+                xVaultWrapTTL: capabilities.wrapTimeToLive.flatMap({ $0.formatted(.vaultSeconds) }).flatMap(String.init(_:))
             ),
             body: .json(.init(
                 tokenBoundCidrs: capabilities.tokenBoundCIDRS,
                 cidrList: capabilities.cidrList,
                 metadata: capabilities.metadata,
                 numUses: capabilities.tokenNumberOfUses,
-                ttl: capabilities.tokenTTL?.formatted(.vaultSeconds)))
+                ttl: capabilities.tokenTimeToLive?.formatted(.vaultSeconds)))
         )
 
         switch response {

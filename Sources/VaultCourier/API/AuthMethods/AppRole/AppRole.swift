@@ -26,6 +26,7 @@ import VaultUtilities
 
 extension VaultClient {
     /// Creates a new AppRole
+    /// - Parameter mountPath: mount path of AppRole authentication. Setting `nil`in this parameter sets to default mount path `approle`.
     public func createAppRole(
         _ appRole: CreateAppRole,
         mountPath: String? = nil
@@ -37,6 +38,7 @@ extension VaultClient {
 
     /// Read AppRole
     /// - Parameter name: role name
+    /// - Parameter mountPath: mount path of AppRole authentication. Setting `nil`in this parameter sets to default mount path `approle`.
     public func readAppRole(
         name: String,
         mountPath: String? = nil
@@ -49,6 +51,7 @@ extension VaultClient {
     
     /// Delete existing AppRole
     /// - Parameter name: role name
+    /// - Parameter mountPath: mount path of AppRole authentication. Setting `nil`in this parameter sets to default mount path `approle`.
     public func deleteAppRole(
         name: String,
         mountPath: String? = nil
@@ -70,8 +73,11 @@ extension VaultClient {
         }
     }
 
-    /// Get AppRole ID
+    /// Wraps AppRole ID
     /// - Parameter name: role name
+    /// - Parameter mountPath: mount path of AppRole authentication. Setting `nil`in this parameter sets to default mount path `approle`.
+    /// - Parameter wrapTimeToLive: duration of wrapping token
+    /// - Returns: wrapped token
     public func wrapAppRoleID(
         name: String,
         mountPath: String? = nil,
@@ -83,9 +89,10 @@ extension VaultClient {
     }
     
     /// Generate AppRole secretID
-    /// - Parameter capabilities: the properties this generated secretID must have
+    /// - Parameter capabilities: the properties this generated secretID must have. Includes option to wrap the generated secret ID.
+    /// - Parameter mountPath: mount path of AppRole authentication. Setting `nil`in this parameter sets to default mount path `approle`.
     /// - Returns: Either a wrapped response token or the secretID
-    public func generateAppSecretId(
+    public func generateAppSecretID(
         capabilities: GenerateAppRoleToken,
         mountPath: String? = nil
     ) async throws -> AppRoleSecretIdResponse {
@@ -94,16 +101,16 @@ extension VaultClient {
         }
     }
 
-    
     /// Fetches the login session token and its information.
-    ///
+    /// 
     /// if ``VaultCourier/CreateAppRole/bindSecretID`` is enabled (the default) on the AppRole, `secretID` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
-    ///
+    /// 
     /// - Note: this method does not set the token session of the vault client. See the ``VaultCourier/VaultClient/login()`` which initiates login from the given authentication
     /// method and sets the session token of the client.
     /// - Parameters:
     ///   - roleID: RoleID of the AppRole
     ///   - secretID: SecretID belonging to AppRole
+    ///   - mountPath: mount path of AppRole authentication. Setting `nil`in this parameter sets to default mount path `approle`.
     /// - Returns: ``VaultAuthResponse``
     public func loginToken(
         roleID: String,

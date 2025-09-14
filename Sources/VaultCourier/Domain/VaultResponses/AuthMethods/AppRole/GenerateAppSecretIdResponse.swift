@@ -34,3 +34,17 @@ public struct GenerateAppSecretIdResponse: Sendable {
         self.secretIDNumberOfUses = secretIDNumberOfUses
     }
 }
+
+struct AppRoleSecretID: Decodable, Sendable {
+    let secretID: String
+    let secretIDAccessor: String
+    let secretIDTimeToLive: Int
+    let secretIDNumberOfUses: Int
+
+    enum CodingKeys: String, CodingKey {
+        case secretID = "secret_id"
+        case secretIDAccessor = "secret_id_accessor"
+        case secretIDTimeToLive = "secret_id_ttl"
+        case secretIDNumberOfUses = "secret_id_num_uses"
+    }
+}

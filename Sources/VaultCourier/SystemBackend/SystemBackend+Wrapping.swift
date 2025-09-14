@@ -191,3 +191,21 @@ extension SystemBackend {
         }
     }
 }
+
+#if AppRoleSupport
+extension SystemBackend {
+    public func unwrapAppRoleSecretID(
+        token: String
+    ) async throws -> GenerateAppSecretIdResponse {
+        let response: VaultResponse<AppRoleSecretID, Never> = try await unwrapResponse(token: token)
+        guard let data = response.data else {
+            throw VaultClientError.receivedUnexpectedResponse("Unwrap response did not contain any data")
+        }
+        return .init(requestID: response.requestID,
+                     secretID: data.secretID,
+                     secretIDAccessor: data.secretIDAccessor,
+                     secretIDTimeToLive: data.secretIDTimeToLive,
+                     secretIDNumberOfUses: data.secretIDNumberOfUses)
+    }
+}
+#endif

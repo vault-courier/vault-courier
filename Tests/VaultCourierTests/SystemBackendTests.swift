@@ -80,7 +80,7 @@ extension IntegrationTests.System.Wrapping {
                                                   tokenTTL: .seconds(120),
                                                   tokenType: .batch),
                                             mountPath: path)
-        let secretIDResponse = try await vaultClient.generateAppSecretId(capabilities: .init(roleName: appRoleName, wrapTTL: .seconds(120)),
+        let secretIDResponse = try await vaultClient.generateAppSecretID(capabilities: .init(roleName: appRoleName, wrapTimeToLive: .seconds(120)),
                                                                          mountPath: path)
 
         switch secretIDResponse {

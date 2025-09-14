@@ -27,14 +27,12 @@ extension VaultClient {
     >(
         token: String?
     ) async throws -> VaultResponse<VaultData, Auth> {
-        let sessionToken = try? sessionToken()
         return try await withSystemBackend { systemBackend in
-            let response: VaultResponse<VaultData, Auth> = try await systemBackend.unwrapResponse(token: sessionToken)
+            let response: VaultResponse<VaultData, Auth> = try await systemBackend.unwrapResponse(token: token)
             return response
         }
     }
 
-    
     /// Wraps the given dictionary of secrets in a response-wrapped token
     /// - Parameters:
     ///   - secrets: dictionary of secrets
@@ -75,3 +73,19 @@ extension VaultClient {
         }
     }
 }
+
+#if AppRoleSupport
+extension VaultClient {
+    /// Unwraps an AppRole secretID response
+    ///
+    /// - Parameter token: Wrapping token ID
+    /// - Returns: Returns the original AppRole secretID response
+    public func unwrapAppRoleSecretID(
+        token: String
+    ) async throws -> GenerateAppSecretIdResponse {
+        return try await withSystemBackend { systemBackend in
+            try await systemBackend.unwrapAppRoleSecretID(token: token)
+        }
+    }
+}
+#endif

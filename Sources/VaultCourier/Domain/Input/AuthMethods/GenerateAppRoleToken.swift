@@ -36,24 +36,24 @@ public struct GenerateAppRoleToken: Sendable {
 
     /// Duration after which this SecretID expires. A value of `nil` will allow the SecretID to not expire.
     /// Overrides ``VaultCourier/CreateAppRole/secretIdTTL`` role option when supplied.
-    public let tokenTTL: Duration?
+    public let tokenTimeToLive: Duration?
 
-    /// Set to wrap-response the generated token with the given TTL.
-    public let wrapTTL: Duration?
+    /// Set to wrap-response the generated token with the given time to live duration.
+    public let wrapTimeToLive: Duration?
 
     public init(roleName: String,
                 metadata: String? = nil,
                 cidrList: [String]? = [],
                 tokenNumberOfUses: Int? = nil,
                 tokenBoundCIDRS: [String]? = nil,
-                tokenTTL: Duration? = nil,
-                wrapTTL: Duration? = nil) {
+                tokenTimeToLive: Duration? = nil,
+                wrapTimeToLive: Duration? = nil) {
         self.roleName = roleName
         self.metadata = metadata
         self.cidrList = cidrList
         self.tokenNumberOfUses = tokenNumberOfUses
         self.tokenBoundCIDRS = tokenBoundCIDRS
-        self.tokenTTL = tokenTTL
-        self.wrapTTL = wrapTTL
+        self.tokenTimeToLive = tokenTimeToLive
+        self.wrapTimeToLive = wrapTimeToLive
     }
 }

@@ -69,7 +69,7 @@ extension IntegrationTests.Auth.AppRole {
             _ = try await vaultClient.appRoleID(name: appRoleName, mountPath: path)
         }
 
-        let generateAppSecretIdResponse = try await vaultClient.generateAppSecretId(
+        let generateAppSecretIdResponse = try await vaultClient.generateAppSecretID(
             capabilities: .init(roleName: appRoleName),
             mountPath: path
         )
@@ -101,7 +101,7 @@ extension IntegrationTests.Auth.AppRole {
                                             mountPath: path)
 
         let appRoleID = try await vaultClient.appRoleID(name: appRoleName, mountPath: path).roleID
-        let secretIDResponse = try await vaultClient.generateAppSecretId(
+        let secretIDResponse = try await vaultClient.generateAppSecretID(
             capabilities: .init(roleName: appRoleName),
             mountPath: path
         )
@@ -136,7 +136,7 @@ extension IntegrationTests.Auth.AppRole {
                                             mountPath: path)
 
         let appRoleID = try await vaultClient.appRoleID(name: appRoleName, mountPath: path).roleID
-        let secretIDResponse = try await vaultClient.generateAppSecretId(
+        let secretIDResponse = try await vaultClient.generateAppSecretID(
             capabilities: .init(
                 roleName: appRoleName
             ),
