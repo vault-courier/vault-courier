@@ -21,6 +21,10 @@ public struct VaultClientError: Error, Sendable {
         .init(message: "Invalid state: \(state)")
     }
 
+    package static func invalidArgument(_ error: String) -> VaultClientError {
+        .init(message: "Invalid argument: \(error)")
+    }
+
     package static func permissionDenied() -> VaultClientError {
         .init(message: "Permission denied")
     }

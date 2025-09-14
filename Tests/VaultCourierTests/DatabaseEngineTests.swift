@@ -99,7 +99,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                           rotation: .period(.seconds(28 * 24 * 60 * 60)))
                 try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
 
-                let sut = await vaultClient.makeResourceReader(
+                let sut = try await vaultClient.makeResourceReader(
                     scheme: "vault",
                     keyValueReaderParser: KeyValueReaderParser(mount: ""),
                     databaseReaderParser: DatabaseReaderParser(mount: enginePath)
@@ -129,7 +129,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                      ])
                 try await vaultClient.createPostgres(dynamicRole: dynamicRole, enginePath: enginePath)
 
-                let sut = await vaultClient.makeResourceReader(
+                let sut = try await vaultClient.makeResourceReader(
                     scheme: "vault",
                     keyValueReaderParser: KeyValueReaderParser(mount: ""),
                     databaseReaderParser: DatabaseReaderParser(mount: enginePath)

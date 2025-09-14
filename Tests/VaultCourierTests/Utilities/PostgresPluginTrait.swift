@@ -46,7 +46,7 @@ struct PostgresPluginTrait: SuiteTrait, TestScoping {
 
 extension SuiteTrait where Self == PostgresPluginTrait {
     static func setupPostgresConnection(name: String = "postgres_db",
-                                        enginePath: String = "my-postgres-db") -> Self {
+                                        enginePath: String = "database") -> Self {
         return Self(connectionName: name, enginePath: enginePath)
     }
 }

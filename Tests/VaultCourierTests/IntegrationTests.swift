@@ -83,16 +83,8 @@ public func enableIntegrationTests() -> Bool {
 
 #if PklSupport
 extension IntegrationTests {
-    @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
-}
-
-extension IntegrationTests.Pkl {
-    @Suite(
-        .bug(
-            "https://github.com/swiftlang/swift-package-manager/issues/8394",
-            "swift test is hanging on GitHub Actions, started in Swift 6.0+"
-        )
-    ) struct ModuleSourceReader {}
+//    @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
+    @Suite struct Pkl {}
 }
 
 public func isPklEnabled() -> Bool {
