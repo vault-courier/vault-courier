@@ -25,8 +25,9 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import Logging
+import VaultUtilities
 
-extension ModuleSource: @unchecked Sendable { }
+extension ModuleSource: @unchecked Sendable {}
 
 /// A Pkl resource reader for Vault
 ///
@@ -49,15 +50,15 @@ public final class VaultResourceReader<
     let logger: Logging.Logger
 
     /// Strategy for reading the component of key/value resources
-    let keyValueReaderParser: KeyValueStrategy
+    let keyValueReaderParser: KeyValueStrategy?
 
     /// Strategy for reading the component of database resources
-    let databaseReaderParser: DatabaseStrategy
+    let databaseReaderParser: DatabaseStrategy?
 
     init(client: VaultClient,
          scheme: String,
-         keyValueReaderParser: KeyValueStrategy,
-         databaseReaderParser: DatabaseStrategy,
+         keyValueReaderParser: KeyValueStrategy?,
+         databaseReaderParser: DatabaseStrategy?,
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
@@ -72,14 +73,14 @@ public final class VaultResourceReader<
 extension VaultResourceReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
         do {
-            if let (mount,key, version) = try keyValueReaderParser.parse(url) {
+            if let (mount,key, version) = try keyValueReaderParser?.parse(url) {
                 let buffer = try await client.readKeyValueSecretData(
                     enginePath: mount.removeSlash(),
                     key: key,
                     version: version
                 )
                 return Array(buffer)
-            } else if let (mount, role) = try databaseReaderParser.parse(url) {
+            } else if let (mount, role) = try databaseReaderParser?.parse(url) {
                 return try await readDatabaseCredential(mount: mount.removeSlash(), role: role)
             } else {
                 throw VaultReaderError.readingUnsupportedEngine(url.relativePath)
@@ -250,8 +251,11 @@ extension VaultClient {
         scheme: String = "vault",
         keyValueReaderParser: KeyValueStrategy,
         databaseReaderParser: DatabaseStrategy
-    ) -> VaultResourceReader<KeyValueStrategy, DatabaseStrategy> {
-        .init(
+    ) throws -> VaultResourceReader<KeyValueStrategy, DatabaseStrategy> {
+        guard !scheme.isEmpty else {
+            throw VaultClientError.invalidArgument("Scheme must not be empty")
+        }
+        return .init(
             client: self,
             scheme: scheme,
             keyValueReaderParser: keyValueReaderParser,
