@@ -18,18 +18,12 @@ import OpenAPIRuntime
 import Logging
 #if canImport(FoundationEssentials)
 import FoundationEssentials
-import protocol Foundation.LocalizedError
 #else
 import struct Foundation.URL
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
-import protocol Foundation.LocalizedError
 #endif
 import AppRoleAuth
 import TokenAuth
 import SystemWrapping
-import VaultUtilities
 
 /// REST Client for Hashicorp Vault and OpenBao.
 ///

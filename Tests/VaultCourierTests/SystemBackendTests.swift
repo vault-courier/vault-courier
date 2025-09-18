@@ -77,7 +77,7 @@ extension IntegrationTests.System.Wrapping {
         let appRoleName = "test_app_role"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
-                                                  tokenTTL: .seconds(120),
+                                                  tokenTimeToLive: .seconds(120),
                                                   tokenType: .batch),
                                             mountPath: path)
         let secretIDResponse = try await vaultClient.generateAppSecretID(capabilities: .init(roleName: appRoleName, wrapTimeToLive: .seconds(120)),
@@ -108,7 +108,7 @@ extension IntegrationTests.System.Wrapping {
         let appRoleName = "test_app_role"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
-                                                  tokenTTL: .seconds(120),
+                                                  tokenTimeToLive: .seconds(120),
                                                   tokenType: .batch),
                                             mountPath: path)
 

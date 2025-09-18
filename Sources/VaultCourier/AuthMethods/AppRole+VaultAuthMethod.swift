@@ -14,8 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 import AppRoleAuth
-import VaultUtilities
 
 extension AppRoleAuth: VaultAuthMethod {
     /// Authenticate with Vault
@@ -24,7 +24,7 @@ extension AppRoleAuth: VaultAuthMethod {
         let appRolePath = basePath.relativePath.removeSlash()
 
         guard let credentials else {
-            throw AppRoleError.missingCredentials()
+            throw VaultClientError(message: "AppRole credentials have not been set")
         }
 
         let response = try await client.authApproleLogin(
@@ -36,11 +36,9 @@ extension AppRoleAuth: VaultAuthMethod {
             case .ok(let content):
                 let json = try content.body.json
                 return json.auth.clientToken
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                throw AppRoleError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                throw AppRoleError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                throw vaultError
         }
     }
 }
@@ -56,11 +54,10 @@ extension AppRoleMock: VaultAuthMethod {
             case .ok(let content):
                 let json = try content.body.json
                 return json.auth.clientToken
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                throw AppRoleError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                throw AppRoleError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                throw vaultError
         }
     }
 }
+#endif

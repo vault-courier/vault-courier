@@ -14,15 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
-#endif
 import OpenAPIRuntime
-import VaultUtilities
 
 extension SystemBackend {
     /// Enables authentication mount. Example AppRole, Token...
@@ -47,13 +39,10 @@ extension SystemBackend {
         switch response {
             case .noContent:
                 logger.info("\(configuration.type) authentication method enabled")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -94,13 +83,10 @@ extension SystemBackend {
                     externalEntropyAccess: json.data.externalEntropyAccess,
                     accessor: json.data.accessor,
                     mountType: json.mountType)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -117,13 +103,10 @@ extension SystemBackend {
         switch response {
             case .noContent:
                 logger.info("Authentication method disabled successfully on path: \(path).")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 }

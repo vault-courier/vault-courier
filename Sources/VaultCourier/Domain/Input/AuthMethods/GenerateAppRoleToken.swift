@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 /// This is the DTO for generating a new SecretID for an AppRole
 ///
 /// See [AppRoleToken](https://github.com/vault-courier/vault-courier-pkl/blob/main/Payloads/AppRoleToken.pkl) and [Vault API](https://developer.hashicorp.com/vault/api-docs/auth/approle#parameters-5)
@@ -35,7 +36,7 @@ public struct GenerateAppRoleToken: Sendable {
     public let tokenBoundCIDRS: [String]?
 
     /// Duration after which this SecretID expires. A value of `nil` will allow the SecretID to not expire.
-    /// Overrides ``VaultCourier/CreateAppRole/secretIdTTL`` role option when supplied.
+    /// Overrides ``VaultCourier/CreateAppRole/secretIdTimeToLive`` role option when supplied.
     public let tokenTimeToLive: Duration?
 
     /// Set to wrap-response the generated token with the given time to live duration.
@@ -57,3 +58,4 @@ public struct GenerateAppRoleToken: Sendable {
         self.wrapTimeToLive = wrapTimeToLive
     }
 }
+#endif

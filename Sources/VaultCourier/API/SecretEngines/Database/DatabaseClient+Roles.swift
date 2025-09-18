@@ -26,7 +26,6 @@ import struct Foundation.Data
 #endif
 import Logging
 import DatabaseEngine
-import VaultUtilities
 
 extension DatabaseEngineClient {
     /// Creates a vault role for accessing database secrets
@@ -71,7 +70,7 @@ extension DatabaseEngineClient {
                 logger.info("Database static role written")
                 return
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -97,7 +96,7 @@ extension DatabaseEngineClient {
                 logger.info("Database static role \(name) deleted")
                 return
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -140,7 +139,7 @@ extension DatabaseEngineClient {
                 logger.info("Database dynamic role written")
                 return
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -179,7 +178,7 @@ extension DatabaseEngineClient {
                 logger.info("Database dynamic role written")
                 return
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -205,7 +204,7 @@ extension DatabaseEngineClient {
                 logger.info("Database static role \(name) deleted")
                 return
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -256,7 +255,7 @@ extension DatabaseEngineClient {
                     rotation: rotation
                 )
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -289,7 +288,7 @@ extension DatabaseEngineClient {
                     timeToLive: json.data.ttl.flatMap({ .seconds($0)}),
                     updatedAt: json.data.lastVaultRotation)
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }

@@ -46,16 +46,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -103,16 +93,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -151,16 +131,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VaultApiResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -255,16 +225,6 @@
                     "request_id",
                     "data"
                   ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }

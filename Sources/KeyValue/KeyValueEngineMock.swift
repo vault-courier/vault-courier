@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
+import Utils
 
 package struct KeyValueEngineMock: APIProtocol {
     package typealias ConfigKvSecretsSignature = @Sendable (Operations.ConfigKvSecrets.Input) async throws -> Operations.ConfigKvSecrets.Output

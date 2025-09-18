@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if DatabaseEngineSupport
 public struct RoleCredentialsResponse: Sendable {
     public let requestID: String
 
@@ -28,3 +29,4 @@ public struct RoleCredentialsResponse: Sendable {
     /// Last Vault rotation
     public let updatedAt: String?
 }
+#endif

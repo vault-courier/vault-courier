@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
+import Utils
 
 package struct AppRoleMock: APIProtocol {
     package var appRolePath: String

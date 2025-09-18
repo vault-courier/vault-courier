@@ -34,7 +34,7 @@ public struct VaultTokenRole: Sendable {
     /// \"default\" is not contained in ``disallowedPolicies`` or glob matched in ``disallowedPoliciesGlob``, the \"default\" policy will be
     /// added to the created token automatically. If combined with ``allowedPolicies`` policies need to only match one of the two lists to be permitted.
     /// Note that unlike ``allowedPolicies`` the policies listed in ``allowedPoliciesGlob`` will not be added to the token when no policies are
-    /// specified in the call to ``VaultCourier/VaultClient/createToken(_:wrappTTL:)``.
+    /// specified in the call to ``VaultCourier/VaultClient/createToken(_:wrapTimeToLive:)``.
     public var allowedPoliciesGlob: [String]?
 
     /// If set, successful token creation via this role will require that no requested policies glob match any of policies in this list. The parameter is a
@@ -64,13 +64,13 @@ public struct VaultTokenRole: Sendable {
     /// Token type
     public var tokenType: TokenType?
 
-    /// If set, will encode an explicit max TTL onto the token. This is a hard cap even if `tokenTTL` and `tokenMaxTTL` would otherwise allow a renewal.
+    /// If set, will encode an explicit max TimeToLive onto the token. This is a hard cap even if `tokenTimeToLive` and `tokenMaxTimeToLive` would otherwise allow a renewal.
     public var tokenExplicitMaxTTL: Duration?
 
     /// The maximum uses for the given token. This can be used to create a one-time-token or limited use token. The value of `nil` has no limit to the number of uses.
     public var tokenNumberOfUses: Int?
 
-    /// If specified, the token will be periodic; it will have no maximum TTL (unless an `tokenMaxTTL` is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
+    /// If specified, the token will be periodic; it will have no maximum TTL (unless an `tokenMaxTimeToLive` is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
     public var tokenPeriod: Duration?
 
     /// If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios,
@@ -88,8 +88,8 @@ public struct VaultTokenRole: Sendable {
                 noDefaultPolicy: Bool = false,
                 isRenewable: Bool? = nil,
                 allowedEntityAliases: [String]? = nil,
-                tokenBoundCidrs: [String]? = nil
-                , tokenType: TokenType? = nil,
+                tokenBoundCidrs: [String]? = nil,
+                tokenType: TokenType? = nil,
                 tokenExplicitMaxTTL: Duration? = nil,
                 tokenNumberOfUses: Int? = nil,
                 tokenPeriod: Duration? = nil,

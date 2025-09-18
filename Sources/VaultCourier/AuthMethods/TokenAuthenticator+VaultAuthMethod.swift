@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 import TokenAuth
-import VaultUtilities
 
 extension TokenAuth: VaultAuthMethod {
     /// Authenticate with Vault

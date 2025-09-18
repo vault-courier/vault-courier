@@ -46,7 +46,7 @@ public struct CreateVaultToken: Sendable {
     /// (Root tokens may have a TTL associated, but the TTL may also be 0, indicating a token that never expires). After the current TTL is up, the token will no longer function -- it, and its associated leases, are revoked.
     ///
     /// If not provided, the token is valid for the default lease TTL, or indefinitely if the root policy is used.
-    public var ttl: Duration?
+    public var timeToLive: Duration?
 
     /// Token type
     /// Defaults to the type specified by the role configuration named by `roleName`.
@@ -56,7 +56,7 @@ public struct CreateVaultToken: Sendable {
     /// - The system max TTL
     /// - The max TTL set on a mount using mount tuning
     /// - A value suggested by the auth method that issued the token. This might be configured on a per-role, per-group, or per-user basis.
-    public var tokenMaxTTL: Duration?
+    public var tokenMaxTimeToLive: Duration?
 
     /// Name to associate with this token
     public var displayName: String?
@@ -64,7 +64,7 @@ public struct CreateVaultToken: Sendable {
     /// The maximum uses for the given token. This can be used to create a one-time-token or limited use token. The value of `nil` has no limit to the number of uses.
     public var tokenNumberOfUses: Int?
 
-    /// If specified, the token will be periodic; it will have no maximum TTL (unless an ``CreateVaultToken/tokenMaxTTL`` is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
+    /// If specified, the token will be periodic; it will have no maximum TTL (unless an ``CreateVaultToken/tokenMaxTimeToLive`` is also set) but every renewal will use the given period. Requires a root token or one with the sudo capability.
     public var tokenPeriod: Duration?
 
     /// Name of the entity alias to associate with during token creation. Only works in combination with ``VaultCourier/CreateVaultToken/roleName`` property. If this has been specified, the entity will not be inherited from the parent.
@@ -77,7 +77,7 @@ public struct CreateVaultToken: Sendable {
                 hasParent: Bool = true,
                 hasDefaultPolicy: Bool = true,
                 isRenewable: Bool? = nil,
-                ttl: Duration? = nil,
+                timeToLive: Duration? = nil,
                 type: TokenType? = nil,
                 tokenMaxTTL: Duration? = nil,
                 displayName: String? = nil,
@@ -91,9 +91,9 @@ public struct CreateVaultToken: Sendable {
         self.hasParent = hasParent
         self.hasDefaultPolicy = hasDefaultPolicy
         self.isRenewable = isRenewable
-        self.ttl = ttl
+        self.timeToLive = timeToLive
         self.type = type
-        self.tokenMaxTTL = tokenMaxTTL
+        self.tokenMaxTimeToLive = tokenMaxTTL
         self.displayName = displayName
         self.tokenNumberOfUses = tokenNumberOfUses
         self.tokenPeriod = tokenPeriod

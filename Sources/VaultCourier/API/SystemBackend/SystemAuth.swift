@@ -14,8 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
-
 extension VaultClient {
     /// Enables authentication mount. Example AppRole, Token...
     /// - Parameter configuration: Authentication method configuration

@@ -17,7 +17,6 @@
 import Testing
 
 import VaultCourier
-import VaultUtilities
 
 extension IntegrationTests.Auth.Token {
     @Test
@@ -34,7 +33,7 @@ extension IntegrationTests.Auth.Token {
                       meta: ["user": "Juan"],
                       hasParent: false,
                       hasDefaultPolicy: true,
-                      ttl: .seconds(leaseDuration),
+                      timeToLive: .seconds(leaseDuration),
                       type: .service,
                       tokenMaxTTL: .seconds(60*60*4),
                       displayName: displayName,
@@ -57,7 +56,7 @@ extension IntegrationTests.Auth.Token {
             try await vaultClient.revoke(token: tokenID)
         }
 
-        await #expect(throws: VaultClientError.self) {
+        await #expect(throws: VaultServerError.self) {
             _ = try await vaultClient.lookup(token: tokenID)
         }
     }
@@ -77,7 +76,7 @@ extension IntegrationTests.Auth.Token {
                       meta: ["user": "Juan"],
                       hasParent: true,
                       hasDefaultPolicy: true,
-                      ttl: .seconds(leaseDuration),
+                      timeToLive: .seconds(leaseDuration),
                       type: .service,
                       tokenMaxTTL: .seconds(60*60*4),
                       displayName: displayName,
@@ -98,7 +97,7 @@ extension IntegrationTests.Auth.Token {
             try await vaultClient.deleteTokenRole(name: roleName)
         }
 
-        await #expect(throws: VaultClientError.self) {
+        await #expect(throws: VaultServerError.self) {
             _ = try await vaultClient.readTokenRole(name: roleName)
         }
     }

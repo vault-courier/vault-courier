@@ -14,9 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import struct OpenAPIRuntime.OpenAPIObjectContainer
-import VaultUtilities
-
 extension VaultClient {
     /// Enables secret engine
     /// - Parameter mountConfig: mount configuration including path of secret engine

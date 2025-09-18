@@ -22,7 +22,7 @@ import struct Foundation.URL
 #endif
 import Synchronization
 
-package final class ResponseWrapper: Sendable {
+package final class SystemWrapProvider: Sendable {
     package init(apiURL: URL,
                 clientTransport: any ClientTransport,
                 middlewares: [any ClientMiddleware] = [],

@@ -14,9 +14,9 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
+import Utils
 
-package struct ResponseWrapperMock: APIProtocol {
+package struct SystemWrapProviderMock: APIProtocol {
     package init(lookupAction: LookupSignature? = nil,
                  wrapAction: WrapSignature? = nil,
                  rewrapAction: RewrapSignature? = nil,

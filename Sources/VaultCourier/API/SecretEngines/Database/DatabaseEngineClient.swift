@@ -28,7 +28,6 @@ import struct Foundation.Data
 import Synchronization
 import Logging
 import DatabaseEngine
-import VaultUtilities
 
 /// Client for Database secret engine
 public final class DatabaseEngineClient: Sendable {
@@ -111,7 +110,7 @@ extension DatabaseEngineClient {
             case .noContent:
                 logger.info("Postgres database connection configured")
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -143,7 +142,7 @@ extension DatabaseEngineClient {
             case .noContent:
                 logger.info("Valkey database connection configured")
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -187,7 +186,7 @@ extension DatabaseEngineClient {
                     }
                 } else if let value = json.data.connectionDetails?.value2 {
                     logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(value.value.description)"))
-                    throw VaultClientError.decodingFailed()
+                    throw VaultClientError.receivedUnexpectedResponse()
                 } else {
                     preconditionFailure("Unreachable path \(#function)")
                 }
@@ -203,7 +202,7 @@ extension DatabaseEngineClient {
                     rotateStatements: json.data.rootCredentialsRotateStatements ?? []
                 )
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -253,7 +252,7 @@ extension DatabaseEngineClient {
                     }
                 } else if let value = json.data.connectionDetails?.value2 {
                     logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(value.value.description)"))
-                    throw VaultClientError.decodingFailed()
+                    throw VaultClientError.receivedUnexpectedResponse()
                 } else {
                     preconditionFailure("Unreachable path \(#function)")
                 }
@@ -270,7 +269,7 @@ extension DatabaseEngineClient {
                         rotateStatements: json.data.rootCredentialsRotateStatements ?? []
                     )
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -296,7 +295,7 @@ extension DatabaseEngineClient {
             case .noContent:
                 logger.info("database connection '\(connectionName)' deleted")
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -321,7 +320,7 @@ extension DatabaseEngineClient {
             case .noContent:
                 logger.info("Vault root credentials rotated")
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }
@@ -348,7 +347,7 @@ extension DatabaseEngineClient {
             case .noContent:
                 logger.info("Connection \(connectionName) reset successfully.")
             case let .undocumented(statusCode, payload):
-                let vaultError = await mapVaultError(statusCode: statusCode, payload: payload)
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                 throw vaultError
         }

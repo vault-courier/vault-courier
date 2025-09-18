@@ -37,7 +37,7 @@ public final class SystemBackend: Sendable {
                  middlewares: [any ClientMiddleware] = [],
                  token: String? = nil,
                  logger: Logger? = nil) {
-        self.wrapping = ResponseWrapper(
+        self.wrapping = SystemWrapProvider(
             apiURL: apiURL,
             clientTransport: clientTransport,
             middlewares: middlewares,
@@ -69,7 +69,7 @@ public final class SystemBackend: Sendable {
     /// Vault's URL
     let apiURL: URL
 
-    let wrapping: ResponseWrapper
+    let wrapping: SystemWrapProvider
     let auth: SystemAuthProvider
     let policies: SystemPoliciesProvider
     let mounts: SystemMountsProvider

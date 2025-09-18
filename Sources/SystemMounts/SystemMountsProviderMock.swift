@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
+import Utils
 
 package struct SystemMountsProviderMock: APIProtocol {
     package typealias ReadMountSignature = @Sendable (Operations.MountsReadSecretsEngine.Input) async throws -> Operations.MountsReadSecretsEngine.Output

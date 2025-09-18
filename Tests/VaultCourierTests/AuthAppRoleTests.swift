@@ -57,7 +57,7 @@ extension IntegrationTests.Auth.AppRole {
         let appRoleName = "batch_role_1"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
-                                                  tokenTTL: .seconds(60*60),
+                                                  tokenTimeToLive: .seconds(60*60),
                                                   tokenType: .batch),
                                             mountPath: path)
 
@@ -96,7 +96,7 @@ extension IntegrationTests.Auth.AppRole {
         let appRoleName = "batch_role_2"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
-                                                  tokenTTL: .seconds(60*60),
+                                                  tokenTimeToLive: .seconds(60*60),
                                                   tokenType: .batch),
                                             mountPath: path)
 
@@ -131,7 +131,7 @@ extension IntegrationTests.Auth.AppRole {
         let appRoleName = "test_app_role"
         try await vaultClient.createAppRole(.init(name: appRoleName,
                                                   tokenPolicies: [],
-                                                  tokenTTL: .seconds(60*60),
+                                                  tokenTimeToLive: .seconds(60*60),
                                                   tokenType: .batch),
                                             mountPath: path)
 

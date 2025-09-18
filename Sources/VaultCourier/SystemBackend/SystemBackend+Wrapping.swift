@@ -22,7 +22,6 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import OpenAPIRuntime
-import VaultUtilities
 
 extension SystemBackend {
     /// Unwraps a vault wrapped response
@@ -37,7 +36,7 @@ extension SystemBackend {
     ) async throws -> VaultResponse<VaultData, AuthResponse> {
         let sessionToken = wrapping.token
         guard sessionToken != token else {
-            throw VaultClientError.badRequest(["Wrapping parameter token and client token cannot be the same"])
+            throw VaultClientError.invalidArgument("Wrapping parameter token and client token cannot be the same")
         }
 
         let response = try await wrapping.client.unwrap(
@@ -58,11 +57,10 @@ extension SystemBackend {
                     auth = try JSONDecoder().decode(AuthResponse.self, from: authData)
                 }
                 return VaultResponse(requestID: json.requestId, data: vaultData, auth: auth)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -101,13 +99,10 @@ extension SystemBackend {
                     creationPath: json.wrapInfo.creationPath,
                     wrappedAccessor: json.wrapInfo.wrappedAccessor
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
     
@@ -146,13 +141,10 @@ extension SystemBackend {
                     creationPath: json.wrapInfo.creationPath,
                     wrappedAccessor: json.wrapInfo.wrappedAccessor
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -181,13 +173,10 @@ extension SystemBackend {
                     createdAt: json.data.creationTime,
                     creationPath: json.data.creationPath
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 }

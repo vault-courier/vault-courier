@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
+import Utils
 
 package struct DatabaseEngineMock: APIProtocol {
     // MARK: Configure Database Connection

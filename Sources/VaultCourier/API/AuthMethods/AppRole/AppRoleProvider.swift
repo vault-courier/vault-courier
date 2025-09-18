@@ -24,7 +24,7 @@ import struct Foundation.URL
 import Synchronization
 import Logging
 import AppRoleAuth
-import VaultUtilities
+//import Utils
 
 public final class AppRoleProvider: Sendable {
     static var loggingDisabled: Logger { .init(label: "app-role-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
@@ -41,12 +41,15 @@ public final class AppRoleProvider: Sendable {
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
+        self.mountPath = mountPath?.removeSlash() ?? "approle"
         self._token = .init(token)
         self.logger = logger ?? Self.loggingDisabled
     }
 
     /// Vault's URL
     let apiURL: URL
+
+    let mountPath: String
 
     /// Authentication client
     let auth: AppRoleAuth
@@ -76,7 +79,7 @@ extension AppRoleProvider {
         guard let sessionToken = token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
-        let mountPath = self.auth.basePath.relativePath.removeSlash()
+        let mountPath = self.mountPath
 
         let response = try await auth.client.authCreateApprole(
             path: .init(enginePath: mountPath, roleName: appRole.name),
@@ -88,13 +91,13 @@ extension AppRoleProvider {
                 tokenNumUses: appRole.tokenNumberOfUses,
                 tokenPeriod: appRole.tokenPeriod?.formatted(.vaultSeconds),
                 tokenType: .init(rawValue: appRole.tokenType.rawValue),
-                tokenTtl: appRole.tokenTTL?.formatted(.vaultSeconds),
-                tokenMaxTtl: appRole.tokenMaxTTL?.formatted(.vaultSeconds),
+                tokenTtl: appRole.tokenTimeToLive?.formatted(.vaultSeconds),
+                tokenMaxTtl: appRole.tokenMaxTimeToLive?.formatted(.vaultSeconds),
                 tokenPolicies: appRole.tokenPolicies,
                 bindSecretId: appRole.bindSecretID,
                 secretIdBoundCidrs: appRole.secretIdBoundCIDRS,
                 secretIdNumUses: appRole.secretIdNumberOfUses,
-                secretIdTtl: appRole.secretIdTTL?.formatted(.vaultSeconds),
+                secretIdTtl: appRole.secretIdTimeToLive?.formatted(.vaultSeconds),
                 localSecretIds: appRole.localSecretIds))
         )
 
@@ -102,13 +105,10 @@ extension AppRoleProvider {
         switch response {
             case .noContent:
                 logger.info("approle \(appRole.name) created.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -118,7 +118,7 @@ extension AppRoleProvider {
         guard let sessionToken = token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
-        let mountPath = self.auth.basePath.relativePath.removeSlash()
+        let mountPath = self.mountPath
 
         let response = try await auth.client.authReadApprole(
             path: .init(enginePath: mountPath, roleName: name),
@@ -150,13 +150,10 @@ extension AppRoleProvider {
                     secretIdBoundCIDRS: json.data.secretIdBoundCidrs,
                     tokenType: tokenType
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -166,7 +163,7 @@ extension AppRoleProvider {
         guard let sessionToken = token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
-        let mountPath = self.auth.basePath.relativePath.removeSlash()
+        let mountPath = self.mountPath
 
         let response = try await auth.client.authDeleteApprole(
             path: .init(enginePath: mountPath, roleName: name),
@@ -176,13 +173,10 @@ extension AppRoleProvider {
         switch response {
             case .noContent:
                 logger.info("Approle \(name) deleted.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -192,7 +186,7 @@ extension AppRoleProvider {
         guard let sessionToken = token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
-        let mountPath = self.auth.basePath.relativePath.removeSlash()
+        let mountPath = self.mountPath
 
         let response = try await auth.client.authReadRoleId(
             path: .init(enginePath: mountPath, roleName: name),
@@ -211,17 +205,14 @@ extension AppRoleProvider {
                     }
                 } else if let json = json.value2 {
                     logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(json.value.description)"))
-                    throw VaultClientError.decodingFailed()
+                    throw VaultClientError.receivedUnexpectedResponse()
                 } else {
                     preconditionFailure("Unreachable path \(#function)")
                 }
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -234,7 +225,7 @@ extension AppRoleProvider {
         guard let sessionToken = token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
-        let mountPath = self.auth.basePath.relativePath.removeSlash()
+        let mountPath = self.mountPath
 
         let response = try await auth.client.authReadRoleId(
             path: .init(enginePath: mountPath, roleName: name),
@@ -268,13 +259,10 @@ extension AppRoleProvider {
                 } else {
                     preconditionFailure("Unreachable path \(#function)")
                 }
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -287,7 +275,7 @@ extension AppRoleProvider {
         guard let sessionToken = token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
-        let mountPath = self.auth.basePath.relativePath.removeSlash()
+        let mountPath = self.mountPath
 
         let response = try await auth.client.authApproleSecretId(
             path: .init(enginePath: mountPath, roleName: capabilities.roleName),
@@ -330,17 +318,14 @@ extension AppRoleProvider {
                     }
                 } else if let json = json.value2 {
                     logger.debug(.init(stringLiteral: "\(#function) Unknown body response: \(json.value.description)"))
-                    throw VaultClientError.decodingFailed()
+                    throw VaultClientError.receivedUnexpectedResponse()
                 } else {
                     preconditionFailure("Unreachable path \(#function)")
                 }
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -358,7 +343,7 @@ extension AppRoleProvider {
         roleID: String,
         secretID: String
     ) async throws -> VaultAuthResponse {
-        let mountPath = self.auth.basePath.relativePath.removeSlash()
+        let mountPath = self.mountPath
 
         let response = try await auth.client.authApproleLogin(
             path: .init(enginePath: mountPath),
@@ -385,13 +370,10 @@ extension AppRoleProvider {
                     isOrphan: json.auth.orphan,
                     numberOfUses: json.auth.numUses
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.permissionDenied()
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "login failed with \(statusCode): "))
-                throw VaultClientError.permissionDenied()
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 }

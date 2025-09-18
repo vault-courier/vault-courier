@@ -83,7 +83,6 @@ public func enableIntegrationTests() -> Bool {
 
 #if PklSupport
 extension IntegrationTests {
-//    @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
     @Suite struct Pkl {}
 }
 

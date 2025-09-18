@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
+import Utils
 
 package struct SystemAuthProviderMock: APIProtocol {
     package init(disableAuthMethodAction: DisableAuthMethodSignature? = nil,

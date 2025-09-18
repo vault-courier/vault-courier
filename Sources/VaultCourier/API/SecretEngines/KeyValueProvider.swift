@@ -26,7 +26,6 @@ import struct Foundation.Data
 import Synchronization
 import Logging
 import KeyValue
-import VaultUtilities
 
 /// Client for KeyValue secret engine
 public final class KeyValueSecretProvider: Sendable {
@@ -52,6 +51,7 @@ public final class KeyValueSecretProvider: Sendable {
     /// Vault's base URL
     let apiURL: URL
 
+    /// Mount path of KeyValue secret engine
     let mountPath: String
 
     /// Engine client
@@ -119,13 +119,10 @@ extension KeyValueSecretProvider {
                     isDestroyed: json.data.destroyed,
                     version: json.data.version
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -154,13 +151,10 @@ extension KeyValueSecretProvider {
                 let json = try content.body.json
                 let data = try JSONEncoder().encode(json.data.data)
                 return try JSONDecoder().decode(T.self, from: data)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -192,13 +186,10 @@ extension KeyValueSecretProvider {
                     requestID: json.requestId,
                     data: secret
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -229,13 +220,10 @@ extension KeyValueSecretProvider {
                 let json = try content.body.json
                 let data = try JSONEncoder().encode(json.data.data)
                 return data
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -251,7 +239,7 @@ extension KeyValueSecretProvider {
         key: String,
         version: Int? = nil,
         depth: Int? = nil
-    ) async throws -> Data? {
+    ) async throws -> Data {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
 
@@ -266,13 +254,10 @@ extension KeyValueSecretProvider {
                 let json = try content.body.json
                 let data = try JSONEncoder().encode(json.data.subkeys)
                 return data
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                return nil
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -288,7 +273,7 @@ extension KeyValueSecretProvider {
     public func patchKeyValue(
         secret: some Codable,
         key: String
-    ) async throws -> KeyValueMetadata? {
+    ) async throws -> KeyValueMetadata {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
 
@@ -319,13 +304,10 @@ extension KeyValueSecretProvider {
                     isDestroyed: json.data.destroyed,
                     version: json.data.version
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -352,13 +334,10 @@ extension KeyValueSecretProvider {
             switch response {
                 case .noContent:
                     logger.info("secret deleted successfully")
-                case .badRequest(let content):
-                    let errors = (try? content.body.json.errors) ?? []
-                    logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                    throw VaultClientError.badRequest(errors)
-                case .undocumented(statusCode: let statusCode, _):
-                    logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                    throw VaultClientError.operationFailed(statusCode)
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    throw vaultError
             }
         } else {
             let response = try await engine.client.deleteKvSecrets(
@@ -370,13 +349,10 @@ extension KeyValueSecretProvider {
             switch response {
                 case .noContent:
                     logger.info("secret deleted successfully")
-                case .badRequest(let content):
-                    let errors = (try? content.body.json.errors) ?? []
-                    logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                    throw VaultClientError.badRequest(errors)
-                case .undocumented(statusCode: let statusCode, _):
-                    logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                    throw VaultClientError.operationFailed(statusCode)
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    throw vaultError
             }
         }
     }
@@ -405,13 +381,10 @@ extension KeyValueSecretProvider {
             case .noContent:
                 logger.info("secret undeleted successfully")
                 return
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -447,13 +420,10 @@ extension KeyValueSecretProvider {
         switch response {
             case .noContent:
                 logger.info("Secret metadata updated.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -493,13 +463,10 @@ extension KeyValueSecretProvider {
                     updatedAt: json.data.updatedTime,
                     versions: versions
                 )
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -521,13 +488,10 @@ extension KeyValueSecretProvider {
         switch response {
             case .noContent:
                 logger.info("Metadata deleted successfully.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 }

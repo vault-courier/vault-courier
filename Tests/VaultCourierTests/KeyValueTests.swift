@@ -22,7 +22,6 @@ import FoundationEssentials
 import class Foundation.JSONDecoder
 import struct Foundation.Data
 #endif
-import VaultUtilities
 
 extension IntegrationTests.SecretEngine.KeyValue {
 
@@ -58,7 +57,7 @@ extension IntegrationTests.SecretEngine.KeyValue {
         #expect(readResponse.apiKey == secret.apiKey)
 
         try await vaultClient.delete(enginePath: Self.enginePath, key: key)
-        await #expect(throws: VaultClientError.self) {
+        await #expect(throws: VaultServerError.self) {
             let _: Secret? = try await vaultClient.readKeyValueSecret(enginePath: Self.enginePath, key: key)
         }
     }
@@ -100,7 +99,7 @@ extension IntegrationTests.SecretEngine.KeyValue {
     @Test
     func metadata() async throws {
         let sut = VaultClient.current
-        await #expect(throws: VaultClientError.self) {
+        await #expect(throws: VaultServerError.self) {
             try await sut.readMetadata(enginePath: Self.enginePath, key: "non-existent")
         }
 
@@ -123,7 +122,7 @@ extension IntegrationTests.SecretEngine.KeyValue {
     @Test
     func deleting_all_metadata_deletes_secret_data_and_history() async throws {
         let sut = VaultClient.current
-        await #expect(throws: VaultClientError.self) {
+        await #expect(throws: VaultServerError.self) {
             try await sut.readMetadata(enginePath: Self.enginePath, key: "non-existent")
         }
 
@@ -142,7 +141,7 @@ extension IntegrationTests.SecretEngine.KeyValue {
         // MUT
         try await sut.deleteAllMetadata(enginePath: Self.enginePath, key: key)
 
-        await #expect(throws: VaultClientError.self) {
+        await #expect(throws: VaultServerError.self) {
             let _ : KeyValueResponse<Secret> = try await sut.readKeyValueSecret(enginePath: Self.enginePath, key: key)
         }
     }

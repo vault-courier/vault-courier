@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 /// Request type for creating an AppRole
 public struct CreateAppRole: Sendable {
     /// Name of the app role
@@ -29,7 +30,7 @@ public struct CreateAppRole: Sendable {
     public var secretIdNumberOfUses: Int?
 
     /// Duration after which by default any SecretID expires. A value of `nil` will allow the SecretID to not expire. However, this option may be overridden by the request's ``VaultCourier/GenerateAppRoleToken/tokenTimeToLive`` field when generating a SecretID.
-    public var secretIdTTL: Duration?
+    public var secretIdTimeToLive: Duration?
 
     /// If set, the secret IDs generated using this role will be cluster local. This can only be set during role creation and once set, it can't be reset later.
     public var localSecretIds: Bool?
@@ -41,10 +42,10 @@ public struct CreateAppRole: Sendable {
     public var tokenBoundCIDRS: [String]?
 
     /// The incremental lifetime for generated tokens. This current value of this will be referenced at renewal time.
-    public var tokenTTL: Duration?
+    public var tokenTimeToLive: Duration?
 
     /// The maximum lifetime for generated tokens. This current value of this will be referenced at renewal time.
-    public var tokenMaxTTL: Duration?
+    public var tokenMaxTimeToLive: Duration?
 
     /// If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in `tokenPolicies`.
     public var tokenNoDefaultPolicy: Bool
@@ -61,12 +62,12 @@ public struct CreateAppRole: Sendable {
                 bindSecretId: Bool = true,
                 secretIdBoundCIDRS: [String]? = nil,
                 secretIdNumberOfUses: Int? = nil,
-                secretIdTTL: Duration? = nil,
+                secretIdTimeToLive: Duration? = nil,
                 localSecretIds: Bool? = nil,
                 tokenPolicies: [String],
                 tokenBoundCIDRS: [String]? = nil,
-                tokenTTL: Duration? = nil,
-                tokenMaxTTL: Duration? = nil,
+                tokenTimeToLive: Duration? = nil,
+                tokenMaxTimeToLive: Duration? = nil,
                 tokenNoDefaultPolicy: Bool = false,
                 tokenNumberOfUses: Int? = nil,
                 tokenPeriod: Duration? = nil,
@@ -75,15 +76,16 @@ public struct CreateAppRole: Sendable {
         self.bindSecretID = bindSecretId
         self.secretIdBoundCIDRS = secretIdBoundCIDRS
         self.secretIdNumberOfUses = secretIdNumberOfUses
-        self.secretIdTTL = secretIdTTL
+        self.secretIdTimeToLive = secretIdTimeToLive
         self.localSecretIds = localSecretIds
         self.tokenPolicies = tokenPolicies
         self.tokenBoundCIDRS = tokenBoundCIDRS
-        self.tokenTTL = tokenTTL
-        self.tokenMaxTTL = tokenMaxTTL
+        self.tokenTimeToLive = tokenTimeToLive
+        self.tokenMaxTimeToLive = tokenMaxTimeToLive
         self.tokenNoDefaultPolicy = tokenNoDefaultPolicy
         self.tokenNumberOfUses = tokenNumberOfUses
         self.tokenPeriod = tokenPeriod
         self.tokenType = tokenType
     }
 }
+#endif

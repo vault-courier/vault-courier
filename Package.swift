@@ -78,7 +78,7 @@ let package = Package(
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities"),
+                .target(name: "Utils"),
                 // Vault System backend
                 .target(name: "SystemWrapping"),
                 .target(name: "SystemAuth"),
@@ -93,9 +93,8 @@ let package = Package(
             ]
         ),
         .target(
-            name: "VaultUtilities",
-            dependencies: [],
-            path: "Sources/VaultUtilities"
+            name: "Utils",
+            path: "Sources/Utils"
         ),
         // Auth Methods Targets
         .target(
@@ -103,7 +102,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/AppRole",
             plugins: [
@@ -115,7 +114,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/TokenAuth",
             plugins: [
@@ -128,7 +127,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/SystemWrapping",
             plugins: [
@@ -140,7 +139,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/SystemAuth",
             plugins: [
@@ -152,7 +151,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/SystemPolicies",
             plugins: [
@@ -164,7 +163,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/SystemMounts",
             plugins: [
@@ -177,7 +176,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/KeyValue",
             plugins: [
@@ -189,7 +188,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
-                .target(name: "VaultUtilities")
+                .target(name: "Utils")
             ],
             path: "Sources/DatabaseEngine",
             plugins: [

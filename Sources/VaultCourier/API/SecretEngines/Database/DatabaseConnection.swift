@@ -26,7 +26,6 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 import protocol Foundation.LocalizedError
 #endif
-import VaultUtilities
 
 extension VaultClient {
     #if PostgresPluginSupport

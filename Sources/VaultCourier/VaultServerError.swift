@@ -59,7 +59,7 @@ struct VaultErrorBody: Decodable {
     let errors: [String]
 }
 
-func mapVaultError(statusCode: Int, payload: UndocumentedPayload) async -> VaultServerError {
+func makeVaultError(statusCode: Int, payload: UndocumentedPayload) async -> VaultServerError {
     let errors: String?
     if let body = payload.body {
         do {

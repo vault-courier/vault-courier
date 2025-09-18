@@ -15,8 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #if DatabaseEngineSupport
-import VaultUtilities
-
 extension VaultClient {
 
     /// Reads database credentials for a static role

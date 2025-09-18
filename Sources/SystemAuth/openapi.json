@@ -38,16 +38,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -71,16 +61,6 @@
         "responses": {
           "204": {
             "description": "NoContent"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -94,16 +74,6 @@
         "responses": {
           "204": {
             "description": "NoContent"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },

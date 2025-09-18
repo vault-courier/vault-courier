@@ -17,25 +17,17 @@
 public struct VaultClientError: Error, Sendable {
     public var message: String
 
-    package static func invalidState(_ state: String) -> VaultClientError {
-        .init(message: "Invalid state: \(state)")
+    package init(message: String) {
+        self.message = message
     }
 
     package static func invalidArgument(_ error: String) -> VaultClientError {
         .init(message: "Invalid argument: \(error)")
     }
 
-    package static func permissionDenied() -> VaultClientError {
-        .init(message: "Permission denied")
-    }
-
-    package static func decodingFailed() -> VaultClientError {
+    package static func decodingFailed(_ message: String? = nil,
+                                       file: String = #filePath) -> VaultClientError {
         .init(message: "Decoding failed")
-    }
-
-    package static func receivedUnexpectedResponse(_ message: String? = nil,
-                                                   file: String = #filePath) -> VaultClientError {
-        .init(message: "Received unexpected response. Do you mind filling a bug at https://github.com/vault-courier/vault-courier/issues 🙏?")
     }
 
     package static func clientIsNotLoggedIn() -> VaultClientError {
@@ -50,21 +42,8 @@ public struct VaultClientError: Error, Sendable {
         .init(message: "Invalid role statements: \(statements.joined(separator: ", "))")
     }
 
-    package static func badRequest(_ errors: [String]) -> VaultClientError {
-        let errorsDescription = errors.isEmpty ? "" : ": " + errors.joined(separator: ", ")
-        return .init(message: "Vault returned a bad request\(errorsDescription)")
-    }
-
-    package static func internalServerError(_ errors: [String]) -> VaultClientError {
-        let errorsDescription = errors.isEmpty ? "" : ": " + errors.joined(separator: ", ")
-        return .init(message: "Internal server error\(errorsDescription)")
-    }
-
-    package static func operationFailed(_ statusCode: Int) -> VaultClientError {
-        .init(message: "operation failed with \(statusCode)")
-    }
-
-    package init(message: String) {
-        self.message = message
+    package static func receivedUnexpectedResponse(_ message: String? = nil,
+                                                   file: String = #filePath) -> VaultClientError {
+        .init(message: "Received unexpected response. Do you mind filling a bug at https://github.com/vault-courier/vault-courier/issues 🙏?")
     }
 }

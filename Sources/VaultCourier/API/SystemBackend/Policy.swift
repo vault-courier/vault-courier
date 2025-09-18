@@ -19,7 +19,6 @@ import FoundationEssentials
 #else
 import struct Foundation.URL
 #endif
-import VaultUtilities
 
 extension VaultClient {
     

@@ -14,8 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
-
 extension VaultClient {
     /// Unwraps a vault wrapped response
     ///

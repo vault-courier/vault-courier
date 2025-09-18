@@ -21,10 +21,6 @@
           "default": "https"
         }
       }
-    },
-    {
-      "url": "https://127.0.0.1:8200/v1",
-      "description": "Default https server url"
     }
   ],
   "paths": {
@@ -44,16 +40,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/KVSecretConfigResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -95,16 +81,6 @@
         "responses": {
           "204": {
             "description": "NoContent"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -139,16 +115,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -179,16 +145,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -202,16 +158,6 @@
         "responses": {
           "204": {
             "description": "NoContent"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -239,16 +185,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WriteSecretResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -323,16 +259,6 @@
         "responses": {
           "204": {
             "description": "NoContent"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -394,16 +320,6 @@
         "responses": {
           "204": {
             "description": "NoContent"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -465,16 +381,6 @@
         "responses": {
           "204": {
             "description": "NoContent"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -563,16 +469,6 @@
                     "request_id",
                     "data"
                   ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -743,16 +639,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -801,16 +687,6 @@
         "responses": {
           "204": {
             "description": "Metadata updated"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -824,16 +700,6 @@
         "responses": {
           "204": {
             "description": "All metadata has been deleted"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },

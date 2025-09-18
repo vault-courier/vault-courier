@@ -14,8 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
-
 public struct VaultAuthResponse: Sendable {
     public let requestID: String?
 

@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import VaultUtilities
+import Utils
 
 package struct SystemPoliciesProviderMock: APIProtocol {
     package typealias WritePolicySignature = @Sendable (Operations.PoliciesWriteAclPolicy.Input) async throws -> Operations.PoliciesWriteAclPolicy.Output

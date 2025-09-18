@@ -17,13 +17,9 @@
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
 import struct Foundation.URL
 #endif
 import OpenAPIRuntime
-import VaultUtilities
 
 extension SystemBackend {
     /// Add a new or update an existing ACL policy.
@@ -45,12 +41,10 @@ extension SystemBackend {
         switch response {
             case .noContent:
                 logger.info("Policy '\(policy.name)' written successfully!")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 
@@ -79,12 +73,10 @@ extension SystemBackend {
             case .ok(let content):
                 let json = try content.body.json
                 return .init(name: json.data.name, policy: json.data.policy)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
     
@@ -101,12 +93,10 @@ extension SystemBackend {
         switch response {
             case .noContent:
                 logger.info("Policy '\(name)' deleted")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
-                throw VaultClientError.operationFailed(statusCode)
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
         }
     }
 }

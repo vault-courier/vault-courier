@@ -37,16 +37,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -70,16 +60,6 @@
         "responses": {
           "204": {
             "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -93,16 +73,6 @@
         "responses": {
           "204": {
             "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -160,16 +130,6 @@
                       "type": "object"
                     }
                   ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }
@@ -246,16 +206,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -323,16 +273,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -389,16 +329,6 @@
         "responses": {
           "204": {
             "description": "OK"
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
-                }
-              }
-            }
           }
         }
       },
@@ -464,16 +394,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VaultAuthResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "BadRequest",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VaultErrorsResponseBody"
                 }
               }
             }

@@ -15,8 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #if DatabaseEngineSupport
-import VaultUtilities
-
 extension VaultClient {
 
     /// Creates a vault role for accessing database secrets

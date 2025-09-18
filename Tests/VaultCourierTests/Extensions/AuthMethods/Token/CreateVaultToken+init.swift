@@ -26,7 +26,7 @@ extension CreateVaultToken {
                   hasParent: module.no_parent ?? true,
                   hasDefaultPolicy: module.no_default_policy ?? true,
                   isRenewable: module.renewable,
-                  ttl: module.ttl?.toSwiftDuration(),
+                  timeToLive: module.ttl?.toSwiftDuration(),
                   type: .init(rawValue: module.type.rawValue),
                   tokenMaxTTL: module.explicit_max_ttl?.toSwiftDuration(),
                   displayName: module.display_name,

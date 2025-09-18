@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if DatabaseEngineSupport
 public struct StaticRoleCredentialsResponse: Sendable {
     public let requestID: String
 
@@ -31,3 +32,4 @@ public struct StaticRoleCredentialsResponse: Sendable {
     /// Rotation strategy of credentials
     public let rotation: RotationStrategy?
 }
+#endif
