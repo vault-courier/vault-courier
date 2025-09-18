@@ -35,6 +35,13 @@ extension DatabaseResourceReaderStrategy where Self == DatabaseReaderParser {
     }
 }
 
+/// Resource reader URL parser for database credentials
+///
+/// Given a database mount it parses the role by splitting the path on `/static-creds/` or `/creds/`
+///
+/// Example: given the URL `vault:/my_databases/static-creds/test_static_role`
+/// This parser with mount `my_databases` will parse a static role with name `test_static_role`.
+///
 public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
     /// Mount path to Database secrets
     let mount: String
@@ -63,7 +70,7 @@ public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
         }
     }
 
-    /// Returns role name
+    /// Split function for returning role name
     func split(url: URL, separator: String) throws -> String {
         let relativePath = url.relativePath.removeSlash()
         let components = relativePath.split(separator: separator, maxSplits: 2).map({String($0)})

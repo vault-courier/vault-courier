@@ -80,8 +80,7 @@ extension IntegrationTests.Pkl {
             let kvMountPath = "path/to/secrets"
             let sut = try await vaultClient.makeResourceReader(
                 scheme: "vault",
-                keyValueReaderParser: KeyValueReaderParser(mount: kvMountPath),
-                databaseReaderParser: DatabaseReaderParser(mount: "")
+                keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
             )
             let output = try await sut.readConfiguration(text:"""
             appKeys = read("\(schema):/\(kvMountPath)/key?version=2").text
@@ -129,8 +128,7 @@ extension IntegrationTests.Pkl {
             let scheme = "vault"
             let sut = try await vaultClient.makeResourceReader(
                 scheme: "vault",
-                keyValueReaderParser: KeyValueReaderParser(mount: ""),
-                databaseReaderParser: DatabaseReaderParser(mount: databaseMount)
+                databaseReaderParsers: [DatabaseReaderParser(mount: databaseMount)]
             )
 
             // MUT
@@ -180,8 +178,7 @@ extension IntegrationTests.Pkl {
             let scheme = "vault"
             let sut = try await vaultClient.makeResourceReader(
                 scheme: scheme,
-                keyValueReaderParser: KeyValueReaderParser(mount: ""),
-                databaseReaderParser: DatabaseReaderParser(mount: databaseMount)
+                databaseReaderParsers: [DatabaseReaderParser(mount: databaseMount)]
             )
             // MUT
             let output = try await sut.readConfiguration(
@@ -274,6 +271,196 @@ extension IntegrationTests.Pkl {
                 #expect(roleName == expectedRoleName)
             }
         }
+
+        @Test
+        func read_credentials_for_two_database_secret_mounts() async throws {
+            struct DatabaseSecrets: Codable, Sendable {
+                var postgresRoleCredentials: String
+                var valkeyRoleCredentials: String
+            }
+
+            let vaultRole1 = "test_static_role_1"
+            let vaultRole2 = "test_static_role_2"
+            let username = "test_static_role_username"
+            let passwordDatabase1 = "secret_password_1"
+            let passwordDatabase2 = "secret_password_2"
+            let databaseMount1 = "path/to/database1"
+            let databaseMount2 = "path/to/database2"
+
+            let mockClient = MockClientTransport { req, _, _, _ in
+                switch req.path?.replacingOccurrences(of: "%2F", with: "/") {
+                    case "/\(databaseMount1)/static-creds/\(vaultRole1)":
+                        return (.init(status: .ok), .init("""
+                                {
+                                  "request_id": "04c78e0d-141e-3a13-5d38-17821fbdb3c1",
+                                  "lease_id": "",
+                                  "renewable": false,
+                                  "lease_duration": 0,
+                                  "data": {
+                                    "last_vault_rotation": "2025-09-14T15:44:15.5738422Z",
+                                    "password": "\(passwordDatabase1)",
+                                    "rotation_period": 3600,
+                                    "ttl": 3555,
+                                    "username": "\(username)"
+                                  },
+                                  "wrap_info": null,
+                                  "warnings": null,
+                                  "auth": null
+                                }
+                                """))
+                    case "/\(databaseMount2)/static-creds/\(vaultRole2)":
+                        return (.init(status: .ok), .init("""
+                            {
+                              "request_id": "04c78e0d-141e-3a13-5d38-17821fbdb3c1",
+                              "lease_id": "",
+                              "renewable": false,
+                              "lease_duration": 0,
+                              "data": {
+                                "last_vault_rotation": "2025-09-14T15:44:15.5738422Z",
+                                "password": "\(passwordDatabase2)",
+                                "rotation_period": 3600,
+                                "ttl": 3555,
+                                "username": "\(username)"
+                              },
+                              "wrap_info": null,
+                              "warnings": null,
+                              "auth": null
+                            }
+                            """))
+                    default:
+                        Issue.record("Unexpected request made to \(String(reflecting: req.path)): \(req)")
+                        throw TestError()
+                }
+            }
+
+            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
+                                          clientTransport: mockClient)
+            try await vaultClient.login(method: .token("test_token"))
+
+            let scheme = "vault"
+            let sut = try await vaultClient.makeResourceReader(
+                scheme: scheme,
+                databaseReaderParsers: [.mount(databaseMount1), .mount(databaseMount2)]
+            )
+
+            // MUT
+            let output = try await sut.readConfiguration(
+                source: .text("""
+                postgresRoleCredentials: String = read("\(scheme):/\(databaseMount1)/static-creds/\(vaultRole1)").text
+                valkeyRoleCredentials: String = read("\(scheme):/\(databaseMount2)/static-creds/\(vaultRole2)").text
+                """),
+                as: DatabaseSecrets.self)
+
+            let databaseSecrets1 = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.postgresRoleCredentials.utf8))
+            let databaseSecrets2 = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.valkeyRoleCredentials.utf8))
+            #expect(databaseSecrets1.username == username)
+            #expect(databaseSecrets1.password == passwordDatabase1)
+            #expect(databaseSecrets2.username == username)
+            #expect(databaseSecrets2.password == passwordDatabase2)
+        }
+
+        @Test
+        func custom_parse_strategy() async throws {
+            struct AppConfig: Codable, Sendable {
+                var secrets: String
+            }
+
+            let fooValue = "bar"
+            let zipValue = "zap"
+
+            let customPath = "/sys/wrapping/unwrap"
+            let mockClient = MockClientTransport { req, _, _, _ in
+                switch req.path?.replacingOccurrences(of: "%2F", with: "/") {
+                    case customPath:
+                        return (.init(status: .ok), .init("""
+                            {
+                              "request_id": "d4eb86fe-1a60-7cef-5a97-623bb789891c",
+                              "lease_id": "",
+                              "renewable": false,
+                              "lease_duration": 0,
+                              "data": {
+                                "foo": "\(fooValue)",
+                                "zip": "\(zipValue)"
+                              },
+                              "wrap_info": null,
+                              "warnings": null,
+                              "auth": null
+                            }
+                            """))
+                    default:
+                        Issue.record("Unexpected request made to \(String(reflecting: req.path))")
+                        throw TestError()
+                }
+            }
+
+            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
+                                          clientTransport: mockClient)
+            try await vaultClient.login(method: .token("test_token"))
+
+            let scheme = "vault"
+            let sut = try await vaultClient.makeResourceReader(
+                scheme: scheme,
+                customResourceReaderParsers: [vaultClient.unwrapReader(customPath: customPath)]
+            )
+
+            // MUT
+            let output = try await sut.readConfiguration(
+                source: .text("""
+                secrets: String = read("\(scheme):\(customPath)?token=wrapping_token").text
+                """),
+                as: AppConfig.self)
+
+            let secrets = try JSONDecoder().decode(WrappingTestSecret.self, from: Data(output.secrets.utf8))
+            #expect(secrets.foo == fooValue)
+            #expect(secrets.zip == zipValue)
+        }
+    }
+}
+
+fileprivate struct WrappingTestSecret: Codable {
+    let foo: String
+    let zip: String
+}
+
+fileprivate extension VaultClient {
+    struct CustomReader: CustomResourceReaderStrategy {
+        let client: VaultClient
+        let customPath: String
+
+        func parse(_ url: URL) async throws -> [UInt8]? {
+            let relativePath = url.relativePath.removeSlash()
+
+            if !customPath.isEmpty,
+               relativePath.starts(with: customPath.removeSlash()) {
+                let query = url.query()
+                let token: String? = if let query {
+                    String(query.dropFirst("token=".count))
+                } else {
+                    nil
+                }
+                let response: VaultResponse<WrappingTestSecret, Never> = try await client.withSystemBackend { systemBackend in
+                    try await systemBackend.unwrapResponse(token: token)
+                }
+
+                let data = try response.data.map(JSONEncoder().encode) ?? Data()
+                return Array(data)
+            } else {
+                return nil
+            }
+        }
+    }
+}
+
+fileprivate extension CustomResourceReaderStrategy where Self == VaultClient.CustomReader {
+    /// Strategy to parse KeyValue resource which expects a URL prefixed with the given `mount`
+    static func unwrapSecret(customPath: String, client: VaultClient) -> VaultClient.CustomReader {
+        .init(client: client, customPath: customPath)
+    }
+}
+
+fileprivate extension VaultClient {
+    func unwrapReader(customPath: String) -> VaultClient.CustomReader {
+        .unwrapSecret(customPath: customPath, client: self)
     }
 }
 

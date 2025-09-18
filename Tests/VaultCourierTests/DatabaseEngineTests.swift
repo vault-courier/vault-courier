@@ -101,8 +101,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
 
                 let sut = try await vaultClient.makeResourceReader(
                     scheme: "vault",
-                    keyValueReaderParser: KeyValueReaderParser(mount: ""),
-                    databaseReaderParser: DatabaseReaderParser(mount: enginePath)
+                    databaseReaderParsers: [.mount(enginePath)]
                 )
                 // MUT
                 let output = try await sut.readConfiguration(
@@ -131,8 +130,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
 
                 let sut = try await vaultClient.makeResourceReader(
                     scheme: "vault",
-                    keyValueReaderParser: KeyValueReaderParser(mount: ""),
-                    databaseReaderParser: DatabaseReaderParser(mount: enginePath)
+                    databaseReaderParsers: [.mount(enginePath)]
                 )
                 // MUT
                 let output = try await sut.readConfiguration(
