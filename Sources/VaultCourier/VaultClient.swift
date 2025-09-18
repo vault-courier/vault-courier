@@ -49,12 +49,12 @@ public actor VaultClient {
             self.backgroundActivityLogger = backgroundActivityLogger ?? Self.loggingDisabled
         }
 
-        static func defaultHttp(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
+        public static func defaultHttp(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
             .init(apiURL: VaultClient.Server.defaultHttpURL,
                   backgroundActivityLogger: backgroundActivityLogger)
         }
 
-        static func defaultHttps(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
+        public static func defaultHttps(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
             .init(apiURL: VaultClient.Server.defaultHttpsURL,
                   backgroundActivityLogger: backgroundActivityLogger)
         }
@@ -82,7 +82,7 @@ public actor VaultClient {
         self.logger = configuration.backgroundActivityLogger
     }
 
-    func sessionToken() throws -> String {
+    public func sessionToken() throws -> String {
         guard let token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }

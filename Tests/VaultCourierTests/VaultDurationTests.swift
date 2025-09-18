@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 import Testing
-@testable import VaultCourier
+import VaultCourier
 
 @Suite
 struct VaultDuration {

@@ -22,7 +22,7 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 
-@testable import VaultCourier
+import VaultCourier
 
 @Suite
 struct VaultClientTests {
@@ -40,7 +40,7 @@ struct VaultClientTests {
         let approleMount = "path/to/approle"
 
         let mockClient = MockClientTransport { req, _, _, _ in
-            #expect(req.path?.replacingOccurrences(of: "%2F", with: "/") == "/auth/\(approleMount)/login", "custom approle path was not taken into account")
+            #expect(req.normalizedPath == "/auth/\(approleMount)/login", "custom approle path was not taken into account")
 
             return (.init(status: .ok), .init("""
                 {
@@ -90,7 +90,7 @@ struct VaultClientTests {
         let appRoleName = "batch_app"
         let expectedSecretID = "ed8313c8-852a-0098-0d3f-67c5771cca6e"
         let mockClient = MockClientTransport { req, _, _, _ in
-            switch req.path?.replacingOccurrences(of: "%2F", with: "/") {
+            switch req.normalizedPath {
                     case "/auth/\(mountPath)/role/\(appRoleName)/secret-id":
                     return (.init(status: .ok), .init("""
                         {
@@ -155,6 +155,44 @@ struct VaultClientTests {
 
         let secretID = try await vaultClient.unwrapAppRoleSecretID(token: wrappedToken)
         #expect(secretID.secretID == expectedSecretID)
+    }
+}
+
+extension VaultClientTests {
+    struct Mock {
+        @Test func approle_login() async throws {
+            let apppRoleMountPath = "path/to/approle"
+            let roleID = "59d6d1ca-47bb-4e7e-a40b-8be3bc5a0ba8"
+            let secretID = "84896a0c-1347-aa90-a4f6-aca8b7558780"
+
+            let transportClient = MockVaultClientTransport { req, _, _, _ in
+                switch req.normalizedPath {
+                    case "/auth/\(apppRoleMountPath)/login":
+
+                        return (.init(status: .ok), MockVaultClientTransport.vaultAuth(.init(
+                            requestID: "bb10149f-39dd-8261-a427-d52e64922355",
+                            clientToken: "approle_client_token",
+                            accessor: "accessor_token",
+                            tokenPolicies: ["default"],
+                            metadata: ["tag1": "development"],
+                            leaseDuration: .seconds(3600*24),
+                            isRenewable: true,
+                            entityID: "913160eb-837f-ee8c-e6aa-9ded162b5b75",
+                            tokenType: .batch,
+                            isOrphan: true,
+                            numberOfUses: 0)))
+                    default:
+                        Issue.record("Unexpected request made to \(String(reflecting: req.path)): \(req)")
+                        throw TestError()
+                }
+            }
+
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                          clientTransport: transportClient)
+            try await vaultClient.login(method: .appRole(path: apppRoleMountPath,
+                                                         credentials: .init(roleID: roleID, secretID: secretID)))
+
+        }
     }
 }
 
