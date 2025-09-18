@@ -33,6 +33,10 @@ public protocol ResourceReaderStrategy {
     func parse(_ url: URL) throws -> ParseOutput
 }
 
+public protocol CustomResourceReaderStrategy: Sendable {
+    func parse(_ url: URL) async throws -> [UInt8]?
+}
+
 public protocol KeyValueResourceReaderStrategy: ResourceReaderStrategy, Sendable {
     /// Parses URL into the parameters the vault client needs to fetch a key/value secret.
     /// - Parameter url: URL to parse
