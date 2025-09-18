@@ -35,3 +35,9 @@ struct MockClientTransport: ClientTransport {
 }
 
 struct TestError: Error, Equatable {}
+
+extension HTTPRequest {
+    var normalizedPath: String? {
+        self.path?.replacingOccurrences(of: "%2F", with: "/")
+    }
+}

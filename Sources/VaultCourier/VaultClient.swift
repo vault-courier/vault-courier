@@ -48,6 +48,16 @@ public actor VaultClient {
             self.apiURL = apiURL
             self.backgroundActivityLogger = backgroundActivityLogger ?? Self.loggingDisabled
         }
+
+        static func defaultHttp(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
+            .init(apiURL: VaultClient.Server.defaultHttpURL,
+                  backgroundActivityLogger: backgroundActivityLogger)
+        }
+
+        static func defaultHttps(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
+            .init(apiURL: VaultClient.Server.defaultHttpsURL,
+                  backgroundActivityLogger: backgroundActivityLogger)
+        }
     }
 
     /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
