@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if DatabaseEngineSupport
+/// Dynamic Credentials reponse
 public struct RoleCredentialsResponse: Sendable {
     public let requestID: String
 

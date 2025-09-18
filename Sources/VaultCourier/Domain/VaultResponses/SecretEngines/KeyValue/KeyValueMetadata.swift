@@ -74,27 +74,3 @@ public struct KeyValueStoreMetadata: Sendable {
         public let isDestroyed: Bool
     }
 }
-
-//extension Operations.ReadMetadataKvSecrets.Output.Ok.Body.JsonPayload {
-//    var metadata: KeyValueStoreMetadata {
-//        get throws {
-//            let versionTuples = try data.versions.additionalProperties.map { key, value -> (Int, KeyValueStoreMetadata.KeyValueLifetime) in
-//                guard let index = Int(key) else {
-//                    throw VaultClientError.decodingFailed()
-//                }
-//                return (index, KeyValueStoreMetadata.KeyValueLifetime(createdAt: value.createdTime, deletedAt: value.deletionTime, isDestroyed: value.destroyed))
-//            }
-//            let versions = Dictionary(uniqueKeysWithValues: versionTuples)
-//            return .init(requestID: requestId,
-//                  isCasRequired: data.casRequired,
-//                  createdAt: data.createdTime,
-//                  currentVersion: data.currentVersion,
-//                  custom: data.customMetadata?.additionalProperties,
-//                  deletedVersionAfter: data.deleteVersionAfter,
-//                  versionsLimit: data.maxVersions,
-//                  oldestVersion: data.oldestVersion,
-//                  updatedAt: data.updatedTime,
-//                  versions: versions)
-//        }
-//    }
-//}

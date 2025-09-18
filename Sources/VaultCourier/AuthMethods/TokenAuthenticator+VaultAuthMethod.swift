@@ -21,7 +21,7 @@ extension TokenAuth: VaultAuthMethod {
     /// - Returns: session token
     public func authenticate() async throws -> String {
         guard let token else {
-            throw TokenAuthError.missingToken()
+            throw VaultClientError(message: "Token has not been set in Token Authenticator")
         }
         return token
     }

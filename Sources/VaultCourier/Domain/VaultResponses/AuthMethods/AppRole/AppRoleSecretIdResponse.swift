@@ -14,9 +14,11 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 public enum AppRoleSecretIdResponse: Sendable {
 
     case wrapped(WrappedTokenResponse)
 
     case secretId(GenerateAppSecretIdResponse)
 }
+#endif

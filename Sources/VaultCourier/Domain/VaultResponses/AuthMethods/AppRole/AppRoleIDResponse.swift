@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
+#if AppRoleSupport
 public struct AppRoleIDResponse: Sendable {
     public let requestID: String
 
@@ -25,3 +25,4 @@ public struct AppRoleIDResponse: Sendable {
         self.roleID = roleID
     }
 }
+#endif

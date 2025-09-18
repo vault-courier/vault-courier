@@ -17,8 +17,7 @@
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
-//import struct Foundation.Date
-import Foundation
+import struct Foundation.Date
 #endif
 
 public struct LookupTokenResponse: Sendable {

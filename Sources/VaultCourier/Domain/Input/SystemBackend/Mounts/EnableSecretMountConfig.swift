@@ -32,7 +32,7 @@ public struct EnableSecretMountConfig: Sendable {
     public var options: [String: String]?
 
     /// Mark the mount as a local mount, which is not replicated and is unaffected by replication.
-    public var local: Bool?
+    public var isLocal: Bool?
 
     /// Whether to turn on seal wrapping for the mount.
     public var sealWrap: Bool?
@@ -45,14 +45,14 @@ public struct EnableSecretMountConfig: Sendable {
                 description: String? = nil,
                 config: [String : String]? = nil,
                 options: [String : String]? = nil,
-                local: Bool? = nil, sealWrap: Bool? = nil,
+                isLocal: Bool? = nil, sealWrap: Bool? = nil,
                 externalEntropyAccess: Bool? = nil) {
         self.mountType = mountType
         self.path = path
         self.description = description
         self.config = config
         self.options = options
-        self.local = local
+        self.isLocal = isLocal
         self.sealWrap = sealWrap
         self.externalEntropyAccess = externalEntropyAccess
     }

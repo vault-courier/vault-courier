@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if PostgresPluginSupport
 /// Request type with the connection configuration for Vault and a database
 public struct PostgresConnectionConfiguration: Sendable, Decodable {
     /// The name of the connection
@@ -138,3 +139,4 @@ public enum PostgresAuthMethod: String, Decodable, Sendable, CustomDebugStringCo
 
     public var debugDescription: String { rawValue }
 }
+#endif

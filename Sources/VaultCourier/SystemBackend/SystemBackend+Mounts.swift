@@ -34,7 +34,7 @@ extension SystemBackend {
             body: .json(.init(
                 config: configuration,
                 externalEntropyAccess: mountConfig.externalEntropyAccess,
-                local: mountConfig.local,
+                local: mountConfig.isLocal,
                 options: options,
                 sealWrap: mountConfig.sealWrap,
                 _type: mountConfig.mountType)

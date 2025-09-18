@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if PostgresPluginSupport
 /// Database dynamic role creation configuration
 public struct CreatePostgresRole: Sendable {
     /// The vault role name which maps to a dynamically generated database username
@@ -105,3 +106,4 @@ public enum DatabaseCredentialMethod: String, Sendable {
     case rsaPrivateKey = "rsa_private_key"
     case clientCertificate = "client_certificate"
 }
+#endif

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if AppRoleSupport
 public struct GenerateAppSecretIdResponse: Sendable {
     public let requestID: String
 
@@ -26,12 +27,20 @@ public struct GenerateAppSecretIdResponse: Sendable {
 
     public let secretIDNumberOfUses: Int
 
-    package init(requestID: String, secretID: String, secretIDAccessor: String, secretIDTimeToLive: Int, secretIDNumberOfUses: Int) {
+    init(requestID: String, secretID: String, secretIDAccessor: String, secretIDTimeToLive: Int, secretIDNumberOfUses: Int) {
         self.requestID = requestID
         self.secretID = secretID
         self.secretIDAccessor = secretIDAccessor
         self.secretIDTimeToLive = secretIDTimeToLive
         self.secretIDNumberOfUses = secretIDNumberOfUses
+    }
+
+    init(requestID: String, appRoleSecretID: AppRoleSecretID) {
+        self.init(requestID: requestID,
+                  secretID: appRoleSecretID.secretID,
+                  secretIDAccessor: appRoleSecretID.secretIDAccessor,
+                  secretIDTimeToLive: appRoleSecretID.secretIDTimeToLive,
+                  secretIDNumberOfUses: appRoleSecretID.secretIDNumberOfUses)
     }
 }
 
@@ -48,3 +57,4 @@ struct AppRoleSecretID: Decodable, Sendable {
         case secretIDNumberOfUses = "secret_id_num_uses"
     }
 }
+#endif

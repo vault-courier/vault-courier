@@ -36,7 +36,7 @@ extension EnableSecretMountConfig {
             description: module.description,
             config: config,
             options: options,
-            local: local,
+            isLocal: local,
             sealWrap: sealWrap,
             externalEntropyAccess: externalEntropyAccess
         )

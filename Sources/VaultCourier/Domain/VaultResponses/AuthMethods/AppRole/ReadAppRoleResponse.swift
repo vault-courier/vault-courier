@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
+#if AppRoleSupport
 public struct ReadAppRoleResponse: Sendable {
     public let requestID: String?
 
@@ -82,3 +82,4 @@ public struct ReadAppRoleResponse: Sendable {
         self.tokenType = tokenType
     }
 }
+#endif

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+/// General Vault API response
 public struct VaultResponse<
     VaultData: Decodable & Sendable,
     Auth: Decodable & Sendable

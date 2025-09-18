@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if DatabaseEngineSupport
 public struct DatabaseCredentials: Sendable, Codable {
     public var username: String
     public var password: String
@@ -23,3 +24,4 @@ public struct DatabaseCredentials: Sendable, Codable {
         self.password = password
     }
 }
+#endif

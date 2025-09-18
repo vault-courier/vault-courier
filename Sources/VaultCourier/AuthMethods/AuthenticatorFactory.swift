@@ -22,12 +22,16 @@ import struct Foundation.URL
 #endif
 
 import TokenAuth
+#if AppRoleSupport
 import AppRoleAuth
+#endif
 
 public enum NewAuthMethod {
     case token(String)
 
+    #if AppRoleSupport
     case appRole(path: String, credentials: AppRoleCredentials)
+    #endif
 }
 
 package func makeAuthenticator(_ method: NewAuthMethod,
@@ -43,6 +47,7 @@ package func makeAuthenticator(_ method: NewAuthMethod,
                 clientTransport: clientTransport,
                 token: token
             )
+        #if AppRoleSupport
         case let .appRole(path: path, credentials: credentials):
             guard let clientTransport else {
                 return AppRoleMock(appRolePath: path,
@@ -56,5 +61,6 @@ package func makeAuthenticator(_ method: NewAuthMethod,
                 clientTransport: clientTransport,
                 credentials: credentials
             )
+        #endif
     }
 }

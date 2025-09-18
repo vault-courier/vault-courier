@@ -16,12 +16,7 @@
 
 #if ValkeyPluginSupport
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import struct Foundation.URL
-#endif
-
+/// Valkey Connection Configuration response
 public struct ValkeyConnectionResponse: Sendable {
     public let requestID: String
 

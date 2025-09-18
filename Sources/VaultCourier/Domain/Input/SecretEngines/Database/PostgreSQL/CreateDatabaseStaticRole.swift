@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if DatabaseEngineSupport
 public struct CreateDatabaseStaticRole: Sendable {
     /// The corresponding role in the database of ``databaseUsername``
     public var vaultRoleName: String
@@ -94,3 +95,4 @@ extension RotationStrategy: CustomDebugStringConvertible {
         }
     }
 }
+#endif

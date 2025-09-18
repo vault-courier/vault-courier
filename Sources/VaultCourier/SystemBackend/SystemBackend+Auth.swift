@@ -30,7 +30,7 @@ extension SystemBackend {
             headers: .init(xVaultToken: sessionToken),
             body: .json(.init(
                 config: requestConfig,
-                local: configuration.local,
+                local: configuration.isLocal,
                 options: requestOptions,
                 sealWrap: configuration.sealWrap,
                 _type: configuration.type)))

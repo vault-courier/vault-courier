@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if ValkeyPluginSupport
 /// Database dynamic role creation configuration for Valkey
 public struct CreateValkeyRole: Sendable {
     /// The vault role name which maps to a dynamically generated database username
@@ -47,3 +48,4 @@ public struct CreateValkeyRole: Sendable {
         self.creationStatements = creationStatements
     }
 }
+#endif
