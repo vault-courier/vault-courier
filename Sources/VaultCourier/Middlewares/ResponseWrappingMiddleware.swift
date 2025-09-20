@@ -37,7 +37,3 @@ public struct ResponseWrappingMiddleware: ClientMiddleware {
         return try await next(wrapRequest, body, baseURL)
     }
 }
-
-extension HTTPField.Name {
-    static let wrapTTL = Self("X-VAULT-WRAP-TTL")!
-}

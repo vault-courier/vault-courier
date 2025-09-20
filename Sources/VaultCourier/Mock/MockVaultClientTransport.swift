@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if MockSupport
 import HTTPTypes
 import Foundation
 import OpenAPIRuntime
@@ -34,62 +35,78 @@ public struct MockVaultClientTransport: ClientTransport {
 
     public static var successful: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .ok), responseBody) } }
 
-    public static func response(data: (some Codable)?) -> HTTPBody {
-        let json: String
-        if let data {
-            let encoded = try? JSONEncoder().encode(data)
-            json = if let encoded {
-                String(data: encoded, encoding: .utf8) ?? "null"
-            } else {
-                "null"
-            }
-        } else {
-            json = "null"
-        }
+    /// KeyValue response body
+    ///
+    /// Encodes the input `data` inside a response body of the form
+    ///
+    ///     {
+    ///       "request_id": "request_id",
+    ///        "data": {
+    ///          "data": input
+    ///        }
+    ///     }
+    ///
+    public static func encodeKeyValue(data: some Codable) async throws -> HTTPBody {
+        guard let encoded = try? JSONEncoder().encode(data)
+        else { return .init() }
 
+        let json = String(data: encoded, encoding: .utf8) ?? "null"
         return HTTPBody("""
         {
-          "request_id": "bb10149f-39dd-8261-a427-d52e64922355",
-          "data": \(json),
+          "request_id": "request_id",
+          "data": {
+            "data": \(json)
+          }
         }
         """)
     }
 
+    /// Response body which encodes any encodable input as it is
+    public static func vaultData(_ response: some Encodable) async throws -> HTTPBody {
+        return .vaultData(response)
+    }
+
+    /// Response body of login auth response
     public static func vaultAuth(_ response: VaultAuthResponse) async throws -> HTTPBody {
         return .vaultAuth(response)
+    }
+
+    /// Response body of wrapping endpoint
+    public static func vaultWrapped(_ response: WrappedTokenResponse) async throws -> HTTPBody {
+        return .vaultWrap(response)
+    }
+
+    public static func appRoleSecret(_ response: GenerateAppSecretIdResponse) -> HTTPBody {
+        return .appRoleSecret(response)
     }
 }
 
 extension HTTPBody {
+    static func vaultData(_ response: some Encodable) -> Self {
+        guard let encoded = try? JSONEncoder().encode(response) else {
+            return .init()
+        }
+        return .init(encoded)
+    }
     static func vaultAuth(_ response: VaultAuthResponse) -> Self {
-
-        let tokenPolicies: String = if let encoded = try? JSONEncoder().encode(response.tokenPolicies) {
-            String(data: encoded, encoding: .utf8) ?? "[]"
-        } else {
-            "[]"
+        guard let encoded = try? JSONEncoder().encode(response) else {
+            return .init()
         }
+        return .init(encoded)
+    }
 
-        let result = """
-        {
-          "request_id": "\(response.requestID ?? "")",
-          "auth": {
-            "client_token": "\(response.clientToken)",
-            "accessor": "\(response.accessor)",
-            "token_policies": \(tokenPolicies),
-            "metadata": {
-              "role_name": "my_role",
-              "tag1": "production"
-            },
-            "lease_duration": \(response.leaseDuration.components.seconds),
-            "renewable": \(response.isRenewable),
-            "entity_id": "913160eb-837f-ee8c-e6aa-9ded162b5b75",
-            "token_type": "\(response.tokenType.rawValue)",
-            "orphan": \(response.isOrphan),
-            "mfa_requirement": null,
-            "num_uses": \(response.numberOfUses)
-          }
+    static func vaultWrap(_ response: WrappedTokenResponse) -> Self {
+        guard let encoded = try? JSONEncoder().encode(response) else {
+            return .init()
         }
-        """
-        return .init(result)
+        return .init(encoded)
+    }
+
+    static func appRoleSecret(_ response: GenerateAppSecretIdResponse) -> Self {
+        guard let encoded = try? JSONEncoder().encode(response) else {
+            return .init()
+        }
+        return .init(encoded)
     }
 }
+#endif

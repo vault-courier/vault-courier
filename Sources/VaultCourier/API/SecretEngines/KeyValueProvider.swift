@@ -193,7 +193,7 @@ extension KeyValueSecretProvider {
         }
     }
 
-    /// Retrieves the secret at the specified path location.
+    /// Retrieves the secret at the specified path location as Foundation `Data`.
     ///
     /// - Parameters:
     ///   - enginePath: path to key/value secret engine mount

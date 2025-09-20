@@ -31,3 +31,19 @@ public struct VaultResponse<
         self.auth = auth
     }
 }
+
+extension VaultResponse where Auth == Never {
+    package init(requestID: String, data: VaultData) {
+        self.init(requestID: requestID,
+                  data: data,
+                  auth: nil)
+    }
+}
+
+extension VaultResponse where VaultData == Never {
+    package init(requestID: String, auth: Auth) {
+        self.init(requestID: requestID,
+                  data: nil,
+                  auth: auth)
+    }
+}

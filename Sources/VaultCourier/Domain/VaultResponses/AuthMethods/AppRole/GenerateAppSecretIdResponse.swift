@@ -23,19 +23,14 @@ public struct GenerateAppSecretIdResponse: Sendable {
 
     public let secretIDAccessor: String
 
+    /// Duration of the secretID
     public let secretIDTimeToLive: Int
+
 
     public let secretIDNumberOfUses: Int
 
-    init(requestID: String, secretID: String, secretIDAccessor: String, secretIDTimeToLive: Int, secretIDNumberOfUses: Int) {
-        self.requestID = requestID
-        self.secretID = secretID
-        self.secretIDAccessor = secretIDAccessor
-        self.secretIDTimeToLive = secretIDTimeToLive
-        self.secretIDNumberOfUses = secretIDNumberOfUses
-    }
-
-    init(requestID: String, appRoleSecretID: AppRoleSecretID) {
+    init(requestID: String,
+         appRoleSecretID: AppRoleSecretID) {
         self.init(requestID: requestID,
                   secretID: appRoleSecretID.secretID,
                   secretIDAccessor: appRoleSecretID.secretIDAccessor,
@@ -44,7 +39,7 @@ public struct GenerateAppSecretIdResponse: Sendable {
     }
 }
 
-struct AppRoleSecretID: Decodable, Sendable {
+struct AppRoleSecretID: Codable, Sendable {
     let secretID: String
     let secretIDAccessor: String
     let secretIDTimeToLive: Int

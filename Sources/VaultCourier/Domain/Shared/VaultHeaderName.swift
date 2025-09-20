@@ -14,23 +14,14 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import HTTPTypes
 
-public struct WrappedTokenResponse: Sendable {
-    public let requestID: String
+extension HTTPField.Name {
+    static let wrapTTL = Self("X-VAULT-WRAP-TTL")!
+    static let vaultToken = Self("X-VAULT-TOKEN")!
+}
 
-    /// Wrapped token ID
-    public let token: String
-
-    public let accessor: String
-
-    /// Duration of the wrapped token
-    public let timeToLive: Int
-
-    /// Date of creation
-    public let createdAt: String
-
-    /// Original path that call the wrapping response endpoint
-    public let creationPath: String
-
-    public let wrappedAccessor: String?
+public enum VaultHeaderName {
+    public static let wrapTTL = HTTPField.Name.wrapTTL
+    public static let vaultToken = HTTPField.Name.vaultToken
 }

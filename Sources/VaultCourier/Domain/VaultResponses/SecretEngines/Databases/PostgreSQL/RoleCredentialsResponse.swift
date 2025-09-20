@@ -25,6 +25,7 @@ public struct RoleCredentialsResponse: Sendable {
     /// Password of generated dynamic role
     public let password: String
 
+    /// Credential duration before expiration
     public let timeToLive: Duration?
 
     /// Last Vault rotation

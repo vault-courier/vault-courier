@@ -41,28 +41,4 @@ public struct VaultAuthResponse: Sendable {
 
     /// A value of zero means unlimited number of uses
     public let numberOfUses: Int
-
-    package init(requestID: String?,
-                 clientToken: String,
-                 accessor: String,
-                 tokenPolicies: [String],
-                 metadata: [String : String],
-                 leaseDuration: Duration,
-                 isRenewable: Bool,
-                 entityID: String?,
-                 tokenType: TokenType,
-                 isOrphan: Bool,
-                 numberOfUses: Int) {
-        self.requestID = requestID
-        self.clientToken = clientToken
-        self.accessor = accessor
-        self.tokenPolicies = tokenPolicies
-        self.metadata = metadata
-        self.leaseDuration = leaseDuration
-        self.isRenewable = isRenewable
-        self.entityID = entityID
-        self.tokenType = tokenType
-        self.isOrphan = isOrphan
-        self.numberOfUses = numberOfUses
-    }
 }
