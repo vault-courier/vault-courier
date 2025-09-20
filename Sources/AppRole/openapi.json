@@ -733,7 +733,8 @@
                 }
               },
               "creation_time": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "expiration_time": {
                 "type": "string"
@@ -972,7 +973,8 @@
                 "type": "integer"
               },
               "creation_time": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "accessor": {
                 "type": "string"

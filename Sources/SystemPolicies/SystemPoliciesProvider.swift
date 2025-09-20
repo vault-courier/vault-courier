@@ -29,6 +29,7 @@ package final class SystemPoliciesProvider: Sendable {
                 token: String? = nil) {
         self.client = Client(
             serverURL: apiURL,
+            configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
             transport: clientTransport,
             middlewares: middlewares
         )

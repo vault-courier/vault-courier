@@ -45,6 +45,7 @@ package final class AppRoleAuth: Sendable {
                  credentials: AppRoleCredentials? = nil) {
         self.client = Client(
             serverURL: configuration.apiURL,
+            configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
             transport: clientTransport,
             middlewares: middlewares
         )

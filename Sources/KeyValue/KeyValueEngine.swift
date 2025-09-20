@@ -44,6 +44,7 @@ package final class KeyValueEngine: Sendable {
                  token: String? = nil) {
         self.client = Client(
             serverURL: configuration.apiURL,
+            configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
             transport: clientTransport,
             middlewares: middlewares
         )

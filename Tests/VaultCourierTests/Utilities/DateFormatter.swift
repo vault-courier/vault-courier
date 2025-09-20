@@ -18,24 +18,15 @@
 import FoundationEssentials
 #else
 import struct Foundation.Date
+import struct Foundation.Locale
 #endif
 
-public struct WrappedTokenResponse: Sendable {
-    public let requestID: String
-
-    /// Wrapped token ID
-    public let token: String
-
-    public let accessor: String
-
-    /// Duration of the wrapped token
-    public let timeToLive: Int
-
-    /// Date of creation
-    public let createdAt: Date
-
-    /// Original path that call the wrapping response endpoint
-    public let creationPath: String
-
-    public let wrappedAccessor: String?
+extension VaultClientTests {
+    static var dateFormatter: Date.ISO8601FormatStyle {
+        let style = Date.ISO8601FormatStyle(timeZone: .init(identifier: "Europe/Berlin")!)
+        return style
+//        let createdAt = style.format(fixedDate)
+    }
 }
+
+

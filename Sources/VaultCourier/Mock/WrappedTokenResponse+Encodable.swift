@@ -15,6 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #if MockSupport
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.Date
+#endif
+
 extension WrappedTokenResponse: Encodable {
     enum CodingKeys: String, CodingKey {
         case requestID = "request_id"
@@ -50,7 +56,7 @@ extension WrappedTokenResponse {
                 token: String,
                 accessor: String,
                 timeToLive: Int,
-                createdAt: String,
+                createdAt: Date,
                 creationPath: String,
                 wrappedAccessor: String) {
         self.requestID = requestID

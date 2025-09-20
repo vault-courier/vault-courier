@@ -253,7 +253,7 @@ extension VaultClientTests {
                                     token: wrappedToken,
                                     accessor: "accessor_token",
                                     timeToLive: 120,
-                                    createdAt: "2025-09-14T18:44:15.318941505Z",
+                                    createdAt: .now,
                                     creationPath: "auth/\(apppRoleMountPath)/role/\(appRoleName)/secret-id",
                                     wrappedAccessor: "54d4834d-aa0e-8f19-3286-7a172370ae7b")
                                 )
