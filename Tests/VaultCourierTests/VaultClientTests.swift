@@ -173,18 +173,23 @@ extension VaultClientTests {
                 switch req.normalizedPath {
                     case "/auth/\(apppRoleMountPath)/login":
 
-                        return (.init(status: .ok), try await MockVaultClientTransport.vaultAuth(.init(
-                            requestID: "bb10149f-39dd-8261-a427-d52e64922355",
-                            clientToken: clientToken,
-                            accessor: "accessor_token",
-                            tokenPolicies: ["default"],
-                            metadata: ["tag1": "development"],
-                            leaseDuration: .seconds(3600*24),
-                            isRenewable: true,
-                            entityID: "913160eb-837f-ee8c-e6aa-9ded162b5b75",
-                            tokenType: .batch,
-                            isOrphan: true,
-                            numberOfUses: 0)))
+                        return (.init(status: .ok),
+                                try await MockVaultClientTransport.encode(response:
+                                    VaultAuthResponse(
+                                        requestID: "bb10149f-39dd-8261-a427-d52e64922355",
+                                        clientToken: clientToken,
+                                        accessor: "accessor_token",
+                                        tokenPolicies: ["default"],
+                                        metadata: ["tag1": "development"],
+                                        leaseDuration: .seconds(3600*24),
+                                        isRenewable: true,
+                                        entityID: "913160eb-837f-ee8c-e6aa-9ded162b5b75",
+                                        tokenType: .batch,
+                                        isOrphan: true,
+                                        numberOfUses: 0
+                                    )
+                            )
+                        )
                     default:
                         Issue.record("Unexpected request made to \(String(reflecting: req.path)): \(req)")
                         throw TestError()
@@ -198,7 +203,7 @@ extension VaultClientTests {
             #expect(try await vaultClient.sessionToken() == clientToken)
         }
 
-        @Test func unwrap_approle_secret_id() async throws {
+        @Test func unwrap_approle_login_and_secrets_read() async throws {
             let apppRoleMountPath = "path/to/approle"
             let appRoleName = "test_role_name"
             let roleID = "role_id"
@@ -214,31 +219,40 @@ extension VaultClientTests {
             let dynamicRoleDatabasePassword = "test_dynamic_database_password"
             let keyValueMount = "key_value_mount_path"
             let secretKeyPath = "secret_key_path"
-            struct Secrets: Codable {
+            struct Secrets: Codable, Equatable {
                 let apiKey1: String
                 let apiKey2: String
             }
+            let expectedSecrets = Secrets(
+                apiKey1: "api_key_1",
+                apiKey2: "api_key_2"
+            )
 
             let transportClient = MockVaultClientTransport { req, body, _, _ in
                 switch req.normalizedPath {
                     case "/auth/\(apppRoleMountPath)/login":
-                        return (.init(status: .ok), try await MockVaultClientTransport.vaultAuth(.init(
-                            requestID: "bb10149f-39dd-8261-a427-d52e64922355",
-                            clientToken: clientToken,
-                            accessor: "accessor_token",
-                            tokenPolicies: ["default"],
-                            metadata: ["tag1": "development"],
-                            leaseDuration: .seconds(3600*24),
-                            isRenewable: true,
-                            entityID: "913160eb-837f-ee8c-e6aa-9ded162b5b75",
-                            tokenType: .batch,
-                            isOrphan: true,
-                            numberOfUses: 0)))
+                        return (.init(status: .ok), try await MockVaultClientTransport.encode(response:
+                                VaultAuthResponse(
+                                    requestID: "bb10149f-39dd-8261-a427-d52e64922355",
+                                    clientToken: clientToken,
+                                    accessor: "accessor_token",
+                                    tokenPolicies: ["default"],
+                                    metadata: ["tag1": "development"],
+                                    leaseDuration: .seconds(3600*24),
+                                    isRenewable: true,
+                                    entityID: "913160eb-837f-ee8c-e6aa-9ded162b5b75",
+                                    tokenType: .batch,
+                                    isOrphan: true,
+                                    numberOfUses: 0
+                                )
+                            )
+                        )
                 case "/auth/\(apppRoleMountPath)/role/\(appRoleName)/secret-id":
                         // This endpoint is actually called from an operations job
                         if req.headerFields.contains(VaultHeaderName.wrapTTL) {
                             return (.init(status: .ok),
-                                    try await MockVaultClientTransport.vaultWrapped(.init(
+                                    try await MockVaultClientTransport.encode(response:
+                                        WrappedTokenResponse(
                                     requestID: "",
                                     token: wrappedToken,
                                     accessor: "accessor_token",
@@ -250,12 +264,14 @@ extension VaultClientTests {
                             )
                         } else {
                             return (.init(status: .ok),
-                                    MockVaultClientTransport.appRoleSecret(.init(
-                                        requestID: "81ac0ea6-610d-61df-4039-9aab7cc5bf05",
-                                        secretID: expectedSecretID,
-                                        secretIDAccessor: "e69a33c6-af8e-0ca1-fbc7-63a35ca50d33",
-                                        secretIDTimeToLive: 86400,
-                                        secretIDNumberOfUses: 2)
+                                    try await MockVaultClientTransport.encode(response:
+                                        GenerateAppSecretIdResponse(
+                                            requestID: "81ac0ea6-610d-61df-4039-9aab7cc5bf05",
+                                            secretID: expectedSecretID,
+                                            secretIDAccessor: "e69a33c6-af8e-0ca1-fbc7-63a35ca50d33",
+                                            secretIDTimeToLive: 86400,
+                                            secretIDNumberOfUses: 2
+                                        )
                                     )
                             )
                         }
@@ -284,12 +300,14 @@ extension VaultClientTests {
                             }
                         }
                         return (.init(status: .ok),
-                                MockVaultClientTransport.appRoleSecret(.init(
-                                    requestID: "81ac0ea6-610d-61df-4039-9aab7cc5bf05",
-                                    secretID: expectedSecretID,
-                                    secretIDAccessor: "e69a33c6-af8e-0ca1-fbc7-63a35ca50d33",
-                                    secretIDTimeToLive: 86400,
-                                    secretIDNumberOfUses: 2)
+                                try await MockVaultClientTransport.encode(response:
+                                    GenerateAppSecretIdResponse(
+                                        requestID: "81ac0ea6-610d-61df-4039-9aab7cc5bf05",
+                                        secretID: expectedSecretID,
+                                        secretIDAccessor: "e69a33c6-af8e-0ca1-fbc7-63a35ca50d33",
+                                        secretIDTimeToLive: 86400,
+                                        secretIDNumberOfUses: 2
+                                    )
                                 )
                         )
                     case "/\(databaseMount)/static-creds/\(staticRole)":
@@ -298,7 +316,8 @@ extension VaultClientTests {
                         }
                         return (
                             .init(status: .ok),
-                                try await MockVaultClientTransport.vaultData(StaticRoleCredentialsResponse(
+                            try await MockVaultClientTransport.encode(response:
+                                    StaticRoleCredentialsResponse(
                                     requestID: "",
                                     username: staticRoleDatabaseUsername,
                                     password: staticRoleDatabasePassword,
@@ -308,31 +327,38 @@ extension VaultClientTests {
                                 )
                         )
                     case "/\(databaseMount)/creds/\(dynamicRole)":
-                        guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
-                            return (.init(status: .unauthorized), nil)
+//                        guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
+//                            return (.init(status: .unauthorized), nil)
+//                        }
+//                        return (
+//                            .init(status: .ok),
+//                                try await MockVaultClientTransport.encode(response:
+//                                    RoleCredentialsResponse(
+//                                    requestID: "",
+//                                    username: dynamicRoleDatabaseUsername,
+//                                    password: dynamicRoleDatabasePassword,
+//                                    timeToLive: .seconds(86400),
+//                                    updatedAt: "")
+//                                )
+//                        )
+
+                        return try await withRequiredAuthentication(req: req, clientToken: clientToken) { _, _ in
+                            try await encode(response:
+                                RoleCredentialsResponse(
+                                requestID: "",
+                                username: dynamicRoleDatabaseUsername,
+                                password: dynamicRoleDatabasePassword,
+                                timeToLive: .seconds(86400),
+                                updatedAt: "")
+                            )
                         }
-                        return (
-                            .init(status: .ok),
-                                try await MockVaultClientTransport.vaultData(RoleCredentialsResponse(
-                                    requestID: "",
-                                    username: dynamicRoleDatabaseUsername,
-                                    password: dynamicRoleDatabasePassword,
-                                    timeToLive: .seconds(86400),
-                                    updatedAt: "")
-                                )
-                        )
                     case "/\(keyValueMount)/data/\(secretKeyPath)":
                         guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
                             return (.init(status: .unauthorized), nil)
                         }
                         return (
                             .init(status: .ok),
-                            try await MockVaultClientTransport.encodeKeyValue(data: (
-                                    Secrets(
-                                        apiKey1: "api_key_1",
-                                        apiKey2: "api_key_2"
-                                    )
-                                )
+                            try await MockVaultClientTransport.encodeKeyValue(data: (expectedSecrets)
                             )
                         )
                     default:
@@ -362,7 +388,7 @@ extension VaultClientTests {
 
             let secrets: Secrets = try await vaultClient.readKeyValueSecret(enginePath: keyValueMount,
                                                                             key: secretKeyPath)
-            print(secrets)
+            #expect(secrets == expectedSecrets)
         }
     }
 }

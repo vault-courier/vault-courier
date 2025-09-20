@@ -30,10 +30,35 @@ public struct MockVaultClientTransport: ClientTransport {
         self.sendBlock = sendBlock
     }
 
-    public static let requestBody: HTTPBody = HTTPBody("hello")
-    public static let responseBody: HTTPBody = HTTPBody("bye")
+    /// Require authentication before processing request
+    ///
+    /// Example of use:
+    ///  ```
+    ///    return try await withRequiredAuthentication(req: req, clientToken: clientToken) { _, _ in
+    ///        try await encode(response:
+    ///            RoleCredentialsResponse(
+    ///            requestID: "",
+    ///            username: dynamicRoleDatabaseUsername,
+    ///            password: dynamicRoleDatabasePassword,
+    ///            timeToLive: .seconds(86400),
+    ///            updatedAt: "")
+    ///        )
+    ///    }
+    /// ```
+    public static func withRequiredAuthentication(
+        req: HTTPRequest,
+        body: HTTPBody? = nil,
+        clientToken: String,
+        _ next: @escaping @Sendable (HTTPRequest, HTTPBody?) async throws -> HTTPBody?)
+    async throws -> (HTTPResponse, HTTPBody?) {
+        guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
+            return (.init(status: .unauthorized), nil)
+        }
+        let responseBody = try await next(req, body)
+        return (.init(status: .ok), responseBody)
+    }
 
-    public static var successful: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .ok), responseBody) } }
+    public static var successful: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .ok), HTTPBody("bye")) } }
 
     /// KeyValue response body
     ///
@@ -62,47 +87,13 @@ public struct MockVaultClientTransport: ClientTransport {
     }
 
     /// Response body which encodes any encodable input as it is
-    public static func vaultData(_ response: some Encodable) async throws -> HTTPBody {
+    public static func encode(response: some Encodable) async throws -> HTTPBody {
         return .vaultData(response)
-    }
-
-    /// Response body of login auth response
-    public static func vaultAuth(_ response: VaultAuthResponse) async throws -> HTTPBody {
-        return .vaultAuth(response)
-    }
-
-    /// Response body of wrapping endpoint
-    public static func vaultWrapped(_ response: WrappedTokenResponse) async throws -> HTTPBody {
-        return .vaultWrap(response)
-    }
-
-    public static func appRoleSecret(_ response: GenerateAppSecretIdResponse) -> HTTPBody {
-        return .appRoleSecret(response)
     }
 }
 
 extension HTTPBody {
     static func vaultData(_ response: some Encodable) -> Self {
-        guard let encoded = try? JSONEncoder().encode(response) else {
-            return .init()
-        }
-        return .init(encoded)
-    }
-    static func vaultAuth(_ response: VaultAuthResponse) -> Self {
-        guard let encoded = try? JSONEncoder().encode(response) else {
-            return .init()
-        }
-        return .init(encoded)
-    }
-
-    static func vaultWrap(_ response: WrappedTokenResponse) -> Self {
-        guard let encoded = try? JSONEncoder().encode(response) else {
-            return .init()
-        }
-        return .init(encoded)
-    }
-
-    static func appRoleSecret(_ response: GenerateAppSecretIdResponse) -> Self {
         guard let encoded = try? JSONEncoder().encode(response) else {
             return .init()
         }
