@@ -42,22 +42,4 @@ extension AppRoleAuth: VaultAuthMethod {
         }
     }
 }
-
-extension AppRoleMock: VaultAuthMethod {
-    public func authenticate() async throws -> String {
-        let response = try await authApproleLogin(
-            path: .init(enginePath: appRolePath),
-            body: .json(.init(roleId: credentials.roleID, secretId: credentials.secretID))
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return json.auth.clientToken
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                throw vaultError
-        }
-    }
-}
 #endif

@@ -36,12 +36,9 @@ public enum NewAuthMethod {
 
 package func makeAuthenticator(_ method: NewAuthMethod,
                                apiURL: URL,
-                               clientTransport: ClientTransport?) -> VaultAuthMethod {
+                               clientTransport: ClientTransport) -> VaultAuthMethod {
     switch method {
         case .token(let token):
-            guard let clientTransport else {
-                return TokenAuthMock(token: token)
-            }
             return TokenAuth(
                 apiURL: apiURL,
                 clientTransport: clientTransport,
@@ -49,10 +46,6 @@ package func makeAuthenticator(_ method: NewAuthMethod,
             )
         #if AppRoleSupport
         case let .appRole(path: path, credentials: credentials):
-            guard let clientTransport else {
-                return AppRoleMock(appRolePath: path,
-                                   credentials: credentials)
-            }
             return AppRoleAuth(
                 configuration: .init(
                     apiURL: apiURL,

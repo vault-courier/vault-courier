@@ -26,11 +26,3 @@ extension TokenAuth: VaultAuthMethod {
         return token
     }
 }
-
-extension TokenAuthMock: VaultAuthMethod {
-    /// Authenticate with Vault
-    /// - Returns: session token
-    public func authenticate() async throws -> String {
-        return token
-    }
-}
