@@ -38,15 +38,12 @@ extension IntegrationTests.Pkl {
         ),
         .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
     ) struct ModuleSourceReader {
-        var localApiURL: URL { try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1") }
-        var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
-
         @Test
         func vault_reader_regex_url_for_custom_kv_engine_path() async throws {
             let secret = "api_key"
             let value = "abcde12345"
 
-            let mockClient = MockClientTransport { _, _, _, _ in
+            let mockClient = MockVaultClientTransport { _, _, _, _ in
                 (.init(status: .ok), .init("""
                     {
                       "request_id": "ef3951c9-8c61-11c8-2260-f304a4e8073a",
@@ -72,7 +69,7 @@ extension IntegrationTests.Pkl {
                     """))
             }
 
-            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 
@@ -99,7 +96,7 @@ extension IntegrationTests.Pkl {
             let username = "test_static_role_username"
             let password = "XS-bh8o95yFzdd3N9Gv-"
 
-            let mockClient = MockClientTransport { _, _, _, _ in
+            let mockClient = MockVaultClientTransport { _, _, _, _ in
                 (.init(status: .ok), .init("""
                     {
                       "request_id": "04c78e0d-141e-3a13-5d38-17821fbdb3c1",
@@ -121,7 +118,7 @@ extension IntegrationTests.Pkl {
             }
 
             let databaseMount = "path/to/database/secrets"
-            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 
@@ -152,12 +149,13 @@ extension IntegrationTests.Pkl {
             let username = "v-token-test_dyn-g5RGxYCabRmtspJ1gL2J-1757865237"
             let password = "FQ6-DIT6SCMchBYfCphm"
             let databaseMount = "path/to/database/secrets"
+            let dynamicRole = "test_dynamic_role"
 
-            let mockClient = MockClientTransport { _, _, _, _ in
+            let mockClient = MockVaultClientTransport { _, _, _, _ in
                 (.init(status: .ok), .init("""
                     {
                       "request_id": "152f611f-9b99-a89e-4341-e796b9cba6b8",
-                      "lease_id": "\(databaseMount)/creds/test_dynamic_role/UylQDf6H5MD8bgTrzElBRs8g",
+                      "lease_id": "\(databaseMount)/creds/\(dynamicRole)/UylQDf6H5MD8bgTrzElBRs8g",
                       "renewable": true,
                       "lease_duration": 3600,
                       "data": {
@@ -171,7 +169,7 @@ extension IntegrationTests.Pkl {
                     """))
             }
 
-            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 
@@ -183,7 +181,7 @@ extension IntegrationTests.Pkl {
             // MUT
             let output = try await sut.readConfiguration(
                 source: .text("""
-                databaseCredentials: String = read("vault:/\(databaseMount)/creds/test_dynamic_role").text
+                databaseCredentials: String = read("vault:/\(databaseMount)/creds/\(dynamicRole)").text
                 """),
                 as: DatabaseSecret.self)
     
@@ -287,8 +285,8 @@ extension IntegrationTests.Pkl {
             let databaseMount1 = "path/to/database1"
             let databaseMount2 = "path/to/database2"
 
-            let mockClient = MockClientTransport { req, _, _, _ in
-                switch req.path?.replacingOccurrences(of: "%2F", with: "/") {
+            let mockClient = MockVaultClientTransport { req, _, _, _ in
+                switch req.normalizedPath {
                     case "/\(databaseMount1)/static-creds/\(vaultRole1)":
                         return (.init(status: .ok), .init("""
                                 {
@@ -333,7 +331,7 @@ extension IntegrationTests.Pkl {
                 }
             }
 
-            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 
@@ -369,8 +367,8 @@ extension IntegrationTests.Pkl {
             let zipValue = "zap"
 
             let customPath = "/sys/wrapping/unwrap"
-            let mockClient = MockClientTransport { req, _, _, _ in
-                switch req.path?.replacingOccurrences(of: "%2F", with: "/") {
+            let mockClient = MockVaultClientTransport { req, _, _, _ in
+                switch req.normalizedPath {
                     case customPath:
                         return (.init(status: .ok), .init("""
                             {
@@ -393,7 +391,7 @@ extension IntegrationTests.Pkl {
                 }
             }
 
-            let vaultClient = VaultClient(configuration: .init(apiURL: localApiURL),
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 

@@ -14,25 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
-import XCTest
 import HTTPTypes
-import Foundation
-import OpenAPIRuntime
-
-struct MockClientTransport: ClientTransport {
-    var sendBlock: @Sendable (HTTPRequest, HTTPBody?, URL, String) async throws -> (HTTPResponse, HTTPBody?)
-    func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws -> (
-        HTTPResponse, HTTPBody?
-    ) { try await sendBlock(request, body, baseURL, operationID) }
-
-    static let requestBody: HTTPBody = HTTPBody("hello")
-    static let responseBody: HTTPBody = HTTPBody("bye")
-
-    static var successful: Self { MockClientTransport { _, _, _, _ in (HTTPResponse(status: .ok), responseBody) } }
-
-    static var failing: Self { MockClientTransport { _, _, _, _ in throw TestError() } }
-}
 
 struct TestError: Error, Equatable {}
 

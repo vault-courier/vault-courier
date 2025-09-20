@@ -28,10 +28,6 @@ import VaultCourier
 
 @Suite
 struct VaultClientTests {
-    let localApiURL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
-
-    var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
-
     @Test
     func login_with_unwrapped_app_role_secret() async throws {
         let roleID = "59d6d1ca-47bb-4e7e-a40b-8be3bc5a0ba8"
@@ -41,7 +37,7 @@ struct VaultClientTests {
 
         let approleMount = "path/to/approle"
 
-        let mockClient = MockClientTransport { req, _, _, _ in
+        let mockClient = MockVaultClientTransport { req, _, _, _ in
             #expect(req.normalizedPath == "/auth/\(approleMount)/login", "custom approle path was not taken into account")
 
             return (.init(status: .ok), .init("""
@@ -78,7 +74,7 @@ struct VaultClientTests {
                 """))
         }
 
-        let vaultClient = VaultClient(configuration: configuration,
+        let vaultClient = VaultClient(configuration: .defaultHttp(),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .appRole(path: approleMount,
                                                      credentials: .init(roleID: roleID,
@@ -91,7 +87,7 @@ struct VaultClientTests {
         let mountPath = "path/to/approle"
         let appRoleName = "batch_app"
         let expectedSecretID = "ed8313c8-852a-0098-0d3f-67c5771cca6e"
-        let mockClient = MockClientTransport { req, _, _, _ in
+        let mockClient = MockVaultClientTransport { req, _, _, _ in
             switch req.normalizedPath {
                     case "/auth/\(mountPath)/role/\(appRoleName)/secret-id":
                     return (.init(status: .ok), .init("""
@@ -137,7 +133,7 @@ struct VaultClientTests {
             }
         }
 
-        let vaultClient = VaultClient(configuration: configuration,
+        let vaultClient = VaultClient(configuration: .defaultHttp(),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .token("test_token"))
         let generateAppSecretIdResponse = try await vaultClient.generateAppSecretID(
@@ -327,31 +323,20 @@ extension VaultClientTests {
                                 )
                         )
                     case "/\(databaseMount)/creds/\(dynamicRole)":
-//                        guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
-//                            return (.init(status: .unauthorized), nil)
-//                        }
-//                        return (
-//                            .init(status: .ok),
-//                                try await MockVaultClientTransport.encode(response:
-//                                    RoleCredentialsResponse(
-//                                    requestID: "",
-//                                    username: dynamicRoleDatabaseUsername,
-//                                    password: dynamicRoleDatabasePassword,
-//                                    timeToLive: .seconds(86400),
-//                                    updatedAt: "")
-//                                )
-//                        )
-
-                        return try await withRequiredAuthentication(req: req, clientToken: clientToken) { _, _ in
-                            try await encode(response:
-                                RoleCredentialsResponse(
-                                requestID: "",
-                                username: dynamicRoleDatabaseUsername,
-                                password: dynamicRoleDatabasePassword,
-                                timeToLive: .seconds(86400),
-                                updatedAt: "")
-                            )
+                        guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
+                            return (.init(status: .unauthorized), nil)
                         }
+                        return (
+                            .init(status: .ok),
+                                try await MockVaultClientTransport.encode(response:
+                                    RoleCredentialsResponse(
+                                    requestID: "",
+                                    username: dynamicRoleDatabaseUsername,
+                                    password: dynamicRoleDatabasePassword,
+                                    timeToLive: .seconds(86400),
+                                    updatedAt: "")
+                                )
+                        )
                     case "/\(keyValueMount)/data/\(secretKeyPath)":
                         guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
                             return (.init(status: .unauthorized), nil)
