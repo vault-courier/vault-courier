@@ -27,7 +27,7 @@ import Logging
 
 extension VaultClient {
     @TaskLocal static var current = VaultClient(
-        configuration: .init(apiURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")),
+        configuration: .init(apiURL: VaultClient.Server.defaultHttpURL),
         clientTransport: AsyncHTTPClientTransport()
     )
 }
@@ -58,7 +58,7 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
 }
 
 extension SuiteTrait where Self == VaultClientTrait {
-    static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
+    static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
                                  logger: Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
@@ -71,7 +71,7 @@ extension SuiteTrait where Self == VaultClientTrait {
 }
 
 extension TestTrait where Self == VaultClientTrait {
-    static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
+    static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
                                  logger: Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
