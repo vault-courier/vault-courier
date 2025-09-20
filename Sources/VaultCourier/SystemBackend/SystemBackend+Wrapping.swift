@@ -193,7 +193,7 @@ extension SystemBackend {
         return .init(requestID: response.requestID,
                      secretID: data.secretID,
                      secretIDAccessor: data.secretIDAccessor,
-                     secretIDTimeToLive: data.secretIDTimeToLive,
+                     secretIDTimeToLive: .seconds(data.secretIDTimeToLive),
                      secretIDNumberOfUses: data.secretIDNumberOfUses)
     }
 }

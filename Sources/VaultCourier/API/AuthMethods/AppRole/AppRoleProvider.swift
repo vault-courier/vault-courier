@@ -300,7 +300,7 @@ extension AppRoleProvider {
                                 requestID: component.requestId,
                                 secretID: component.data.secretId,
                                 secretIDAccessor: component.data.secretIdAccessor,
-                                secretIDTimeToLive: component.data.secretIdTtl,
+                                secretIDTimeToLive: .seconds(component.data.secretIdTtl),
                                 secretIDNumberOfUses: component.data.secretIdNumUses))
                         case .VaultWrappedResponse(let component):
                             return .wrapped(

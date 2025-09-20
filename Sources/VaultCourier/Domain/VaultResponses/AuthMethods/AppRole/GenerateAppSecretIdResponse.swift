@@ -24,7 +24,7 @@ public struct GenerateAppSecretIdResponse: Sendable {
     public let secretIDAccessor: String
 
     /// Duration of the secretID
-    public let secretIDTimeToLive: Int
+    public let secretIDTimeToLive: Duration
 
 
     public let secretIDNumberOfUses: Int
@@ -34,7 +34,7 @@ public struct GenerateAppSecretIdResponse: Sendable {
         self.init(requestID: requestID,
                   secretID: appRoleSecretID.secretID,
                   secretIDAccessor: appRoleSecretID.secretIDAccessor,
-                  secretIDTimeToLive: appRoleSecretID.secretIDTimeToLive,
+                  secretIDTimeToLive: .seconds(appRoleSecretID.secretIDTimeToLive),
                   secretIDNumberOfUses: appRoleSecretID.secretIDNumberOfUses)
     }
 }

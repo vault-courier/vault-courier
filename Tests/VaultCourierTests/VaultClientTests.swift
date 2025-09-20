@@ -265,7 +265,7 @@ extension VaultClientTests {
                                             requestID: "81ac0ea6-610d-61df-4039-9aab7cc5bf05",
                                             secretID: expectedSecretID,
                                             secretIDAccessor: "e69a33c6-af8e-0ca1-fbc7-63a35ca50d33",
-                                            secretIDTimeToLive: 86400,
+                                            secretIDTimeToLive: .seconds(86400),
                                             secretIDNumberOfUses: 2
                                         )
                                     )
@@ -301,7 +301,7 @@ extension VaultClientTests {
                                         requestID: "81ac0ea6-610d-61df-4039-9aab7cc5bf05",
                                         secretID: expectedSecretID,
                                         secretIDAccessor: "e69a33c6-af8e-0ca1-fbc7-63a35ca50d33",
-                                        secretIDTimeToLive: 86400,
+                                        secretIDTimeToLive: .seconds(86400),
                                         secretIDNumberOfUses: 2
                                     )
                                 )

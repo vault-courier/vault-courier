@@ -40,7 +40,7 @@ extension GenerateAppSecretIdResponse: Encodable {
         try container.encode(requestID, forKey: .requestID)
         let secretInfo = AppRoleSecretID(secretID: secretID,
                                          secretIDAccessor: secretIDAccessor,
-                                         secretIDTimeToLive: secretIDTimeToLive,
+                                         secretIDTimeToLive: Int(secretIDTimeToLive.components.seconds),
                                          secretIDNumberOfUses: secretIDNumberOfUses)
         try container.encode(secretInfo, forKey: .data)
     }
@@ -50,7 +50,7 @@ extension GenerateAppSecretIdResponse {
     public init(requestID: String,
                 secretID: String,
                 secretIDAccessor: String,
-                secretIDTimeToLive: Int,
+                secretIDTimeToLive: Duration,
                 secretIDNumberOfUses: Int) {
         self.requestID = requestID
         self.secretID = secretID
