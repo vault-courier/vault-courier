@@ -20,6 +20,11 @@ let PklTrait: Trait = .trait(
     description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
 )
 
+let MockTrait: Trait = .trait(
+    name: "MockSupport",
+    description: "Provides a mock client transport for unit testing and development, and adds Encodable conformance to certain Vault response types."
+)
+
 let AppRoleTrait: Trait = .trait(
     name: "AppRoleSupport",
     description: "Enable AppRole authentication"
@@ -50,6 +55,7 @@ let package = Package(
     ],
     traits: [
         PklTrait,
+        MockTrait,
         AppRoleTrait,
         DatabaseEngineTrait,
         PostgresDatabasePluginTrait,
@@ -60,6 +66,7 @@ let package = Package(
             PostgresDatabasePluginTrait.name,
             ValkeyDatabasePluginTrait.name,
             PklTrait.name,
+            MockTrait.name
         ])
     ],
     dependencies: [
@@ -69,7 +76,7 @@ let package = Package(
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
         .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
-//        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
     ],
     targets: [
         .target(
