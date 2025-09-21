@@ -16,6 +16,7 @@
 
 #if canImport(FoundationEssentials)
 import FoundationEssentials
+import FoundationInternationalization
 #else
 import Foundation
 #endif
