@@ -40,7 +40,7 @@
     }
     
     @Section(title: "Enable the Pkl package trait") {
-        In this section we modify the Hummingbird Todo app to use Pkl as its native configuration format.
+        In this section we modify the Vapor Todo app to use Pkl as its native configuration format.
         @Steps{
             @Step {
                 Add the Swift bindings for `Pkl` and enable the `Pkl` package trait in VaultCourier.
