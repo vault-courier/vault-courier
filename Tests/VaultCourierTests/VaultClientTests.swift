@@ -318,7 +318,7 @@ extension VaultClientTests {
                                     username: staticRoleDatabaseUsername,
                                     password: staticRoleDatabasePassword,
                                     timeToLive: .seconds(86400),
-                                    updatedAt: "",
+                                    updatedAt: .now,
                                     rotation: .period(.seconds(86400)))
                                 )
                         )
@@ -333,8 +333,7 @@ extension VaultClientTests {
                                     requestID: "",
                                     username: dynamicRoleDatabaseUsername,
                                     password: dynamicRoleDatabasePassword,
-                                    timeToLive: .seconds(86400),
-                                    updatedAt: "")
+                                    timeToLive: .seconds(86400))
                                 )
                         )
                     case "/\(keyValueMount)/data/\(secretKeyPath)":

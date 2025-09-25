@@ -587,7 +587,8 @@
             "type": "object",
             "properties": {
               "last_vault_rotation": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "rotation_schedule": {
                 "type": "string"
@@ -1112,9 +1113,6 @@
           "data": {
             "type": "object",
             "properties": {
-              "last_vault_rotation": {
-                "type": "string"
-              },
               "ttl": {
                 "type": "integer"
               },

@@ -101,6 +101,9 @@ let package = Package(
         ),
         .target(
             name: "Utils",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime")
+            ],
             path: "Sources/Utils"
         ),
         // Auth Methods Targets

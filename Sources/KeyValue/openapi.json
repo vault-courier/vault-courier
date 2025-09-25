@@ -570,7 +570,8 @@
                           "type": "integer"
                         },
                         "created_time": {
-                          "type": "string"
+                          "type": "string",
+                          "format": "date-time"
                         },
                         "current_version": {
                           "type": "integer"
@@ -579,7 +580,8 @@
                           "type": "integer"
                         },
                         "updated_time": {
-                          "type": "string"
+                          "type": "string",
+                          "format": "date-time"
                         },
                         "versions": {
                           "type": "object",
@@ -589,10 +591,19 @@
                             "type": "object",
                             "properties": {
                               "created_time": {
-                                "type": "string"
+                                "type": "string",
+                                "format": "date-time"
                               },
                               "deletion_time": {
-                                "type": "string"
+                                "oneOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
                               },
                               "destroyed": {
                                 "type": "boolean"
@@ -611,7 +622,6 @@
                         "max_versions",
                         "created_time",
                         "current_version",
-                        "updated_time",
                         "versions"
                       ]
                     },
@@ -824,7 +834,8 @@
             "type": "object",
             "properties": {
               "created_time": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "custom_metadata": {
                 "type": "object",
@@ -834,7 +845,15 @@
                 }
               },
               "deletion_time": {
-                "type": "string"
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               },
               "destroyed": {
                 "type": "boolean"
@@ -896,7 +915,8 @@
                 "type": "object",
                 "properties": {
                   "created_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                   },
                   "custom_metadata": {
                     "type": "object",
@@ -906,7 +926,15 @@
                     }
                   },
                   "deletion_time": {
-                    "type": "string"
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   },
                   "destroyed": {
                     "type": "boolean"
