@@ -38,6 +38,45 @@ extension IntegrationTests.Pkl {
         ),
         .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
     ) struct ModuleSourceReader {
+
+        @Test
+        func resource_reader_schema_cannot_be_empty() async throws {
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                          clientTransport: MockVaultClientTransport.successful)
+            try await vaultClient.login(method: .token("test_token"))
+
+            let schema = ""
+            let kvMountPath = "path/to/secrets"
+
+            await #expect(throws: VaultClientError.self) {
+                try await vaultClient.makeResourceReader(
+                    scheme: schema,
+                    keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
+                )
+            }
+        }
+
+        @Test
+        func mount_paths_in_resource_parsers_cannot_be_empty() async throws {
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                          clientTransport: MockVaultClientTransport.successful)
+            try await vaultClient.login(method: .token("test_token"))
+
+            let schema = "my_schema"
+            let kvMountPath = ""
+
+            let sut = try await vaultClient.makeResourceReader(
+                scheme: schema,
+                keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
+            )
+
+            await #expect(throws: VaultClientError.self) {
+                try await sut.readConfiguration(text:"""
+                appKeys = read("\(schema):/\(kvMountPath)/key?version=2").text
+                """)
+            }
+        }
+
         @Test
         func vault_reader_regex_url_for_custom_kv_engine_path() async throws {
             let secret = "api_key"

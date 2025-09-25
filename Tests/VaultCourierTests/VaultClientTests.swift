@@ -29,6 +29,28 @@ import VaultCourier
 @Suite
 struct VaultClientTests {
     @Test
+    func wrapping_parameter_token_and_client_token_cannot_be_the_same() async throws {
+        let clientToken = "test_token"
+        let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                      clientTransport: MockVaultClientTransport.successful)
+        try await vaultClient.login(method: .token(clientToken))
+
+        await #expect(throws: VaultClientError.self) {
+            struct Secrets: Codable, Equatable {
+                let apiKey: String
+            }
+
+            let _: VaultResponse<Secrets,Never> = try await vaultClient.unwrapResponse(token: clientToken)
+        }
+
+        #if AppRoleSupport
+        await #expect(throws: VaultClientError.self) {
+            try await vaultClient.unwrapAppRoleSecretID(token: clientToken)
+        }
+        #endif
+    }
+
+    @Test
     func login_with_unwrapped_app_role_secret() async throws {
         let roleID = "59d6d1ca-47bb-4e7e-a40b-8be3bc5a0ba8"
         let secretID = "84896a0c-1347-aa90-a4f6-aca8b7558780"
