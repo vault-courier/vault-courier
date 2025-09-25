@@ -21,6 +21,7 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 import Synchronization
+import Utils
 
 /// AppRole Authentication client
 package final class AppRoleAuth: Sendable {
@@ -45,7 +46,7 @@ package final class AppRoleAuth: Sendable {
                  credentials: AppRoleCredentials? = nil) {
         self.client = Client(
             serverURL: configuration.apiURL,
-            configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
+            configuration: .init(dateTranscoder: .fallbackISO8601),
             transport: clientTransport,
             middlewares: middlewares
         )

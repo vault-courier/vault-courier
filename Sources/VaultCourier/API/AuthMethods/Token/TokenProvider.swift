@@ -148,11 +148,12 @@ extension TokenProvider {
                 }
 
                 return .init(
-                    requestId: json.requestId,
+                    requestID: json.requestId,
                     clientToken: json.data.id,
                     accessor: json.data.accessor,
                     createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
                     creationTimeToLive: .seconds(json.data.creationTtl),
+                    displayName: json.data.displayName,
                     expiresAt: json.data.expireTime,
                     explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
                     timeToLive: .seconds(json.data.ttl),
@@ -161,7 +162,8 @@ extension TokenProvider {
                     isRenewable: json.data.renewable,
                     tokenType: tokenType,
                     isOrphan: json.data.orphan,
-                    numberOfUses: json.data.numUses
+                    numberOfUses: json.data.numUses,
+                    path: json.data.path
                 )
             case let .undocumented(statusCode, payload):
                 let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
@@ -187,11 +189,12 @@ extension TokenProvider {
                 }
 
                 return .init(
-                    requestId: json.requestId,
+                    requestID: json.requestId,
                     clientToken: json.data.id,
                     accessor: json.data.accessor,
                     createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
                     creationTimeToLive: .seconds(json.data.creationTtl),
+                    displayName: json.data.displayName,
                     expiresAt: json.data.expireTime,
                     explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
                     timeToLive: .seconds(json.data.ttl),
@@ -200,7 +203,8 @@ extension TokenProvider {
                     isRenewable: json.data.renewable,
                     tokenType: tokenType,
                     isOrphan: json.data.orphan,
-                    numberOfUses: json.data.numUses
+                    numberOfUses: json.data.numUses,
+                    path: json.data.path
                 )
             case let .undocumented(statusCode, payload):
                 let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
@@ -228,11 +232,12 @@ extension TokenProvider {
                 }
 
                 return .init(
-                    requestId: json.requestId,
+                    requestID: json.requestId,
                     clientToken: json.data.id,
                     accessor: json.data.accessor,
                     createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
                     creationTimeToLive: .seconds(json.data.creationTtl),
+                    displayName: json.data.displayName,
                     expiresAt: json.data.expireTime,
                     explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
                     timeToLive: .seconds(json.data.ttl),
@@ -241,7 +246,8 @@ extension TokenProvider {
                     isRenewable: json.data.renewable,
                     tokenType: tokenType,
                     isOrphan: json.data.orphan,
-                    numberOfUses: json.data.numUses
+                    numberOfUses: json.data.numUses,
+                    path: json.data.displayName
                 )
             case let .undocumented(statusCode, payload):
                 let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)

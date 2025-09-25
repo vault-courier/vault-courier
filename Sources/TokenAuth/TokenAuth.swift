@@ -21,6 +21,7 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 import Synchronization
+import Utils
 
 package final class TokenAuth: Sendable {
     public init(apiURL: URL,
@@ -29,7 +30,7 @@ package final class TokenAuth: Sendable {
                 token: String? = nil) {
         self.client = Client(
             serverURL: apiURL,
-            configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
+            configuration: .init(dateTranscoder: .fallbackISO8601),
             transport: clientTransport,
             middlewares: middlewares
         )

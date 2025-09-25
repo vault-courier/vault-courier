@@ -21,21 +21,27 @@ import struct Foundation.Date
 #endif
 
 public struct LookupTokenResponse: Sendable {
-    public let requestId: String?
+    public let requestID: String?
 
     /// The token value
     public let clientToken: String
 
     public let accessor: String
 
+    /// Date of creation
     public let createdAt: Date
 
     public let creationTimeToLive: Duration
 
-    public let expiresAt: String?
+    /// Human friendly name
+    public let displayName: String?
+
+    /// Date of expiration. It can be `nil` e.g. for root tokens
+    public let expiresAt: Date?
 
     public let explicitMaxTimeToLive: Duration
 
+    /// A duration of zero means indefinitely
     public let timeToLive: Duration
 
     public let policies: [String]
@@ -52,4 +58,7 @@ public struct LookupTokenResponse: Sendable {
 
     /// A value of zero means unlimited number of uses
     public let numberOfUses: Int
+
+    /// Creation path
+    public let path: String?
 }

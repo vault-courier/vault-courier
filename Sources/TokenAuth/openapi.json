@@ -579,7 +579,8 @@
                 "type": "string"
               },
               "creation_time": {
-                "type": "integer"
+                "type": "integer",
+                "description": "creation time in unix time stamp"
               },
               "creation_ttl": {
                 "type": "integer"
@@ -594,6 +595,7 @@
               },
               "expire_time": {
                 "type": "string",
+                "format": "date-time",
                 "description": "Optional expire time date in string format."
               },
               "explicit_max_ttl": {
@@ -1168,7 +1170,8 @@
                 "type": "integer"
               },
               "creation_time": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "accessor": {
                 "type": "string"
