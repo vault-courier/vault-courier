@@ -115,5 +115,22 @@ extension VaultClient {
             try await provider.loginToken(roleID: roleID, secretID: secretID)
         }
     }
+
+    
+    /// Reads out the properties of a SecretID of a given approle via its accessor.
+    /// - Parameters:
+    ///   - role: role name
+    ///   - accessorSecretID: accessor's secret id
+    ///   - mountPath: mount path of AppRole authentication. If not set it defaults to mount path `approle`
+    /// - Returns: Properties of secret id
+    public func lookupSecretID(
+        role: String,
+        accessorSecretID: String,
+        mountPath: String? = nil
+    ) async throws -> LookupAppRoleSecretIDResponse {
+        return try await withAppRoleProvider(mountPath: mountPath) { provider in
+            try await provider.lookupSecretID(role: role, accessorSecretID: accessorSecretID)
+        }
+    }
 }
 #endif

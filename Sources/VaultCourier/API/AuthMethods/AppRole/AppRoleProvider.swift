@@ -375,5 +375,41 @@ extension AppRoleProvider {
                 throw vaultError
         }
     }
+
+    public func lookupSecretID(
+        role: String,
+        accessorSecretID: String
+    ) async throws -> LookupAppRoleSecretIDResponse {
+        guard let sessionToken = token else {
+            throw VaultClientError.clientIsNotLoggedIn()
+        }
+        let mountPath = self.mountPath
+
+        let response = try await auth.client.authReadApproleSecretIdWithAccessor(
+            path: .init(enginePath: mountPath, roleName: role),
+            headers: .init(xVaultToken: .init(sessionToken)),
+            body: .json(.init(secretIdAccessor: accessorSecretID))
+        )
+
+        switch response {
+            case .ok(let content):
+                let json = try content.body.json
+                return .init(requestID: json.requestId,
+                             cidrList: json.data.cidrList ?? [],
+                             createdAt: json.data.creationTime,
+                             expiresAt: json.data.expirationTime,
+                             updatedAt: json.data.lastUpdatedTime,
+                             metadata: json.data.metadata?.additionalProperties ?? [:],
+                             secretIdAccessor: json.data.secretIdAccessor,
+                             secretIdTimeToLive: .seconds(json.data.secretIdTtl),
+                             secretIdNumberOfUses: json.data.secretIdNumUses,
+                             tokenBoundCIDRS: json.data.tokenBoundCidrs ?? [])
+
+            case let .undocumented(statusCode, payload):
+                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                throw vaultError
+        }
+    }
 }
 #endif

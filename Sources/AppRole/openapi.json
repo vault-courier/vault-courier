@@ -723,6 +723,15 @@
           "request_id": {
             "type": "string"
           },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
           "data": {
             "type": "object",
             "properties": {
@@ -737,14 +746,19 @@
                 "format": "date-time"
               },
               "expiration_time": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "last_updated_time": {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               "metadata": {
                 "type": "object",
-                "format": "kvpairs"
+                "format": "kvpairs",
+                "additionalProperties": {
+                  "type": "string"
+                }
               },
               "secret_id_accessor": {
                 "type": "string"
@@ -768,9 +782,26 @@
               "secret_id_ttl",
               "secret_id_num_uses"
             ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
           }
         },
         "required": [
+          "request_id",
           "data"
         ]
       },

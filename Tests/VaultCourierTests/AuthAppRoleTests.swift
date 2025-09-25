@@ -79,6 +79,10 @@ extension IntegrationTests.Auth.AppRole {
                 Issue.record("Receive unexpected response: \(generateAppSecretIdResponse)")
             case .secretId(let secretIdResponse):
                 #expect(secretIdResponse.secretIDNumberOfUses == 0)
+
+                let _ = try await vaultClient.lookupSecretID(role: appRoleName,
+                                                             accessorSecretID: secretIdResponse.secretIDAccessor,
+                                                             mountPath: path)
         }
 
         try await vaultClient.deleteAppRole(name: appRoleName, mountPath: path)
