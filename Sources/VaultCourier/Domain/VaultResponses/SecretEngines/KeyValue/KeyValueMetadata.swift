@@ -14,17 +14,23 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.Date
+#endif
+
 public struct KeyValueMetadata: Sendable {
     public let requestID: String
 
     /// Date of secret creation
-    public let createdAt: String
+    public let createdAt: Date
 
     /// Custom metadata associated to the secret
     public let custom: [String:String]?
 
     /// Date of soft deletion
-    public let deletedAt: String?
+    public let deletedAt: Date?
 
     /// Flag wheter the secret data has been destroyed
     public let isDestroyed: Bool?
@@ -40,7 +46,7 @@ public struct KeyValueStoreMetadata: Sendable {
     public let isCasRequired: Bool
 
     /// Date of secret creation
-    public let createdAt: String
+    public let createdAt: Date
 
     /// Date of secret creation
     public let currentVersion: Int
@@ -58,17 +64,17 @@ public struct KeyValueStoreMetadata: Sendable {
     public let oldestVersion: Int?
 
     /// Date of last update
-    public let updatedAt: String?
+    public let updatedAt: Date?
 
     /// Array of all secret versions lifecycle: whether is destroyed, and creation/deletion time
     public let versions: [Int: KeyValueLifetime]
 
     public struct KeyValueLifetime: Sendable {
         /// Date of secret creation
-        public let createdAt: String
+        public let createdAt: Date
 
         /// Date of soft deletion
-        public let deletedAt: String?
+        public let deletedAt: Date?
 
         /// Flag wheter the secret data has been destroyed
         public let isDestroyed: Bool

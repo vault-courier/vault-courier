@@ -22,7 +22,6 @@ extension RoleCredentialsResponse: Encodable {
     }
 
     enum DataKeys: String, CodingKey {
-        case updatedAt = "last_vault_rotation"
         case username
         case password
         case timeToLive = "ttl"
@@ -34,7 +33,6 @@ extension RoleCredentialsResponse: Encodable {
         try container.encode(requestID, forKey: .requestID)
 
         var auth = container.nestedContainer(keyedBy: DataKeys.self, forKey: .data)
-        try auth.encode(updatedAt, forKey: .updatedAt)
         try auth.encode(username, forKey: .username)
         try auth.encode(password, forKey: .password)
         try auth.encodeIfPresent(timeToLive?.components.seconds, forKey: .timeToLive)
@@ -45,13 +43,11 @@ extension RoleCredentialsResponse {
     public init(requestID: String,
                 username: String,
                 password: String,
-                timeToLive: Duration,
-                updatedAt: String) {
+                timeToLive: Duration) {
         self.requestID = requestID
         self.username = username
         self.password = password
         self.timeToLive = timeToLive
-        self.updatedAt = updatedAt
     }
 }
 #endif

@@ -27,8 +27,5 @@ public struct RoleCredentialsResponse: Sendable {
 
     /// Credential duration before expiration
     public let timeToLive: Duration?
-
-    /// Last Vault rotation
-    public let updatedAt: String?
 }
 #endif

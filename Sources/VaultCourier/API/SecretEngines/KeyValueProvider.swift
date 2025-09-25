@@ -22,6 +22,7 @@ import struct Foundation.URL
 import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.Data
+import struct Foundation.Date
 #endif
 import Synchronization
 import Logging
@@ -111,11 +112,16 @@ extension KeyValueSecretProvider {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
+                let deletedAt: Date? = if case let .case1(date) = json.data.deletionTime {
+                    date
+                } else {
+                    nil
+                }
                 return .init(
                     requestID: json.requestId,
                     createdAt: json.data.createdTime,
                     custom: json.data.customMetadata?.additionalProperties,
-                    deletedAt: json.data.deletionTime,
+                    deletedAt: deletedAt,
                     isDestroyed: json.data.destroyed,
                     version: json.data.version
                 )
@@ -296,11 +302,16 @@ extension KeyValueSecretProvider {
         switch response {
             case .ok(let content):
                 let json = try content.body.json
+                let deletedAt: Date? = if case let .case1(date) = json.data.deletionTime {
+                    date
+                } else {
+                    nil
+                }
                 return .init(
                     requestID: json.requestId,
                     createdAt: json.data.createdTime,
                     custom: json.data.customMetadata?.additionalProperties,
-                    deletedAt: json.data.deletionTime,
+                    deletedAt: deletedAt,
                     isDestroyed: json.data.destroyed,
                     version: json.data.version
                 )
@@ -448,7 +459,12 @@ extension KeyValueSecretProvider {
                     guard let index = Int(key) else {
                         throw VaultClientError.decodingFailed()
                     }
-                    return (index, KeyValueStoreMetadata.KeyValueLifetime(createdAt: value.createdTime, deletedAt: value.deletionTime, isDestroyed: value.destroyed))
+                    let deletedAt: Date? = if case let .case1(date) = value.deletionTime {
+                        date
+                    } else {
+                        nil
+                    }
+                    return (index, KeyValueStoreMetadata.KeyValueLifetime(createdAt: value.createdTime, deletedAt: deletedAt, isDestroyed: value.destroyed))
                 }
                 let versions = Dictionary(uniqueKeysWithValues: versionTuples)
                 return .init(

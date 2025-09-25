@@ -285,8 +285,7 @@ extension DatabaseEngineClient {
                     requestID: json.requestId,
                     username: json.data.username,
                     password: json.data.password,
-                    timeToLive: json.data.ttl.flatMap({ .seconds($0)}),
-                    updatedAt: json.data.lastVaultRotation)
+                    timeToLive: json.data.ttl.flatMap({ .seconds($0)}))
             case let .undocumented(statusCode, payload):
                 let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                 logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))

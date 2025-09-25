@@ -15,6 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #if DatabaseEngineSupport
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.Date
+#endif
+
 public struct StaticRoleCredentialsResponse: Sendable {
     public let requestID: String
 
@@ -27,7 +33,7 @@ public struct StaticRoleCredentialsResponse: Sendable {
     public let timeToLive: Duration
 
     /// Last Vault rotation
-    public let updatedAt: String
+    public let updatedAt: Date
 
     /// Rotation strategy of credentials
     public let rotation: RotationStrategy?

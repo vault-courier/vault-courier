@@ -18,6 +18,7 @@
 import HTTPTypes
 import Foundation
 import OpenAPIRuntime
+import Utils
 
 public struct MockVaultClientTransport: ClientTransport {
     public var sendBlock: @Sendable (HTTPRequest, HTTPBody?, URL, String) async throws -> (HTTPResponse, HTTPBody?)
@@ -94,7 +95,13 @@ public struct MockVaultClientTransport: ClientTransport {
 
 extension HTTPBody {
     static func vaultData(_ response: some Encodable) -> Self {
-        guard let encoded = try? JSONEncoder().encode(response) else {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .custom { date, encoder in
+            let dateAsString = try VaultDateTranscoder().encode(date)
+            var container = encoder.singleValueContainer()
+            try container.encode(dateAsString)
+        }
+        guard let encoded = try? encoder.encode(response) else {
             return .init()
         }
         return .init(encoded)

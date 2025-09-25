@@ -15,6 +15,14 @@
 //===----------------------------------------------------------------------===//
 
 #if MockSupport
+
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.Date
+#endif
+import OpenAPIRuntime
+
 extension StaticRoleCredentialsResponse: Encodable {
     enum CodingKeys: String, CodingKey {
         case requestID = "request_id"
@@ -55,12 +63,12 @@ extension StaticRoleCredentialsResponse: Encodable {
 }
 
 extension StaticRoleCredentialsResponse {
-    package init(
+    public init(
         requestID: String,
         username: String,
         password: String,
         timeToLive: Duration,
-        updatedAt: String,
+        updatedAt: Date,
         rotation: RotationStrategy
     ) {
         self.requestID = requestID
