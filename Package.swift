@@ -14,6 +14,27 @@
 //  limitations under the License.
 
 import PackageDescription
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import class Foundation.ProcessInfo
+#endif
+
+// --- This util config is part of `swift-configuration` Package.swift ------------------------------------------------------
+// Workaround to ensure that all traits are included in documentation. Swift Package Index adds
+// SPI_GENERATE_DOCS (https://github.com/SwiftPackageIndex/SwiftPackageIndex-Server/issues/2336)
+// when building documentation, so only tweak the default traits in this condition.
+let spiGenerateDocs = ProcessInfo.processInfo.environment["SPI_GENERATE_DOCS"] != nil
+
+// Conditionally add the swift-docc plugin only when previewing docs locally.
+// Preview with:
+// ```
+// SWIFT_PREVIEW_DOCS=1 swift package --disable-sandbox preview-documentation --target Configuration
+// ```
+let previewDocs = ProcessInfo.processInfo.environment["SWIFT_PREVIEW_DOCS"] != nil
+
+let addDoccPlugin = previewDocs || spiGenerateDocs
+// --------------------------------------------------------------------------------------------
 
 let PklTrait: Trait = .trait(
     name: "PklSupport",
@@ -61,12 +82,12 @@ let package = Package(
         PostgresDatabasePluginTrait,
         ValkeyDatabasePluginTrait,
         .default(enabledTraits: [
+            MockTrait.name,
             AppRoleTrait.name,
-            DatabaseEngineTrait.name,
-            PostgresDatabasePluginTrait.name,
-            ValkeyDatabasePluginTrait.name,
-            PklTrait.name,
-            MockTrait.name
+//            DatabaseEngineTrait.name,
+//            PostgresDatabasePluginTrait.name,
+//            ValkeyDatabasePluginTrait.name,
+//            PklTrait.name,
         ])
     ],
     dependencies: [
@@ -75,8 +96,7 @@ let package = Package(
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
         .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4")
     ],
     targets: [
         .target(
@@ -219,3 +239,9 @@ let package = Package(
     ],
     swiftLanguageModes: [.v6]
 )
+
+if addDoccPlugin {
+    package.dependencies.append(
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.0.0")
+    )
+}
