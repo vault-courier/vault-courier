@@ -21,14 +21,14 @@ extension VaultClient {
     /// - Note: Certain options are only available when called by a root token.
     /// - Parameters:
     ///   - capabilities: type with the desired token properties
-    ///   - wrappTTL: Optional wrapped time to live of the token
+    ///   - wrapTimeToLive: Optional wrapped time to live of the token
     /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func createToken(
         _ capabilities: CreateVaultToken,
         wrapTimeToLive: Duration? = nil
     ) async throws -> VaultAuthResponse {
         try await withTokenProvider { provider in
-            try await provider.createToken(capabilities, wrappTTL: wrapTimeToLive)
+            try await provider.createToken(capabilities, wrapTimeToLive: wrapTimeToLive)
         }
     }
 

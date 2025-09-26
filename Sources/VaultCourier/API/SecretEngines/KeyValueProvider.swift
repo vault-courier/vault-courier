@@ -80,7 +80,6 @@ extension KeyValueSecretProvider {
     /// If the value already exists, the calling token must have an ACL policy granting the update capability.
     ///
     /// - Parameters:
-    ///   - enginePath: mount path to key/value secret engine
     ///   - secret: value of the secret. It must be a codable object or a dictionary.
     ///   - key: It's the path of the secret to update
     /// - Returns: Metadata about the secret, like its current version and creation time
@@ -236,7 +235,6 @@ extension KeyValueSecretProvider {
     /// Provides the subkeys within a secret entry that exists at the requested path. The secret entry at this path will be retrieved and stripped of all data by replacing underlying values of leaf keys (i.e. non-map keys or map keys with no underlying subkeys) with null.
     ///
     /// - Parameters:
-    ///   - enginePath: path to key/value secret engine mount
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     ///   - depth: Specifies the deepest nesting level to provide in the output. The default value `nil` will not impose any limit. If non-zero, keys that reside at the specified depth value will be artificially treated as leaves and will thus be null even if further underlying subkeys exist.
@@ -271,7 +269,6 @@ extension KeyValueSecretProvider {
     ///
     /// A new version will be created upon successfully applying a patch with the provided data.
     /// - Parameters:
-    ///   - enginePath: path to key/value secret engine mount
     ///   - secret: value of the secret. It must be a codable object or a dictionary.
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Returns: Metadata associated to the secret.

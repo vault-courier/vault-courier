@@ -26,7 +26,7 @@ import TokenAuth
 import AppRoleAuth
 #endif
 
-public enum NewAuthMethod {
+public enum AuthMethod {
     case token(String)
 
     #if AppRoleSupport
@@ -34,7 +34,7 @@ public enum NewAuthMethod {
     #endif
 }
 
-package func makeAuthenticator(_ method: NewAuthMethod,
+package func makeAuthenticator(_ method: AuthMethod,
                                apiURL: URL,
                                clientTransport: ClientTransport) -> VaultAuthMethod {
     switch method {

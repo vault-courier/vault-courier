@@ -28,7 +28,6 @@ import SystemWrapping
 /// REST Client for Hashicorp Vault and OpenBao.
 ///
 /// Before a client can interact with Vault, it must authenticate against an auth method. This actor protects the state of the mutating token during this process.
-/// Regardless of which authentication method was chosen during initialization, ``VaultClient`` always authenticates using the ``authenticate()`` method.
 public actor VaultClient {
     public struct Configuration: Sendable {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
@@ -91,7 +90,7 @@ public actor VaultClient {
 }
 
 extension VaultClient {
-    public func login(method: NewAuthMethod) async throws {
+    public func login(method: AuthMethod) async throws {
         let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
         self.token = try await authenticator.authenticate()
         logger.info("login authorized")

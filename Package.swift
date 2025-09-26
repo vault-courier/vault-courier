@@ -29,7 +29,7 @@ let spiGenerateDocs = ProcessInfo.processInfo.environment["SPI_GENERATE_DOCS"] !
 // Conditionally add the swift-docc plugin only when previewing docs locally.
 // Preview with:
 // ```
-// SWIFT_PREVIEW_DOCS=1 swift package --disable-sandbox preview-documentation --target Configuration
+// SWIFT_PREVIEW_DOCS=1 swift package --disable-sandbox preview-documentation --target VaultCourier
 // ```
 let previewDocs = ProcessInfo.processInfo.environment["SWIFT_PREVIEW_DOCS"] != nil
 

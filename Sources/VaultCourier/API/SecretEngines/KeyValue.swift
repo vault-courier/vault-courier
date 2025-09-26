@@ -119,7 +119,7 @@ extension VaultClient {
     /// 
     /// This marks the version as deleted and will stop it from being returned from reads, but the underlying data will not be removed.
     ///
-    /// A delete can be undone using the ``VaultCourier/VaultClient/undelete(key:versions:)`` operation.
+    /// A delete can be undone using the ``VaultCourier/VaultClient/undelete(enginePath:key:versions:)`` operation.
     /// - Parameter enginePath: mount path of secret engine
     /// - Parameter key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Parameter versions: The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in the read secret operations. Defaults to empty array, which deletes the latest version.
@@ -135,7 +135,7 @@ extension VaultClient {
 
     /// Undeletes the data for the provided version and path in the key-value store. This restores the data, allowing it to be returned on get requests.
     ///
-    /// This reverses the  ``VaultCourier/VaultClient/delete(key:versions:)`` operation.
+    /// This reverses the  ``VaultCourier/VaultClient/delete(enginePath:key:versions:)`` operation.
     ///
     /// - Parameters:
     ///   - enginePath: mount path of secret engine

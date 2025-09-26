@@ -331,7 +331,6 @@ extension DatabaseEngineClient {
     /// - Note: This method resets the connection, but vault's database password is still the same
     /// - Parameters:
     ///   - connectionName: connection name
-    ///   - enginePath: mount path of database secrets
     public func resetDatabaseConnection(
         _ connectionName: String
     ) async throws {

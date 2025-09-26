@@ -94,7 +94,6 @@ extension DatabaseEngineClient {
     /// Deletes a vault database static role
     /// - Parameters:
     ///   - name: name of the role
-    ///   - enginePath: mount path of secret engine
     public func deleteStaticRole(
         name: String
     ) async throws {
@@ -231,7 +230,6 @@ extension DatabaseEngineClient {
     /// Reads database credentials for a static role
     /// - Parameters:
     ///   - staticRole: static role name
-    ///   - enginePath: path to database mount
     /// - Returns: Static database credentials
     public func databaseCredentials(
         staticRole: String
@@ -280,7 +278,6 @@ extension DatabaseEngineClient {
     /// Read current credentials for a dynamic role
     /// - Parameters:
     ///   - dynamicRole: dynamic role name
-    ///   - enginePath: path to database mount
     /// - Returns: Dynamic role credentials
     public func databaseCredentials(
         dynamicRole: String

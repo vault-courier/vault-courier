@@ -26,6 +26,7 @@ import Synchronization
 import Logging
 import TokenAuth
 
+/// Client for AppRole Authentication
 public final class TokenProvider: Sendable {
     static var loggingDisabled: Logger { .init(label: "token-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
@@ -73,16 +74,16 @@ extension TokenProvider {
     /// - Note: Certain options are only available when called by a root token.
     /// - Parameters:
     ///   - capabilities: type with the desired token properties
-    ///   - wrappTTL: Optional wrapped time to live of the token
+    ///   - wrapTimeToLive: Optional wrapped time to live of the token
     /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func createToken(
         _ capabilities: CreateVaultToken,
-        wrappTTL: Duration? = nil
+        wrapTimeToLive: Duration? = nil
     ) async throws -> VaultAuthResponse {
         let sessionToken = auth.token
 
         let response = try await auth.client.tokenCreate(
-            headers: .init(xVaultToken: sessionToken, xVaultWrapTTL: wrappTTL?.formatted(.vaultSeconds)),
+            headers: .init(xVaultToken: sessionToken, xVaultWrapTTL: wrapTimeToLive?.formatted(.vaultSeconds)),
             body: .json(.init(
                 displayName: capabilities.displayName,
                 entityAlias: capabilities.entityAlias,

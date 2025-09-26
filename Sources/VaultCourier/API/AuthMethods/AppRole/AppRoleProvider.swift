@@ -25,6 +25,7 @@ import Synchronization
 import Logging
 import AppRoleAuth
 
+/// Client for AppRole Authentication
 public final class AppRoleProvider: Sendable {
     static var loggingDisabled: Logger { .init(label: "app-role-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
@@ -217,6 +218,7 @@ extension AppRoleProvider {
 
     /// Get a wrapped AppRole ID
     /// - Parameter name: role name
+    /// - Parameter wrapTimeToLive: duration of wrapping token
     public func wrapAppRoleID(
         name: String,
         wrapTimeToLive: Duration
@@ -332,7 +334,7 @@ extension AppRoleProvider {
     ///
     /// if ``VaultCourier/CreateAppRole/bindSecretID`` is enabled (the default) on the AppRole, `secretID` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
     ///
-    /// - Note: this method does not set the token session of the vault client. See the ``VaultCourier/VaultClient/login()`` which initiates login from the given authentication
+    /// - Note: this method does not set the token session of the vault client. See the ``VaultCourier/VaultClient/login(method:)`` which initiates login from the given authentication
     /// method and sets the session token of the client.
     /// - Parameters:
     ///   - roleID: RoleID of the AppRole
