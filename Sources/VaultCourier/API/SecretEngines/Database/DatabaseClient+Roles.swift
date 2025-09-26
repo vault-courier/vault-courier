@@ -51,6 +51,7 @@ extension DatabaseEngineClient {
                 rotationWindow = scheduled.window?.formatted(.vaultSeconds)
         }
 
+        #if PostgresPluginSupport
         let response = try await engine.client.databaseCreateStaticRole(
             .init(
                 path: .init(enginePath: enginePath, roleName: staticRole.vaultRoleName),
@@ -64,6 +65,20 @@ extension DatabaseEngineClient {
                                   credentialType: staticRole.credentialType?.rawValue,
                                   credentialConfig: .init(unvalidatedValue: staticRole.credentialConfig ?? [:]))))
         )
+        #else
+        let response = try await engine.client.databaseCreateStaticRole(
+            .init(
+                path: .init(enginePath: enginePath, roleName: staticRole.vaultRoleName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(username: staticRole.databaseUsername,
+                                  dbName: staticRole.databaseConnectionName,
+                                  rotationPeriod: rotationPeriod,
+                                  rotationSchedule: rotationSchedule,
+                                  rotationWindow: rotationWindow,
+                                  rotationStatements: staticRole.rotationStatements,
+                                  credentialConfig: .init(unvalidatedValue: staticRole.credentialConfig ?? [:]))))
+        )
+        #endif
 
         switch response {
             case .ok , .noContent:

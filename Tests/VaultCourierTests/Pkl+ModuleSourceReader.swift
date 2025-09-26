@@ -126,6 +126,7 @@ extension IntegrationTests.Pkl {
             #expect(output == expected)
         }
 
+#if PostgresPluginSupport
         @Test
         func vault_reader_regex_url_for_custom_database_engine_path_and_static_role() async throws {
             struct DatabaseSecret: Codable, Sendable {
@@ -228,6 +229,7 @@ extension IntegrationTests.Pkl {
             #expect(secrets.username == username)
             #expect(secrets.password == password)
         }
+        #endif
 
         struct ResourceReaderStrategy {
             @Test
@@ -309,6 +311,7 @@ extension IntegrationTests.Pkl {
             }
         }
 
+#if PostgresPluginSupport
         @Test
         func read_credentials_for_two_database_secret_mounts() async throws {
             struct DatabaseSecrets: Codable, Sendable {
@@ -395,6 +398,7 @@ extension IntegrationTests.Pkl {
             #expect(databaseSecrets2.username == username)
             #expect(databaseSecrets2.password == passwordDatabase2)
         }
+        #endif
 
         @Test
         func custom_parse_strategy() async throws {

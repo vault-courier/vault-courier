@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if MockSupport
 import Testing
 
 #if canImport(FoundationEssentials)
@@ -50,6 +51,7 @@ struct VaultClientTests {
         #endif
     }
 
+    #if AppRoleSupport
     @Test
     func login_with_unwrapped_app_role_secret() async throws {
         let roleID = "59d6d1ca-47bb-4e7e-a40b-8be3bc5a0ba8"
@@ -103,7 +105,9 @@ struct VaultClientTests {
                                                                         secretID: secretID)))
         #expect(try await vaultClient.sessionToken() == clientToken)
     }
+    #endif
 
+    #if AppRoleSupport
     @Test
     func wrap_and_unwrap_approle_secret_id() async throws {
         let mountPath = "path/to/approle"
@@ -176,6 +180,7 @@ struct VaultClientTests {
         let secretID = try await vaultClient.unwrapAppRoleSecretID(token: wrappedToken)
         #expect(secretID.secretID == expectedSecretID)
     }
+    #endif
 }
 
 #if AppRoleSupport
@@ -328,6 +333,7 @@ extension VaultClientTests {
                                     )
                                 )
                         )
+                        #if DatabaseEngineSupport
                     case "/\(databaseMount)/static-creds/\(staticRole)":
                         guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
                             return (.init(status: .unauthorized), nil)
@@ -358,6 +364,7 @@ extension VaultClientTests {
                                     timeToLive: .seconds(86400))
                                 )
                         )
+                        #endif
                     case "/\(keyValueMount)/data/\(secretKeyPath)":
                         guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
                             return (.init(status: .unauthorized), nil)
@@ -381,7 +388,11 @@ extension VaultClientTests {
                     credentials: .init(roleID: roleID,secretID: response.secretID)
                 )
             )
+            let secrets: Secrets = try await vaultClient.readKeyValueSecret(enginePath: keyValueMount,
+                                                                            key: secretKeyPath)
+            #expect(secrets == expectedSecrets)
 
+            #if DatabaseEngineSupport
             let credentials = try await vaultClient.databaseCredentials(staticRole: staticRole,
                                                                         enginePath: databaseMount)
             #expect(credentials.username == staticRoleDatabaseUsername)
@@ -391,11 +402,9 @@ extension VaultClientTests {
                                                                                enginePath: databaseMount)
             #expect(dynamicCredentials.username == dynamicRoleDatabaseUsername)
             #expect(dynamicCredentials.password == dynamicRoleDatabasePassword)
-
-            let secrets: Secrets = try await vaultClient.readKeyValueSecret(enginePath: keyValueMount,
-                                                                            key: secretKeyPath)
-            #expect(secrets == expectedSecrets)
+            #endif
         }
     }
 }
+#endif
 #endif

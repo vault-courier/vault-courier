@@ -5,6 +5,7 @@
 //  Created by Javier Cuesta on 30.04.25.
 //
 
+#if PklSupport
 import Testing
 
 struct PklSupportTrait: SuiteTrait, TestScoping {
@@ -22,3 +23,4 @@ extension SuiteTrait where Self == PklSupportTrait {
         return Self(path: execPath)
     }
 }
+#endif

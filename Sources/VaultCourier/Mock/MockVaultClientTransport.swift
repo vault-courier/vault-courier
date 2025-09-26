@@ -16,7 +16,13 @@
 
 #if MockSupport
 import HTTPTypes
-import Foundation
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+import class Foundation.JSONEncoder
+import struct Foundation.Data
+#endif
 import OpenAPIRuntime
 import Utils
 

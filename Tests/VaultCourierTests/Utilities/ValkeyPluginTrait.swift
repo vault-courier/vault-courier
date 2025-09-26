@@ -5,6 +5,7 @@
 //  Created by Javier Cuesta on 30.04.25.
 //
 
+#if ValkeyPluginSupport
 import Testing
 import VaultCourier
 
@@ -54,3 +55,4 @@ extension SuiteTrait where Self == ValkeyPluginTrait {
         return Self(connectionName: name, enginePath: enginePath)
     }
 }
+#endif

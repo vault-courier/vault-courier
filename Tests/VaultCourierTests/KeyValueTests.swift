@@ -79,11 +79,15 @@ extension IntegrationTests.SecretEngine.KeyValue {
 
     @Test
     func read_subkeys_kv_secret() async throws {
+        struct DbCredentials: Codable {
+            var username: String
+            var password: String
+        }
         struct Secret: Codable {
             var apiKey: String
             var database: Database
             struct Database: Codable {
-                var credentials: DatabaseCredentials
+                var credentials: DbCredentials
             }
         }
         let key = "op-secret"

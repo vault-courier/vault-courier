@@ -27,8 +27,12 @@ import PklSwift
 import VaultCourier
 
 extension IntegrationTests.Pkl {
-    @Suite(.disabled())
+    @Suite(
+        .disabled(), // Bug: This suite can only be called individually. Otherwise, it blocks when run with other suits. Seems to be due to Pkl
+        .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
+    )
     struct Payloads {
+#if PostgresPluginSupport
         @Test
         func create_database_static_role_with_pkl_file() async throws {
             let url = pklFixtureUrl(for: "Sample1/static_role.pkl")
@@ -42,6 +46,7 @@ extension IntegrationTests.Pkl {
                 }
             }
         }
+#endif
 
         @Test
         func create_approle_with_pkl_file() async throws {

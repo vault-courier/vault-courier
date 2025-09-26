@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if MockSupport
-
+#if DatabaseEngineSupport
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
@@ -80,5 +80,5 @@ extension StaticRoleCredentialsResponse {
     }
 }
 #endif
-
+#endif
 

@@ -5,6 +5,7 @@
 //  Created by Javier Cuesta on 30.04.25.
 //
 
+#if PostgresPluginSupport
 import Testing
 import VaultCourier
 
@@ -50,3 +51,4 @@ extension SuiteTrait where Self == PostgresPluginTrait {
         return Self(connectionName: name, enginePath: enginePath)
     }
 }
+#endif

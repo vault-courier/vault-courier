@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if PklSupport
+#if PostgresPluginSupport
 import VaultCourier
 
 extension PostgresConnectionConfiguration {
@@ -37,4 +38,5 @@ extension PostgresConnectionConfiguration {
                   rootRotationStatements: module.root_rotation_statements ?? [])
     }
 }
+#endif
 #endif

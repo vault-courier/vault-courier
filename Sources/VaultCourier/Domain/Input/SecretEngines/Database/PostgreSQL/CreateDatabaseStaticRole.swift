@@ -31,13 +31,16 @@ public struct CreateDatabaseStaticRole: Sendable {
     /// Specifies the database statements to be executed to rotate the password for the configured database user. Not every plugin type will support this functionality. See the plugin's API page for more information on support and formatting for this parameter.
     public var rotationStatements: [String]?
 
+    #if PostgresPluginSupport
     /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsaPrivateKey`, `clientCertificate`. See the plugin's API page for credential types supported by individual databases.
     /// `PostgreSQL` plugin supports this, but the `Valkey` plugin does not.
     public var credentialType: DatabaseCredentialMethod?
+    #endif
 
     /// Specifies the configuration for the given ``credentialType``. See Vault/OpenBao documentation for details
     public var credentialConfig: [String: String]?
 
+    #if PostgresPluginSupport
     public init(vaultRoleName: String,
                 databaseUsername: String,
                 databaseConnectionName: String,
@@ -53,6 +56,21 @@ public struct CreateDatabaseStaticRole: Sendable {
         self.credentialType = credentialType
         self.credentialConfig = credentialConfig
     }
+    #else
+    public init(vaultRoleName: String,
+                databaseUsername: String,
+                databaseConnectionName: String,
+                rotation: RotationStrategy,
+                rotationStatements: [String]? = nil,
+                credentialConfig: [String : String]? = nil) {
+        self.vaultRoleName = vaultRoleName
+        self.databaseUsername = databaseUsername
+        self.databaseConnectionName = databaseConnectionName
+        self.rotation = rotation
+        self.rotationStatements = rotationStatements
+        self.credentialConfig = credentialConfig
+    }
+    #endif
 }
 
 public enum RotationStrategy: Sendable {

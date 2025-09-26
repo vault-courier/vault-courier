@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if MockSupport
+#if DatabaseEngineSupport
 extension RoleCredentialsResponse: Encodable {
     enum CodingKeys: String, CodingKey {
         case requestID = "request_id"
@@ -50,4 +51,5 @@ extension RoleCredentialsResponse {
         self.timeToLive = timeToLive
     }
 }
+#endif
 #endif

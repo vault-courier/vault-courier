@@ -92,11 +92,13 @@ extension VaultResourceReader: ResourceReader {
                 }
             }
 
+            #if DatabaseEngineSupport
             for parser in databaseReaderParsers {
                 if let (mount, role) = try parser.parse(url) {
                     return try await readDatabaseCredential(mount: mount.removeSlash(), role: role)
                 }
             }
+            #endif
 
             throw VaultReaderError.readingUnsupportedEngine(url.relativePath)
         } catch {
@@ -109,6 +111,7 @@ extension VaultResourceReader: ResourceReader {
         throw PklError("listElements(uri:) not implemented")
     }
 
+    #if DatabaseEngineSupport
     func readDatabaseCredential(mount: String, role: DatabaseRole) async throws -> [UInt8] {
         let credentials: DatabaseCredentials
         switch role {
@@ -123,6 +126,7 @@ extension VaultResourceReader: ResourceReader {
         let data = try JSONEncoder().encode(credentials)
         return Array(data)
     }
+    #endif
 }
 
 extension VaultResourceReader {
