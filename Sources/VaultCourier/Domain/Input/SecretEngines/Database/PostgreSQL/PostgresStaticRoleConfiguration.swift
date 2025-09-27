@@ -14,8 +14,9 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if DatabaseEngineSupport
-public struct CreateDatabaseStaticRole: Sendable {
+#if PostgresPluginSupport
+
+public struct PostgresStaticRoleConfiguration: Sendable {
     /// The corresponding role in the database of ``databaseUsername``
     public var vaultRoleName: String
 
@@ -31,16 +32,13 @@ public struct CreateDatabaseStaticRole: Sendable {
     /// Specifies the database statements to be executed to rotate the password for the configured database user. Not every plugin type will support this functionality. See the plugin's API page for more information on support and formatting for this parameter.
     public var rotationStatements: [String]?
 
-    #if PostgresPluginSupport
     /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsaPrivateKey`, `clientCertificate`. See the plugin's API page for credential types supported by individual databases.
     /// `PostgreSQL` plugin supports this, but the `Valkey` plugin does not.
     public var credentialType: DatabaseCredentialMethod?
-    #endif
 
     /// Specifies the configuration for the given ``credentialType``. See Vault/OpenBao documentation for details
     public var credentialConfig: [String: String]?
 
-    #if PostgresPluginSupport
     public init(vaultRoleName: String,
                 databaseUsername: String,
                 databaseConnectionName: String,
@@ -56,61 +54,6 @@ public struct CreateDatabaseStaticRole: Sendable {
         self.credentialType = credentialType
         self.credentialConfig = credentialConfig
     }
-    #else
-    public init(vaultRoleName: String,
-                databaseUsername: String,
-                databaseConnectionName: String,
-                rotation: RotationStrategy,
-                rotationStatements: [String]? = nil,
-                credentialConfig: [String : String]? = nil) {
-        self.vaultRoleName = vaultRoleName
-        self.databaseUsername = databaseUsername
-        self.databaseConnectionName = databaseConnectionName
-        self.rotation = rotation
-        self.rotationStatements = rotationStatements
-        self.credentialConfig = credentialConfig
-    }
-    #endif
 }
 
-public enum RotationStrategy: Sendable {
-    /// Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds. Uses duration format strings.
-    case period(Duration)
-
-    /// A cron-style string that will define the schedule on which rotations should occur.
-    case scheduled(ScheduledRotation)
-}
-
-public struct ScheduledRotation: Sendable {
-    /// This should be a "standard" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of  "0 0 * * SAT" will set rotations to occur on Saturday at 00:00.
-    public let schedule: String
-
-    /// Specifies the amount of time in which the rotation is allowed to occur starting from a given ``schedule``. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour. Uses duration format strings.
-    public let window: Duration?
-
-    public init(schedule: String, window: Duration?) {
-        self.schedule = schedule
-        self.window = window
-    }
-}
-
-extension ScheduledRotation: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        guard let window else {
-            return schedule
-        }
-        return "\(schedule), window: \(window)"
-    }
-}
-
-extension RotationStrategy: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        switch self {
-            case .period(let period):
-                return "Rotation.period(\(period))"
-            case .scheduled(let scheduled):
-                return "Rotation.scheduled(\(scheduled))"
-        }
-    }
-}
 #endif

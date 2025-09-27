@@ -16,7 +16,7 @@
 
 #if ValkeyPluginSupport
 /// Database dynamic role creation configuration for Valkey
-public struct CreateValkeyRole: Sendable {
+public struct ValkeyRoleConfig: Sendable {
     /// The vault role name which maps to a dynamically generated database username
     public var vaultRoleName: String
 

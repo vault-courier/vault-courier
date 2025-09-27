@@ -16,7 +16,7 @@
 
 #if PostgresPluginSupport
 /// Database dynamic role creation configuration
-public struct CreatePostgresRole: Sendable {
+public struct PostgresRoleConfig: Sendable {
     /// The vault role name which maps to a dynamically generated database username
     public var vaultRoleName: String
 
@@ -58,8 +58,6 @@ public struct CreatePostgresRole: Sendable {
     ///
     /// If the statement is SQL, then it must be a semicolon-separated string, a base64-encoded semicolon-separated string, a serialized JSON string array,
     /// or a base64-encoded serialized JSON string array. The `{{name}}` and `{{expiration}}` values will be substituted.
-    ///
-    /// - Note: This parameter is ignore in the Valkey database plugin
     public var renewStatements: [String]?
 
     /// Specifies the database statements to be executed to rotate the password for a given username.
@@ -69,8 +67,6 @@ public struct CreatePostgresRole: Sendable {
     public var rotationStatements: [String]?
 
     /// Specifies the type of credential that will be generated for the role. Options include: `password`, `rsa_private_key`, `client_certificate`. See the plugin's API page for credential types supported by individual databases.
-    ///
-    /// - Note: This property is ignored in Valkey's database plugin
     public var credentialType: DatabaseCredentialMethod?
 
     /// Specifies the configuration for the given `credential_type`. See documentation for details

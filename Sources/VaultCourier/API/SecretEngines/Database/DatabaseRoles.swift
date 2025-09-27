@@ -14,22 +14,37 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if DatabaseEngineSupport
+#if PostgresPluginSupport || ValkeyPluginSupport
 extension VaultClient {
-
     /// Creates a vault role for accessing database secrets
     /// - Parameters:
-    ///   - staticRole: static role properties
+    ///   - staticRole: static role configuration
     ///   - enginePath: mount path of secret engine
     public func create(
-        staticRole: CreateDatabaseStaticRole,
+        staticRole: DatabaseStaticRoleConfiguration,
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
             try await client.create(staticRole: staticRole)
         }
     }
-    
+
+    /// Creates a postgres dynamic database role
+    /// - Parameter dynamicRole: dynamic role configuration
+    /// - Parameter enginePath: mount path of database secret engine, e.g. `database`
+    public func create(
+        dynamicRole: DatabaseDynamicRoleConfiguration,
+        enginePath: String
+    ) async throws {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.createRole(configuration: dynamicRole)
+        }
+    }
+}
+#endif
+
+#if DatabaseEngineSupport
+extension VaultClient {
     /// Deletes a vault database static role
     /// - Parameters:
     ///   - name: name of the role
@@ -42,34 +57,6 @@ extension VaultClient {
             try await client.deleteStaticRole(name: name)
         }
     }
-
-    #if PostgresPluginSupport
-    /// Creates a dynamic database role
-    /// - Parameter dynamicRole: properties of dynamic role
-    /// - Parameter enginePath: mount path of secret engine
-    public func createPostgres(
-        dynamicRole: CreatePostgresRole,
-        enginePath: String
-    ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.createPostgres(dynamicRole: dynamicRole)
-        }
-    }
-    #endif
-
-    #if ValkeyPluginSupport
-    /// Creates a dynamic database role
-    /// - Parameter dynamicRole: properties of dynamic role
-    /// - Parameter enginePath: mount path of secret engine
-    public func createValkey(
-        dynamicRole: CreateValkeyRole,
-        enginePath: String
-    ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.createValkey(dynamicRole: dynamicRole)
-        }
-    }
-    #endif
 
     /// Deletes a dynamic database role
     /// - Parameters:

@@ -16,7 +16,6 @@
 
 #if DatabaseEngineSupport
 extension VaultClient {
-
     /// Reads database credentials for a static role
     /// - Parameters:
     ///   - staticRole: static role name
