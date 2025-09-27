@@ -35,7 +35,7 @@ extension DatabaseEngineClient {
     /// - Parameters:
     ///   - staticRole: configuration for static role creation
     public func create(
-        staticRole: DatabaseStaticRoleConfiguration,
+        staticRole: DatabaseStaticRoleConfig,
     ) async throws {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
@@ -111,7 +111,7 @@ extension DatabaseEngineClient {
     /// Creates a dynamic database role
     /// - Parameter dynamicRole: configuration of dynamic role creation
     public func create(
-        dynamicRole: DatabaseDynamicRoleConfiguration
+        dynamicRole: DatabaseDynamicRoleConfig
     ) async throws {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath

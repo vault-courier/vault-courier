@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if PostgresPluginSupport || ValkeyPluginSupport
-public enum DatabaseDynamicRoleConfiguration: Sendable {
+public enum DatabaseDynamicRoleConfig: Sendable {
     #if PostgresPluginSupport
     case postgres(PostgresRoleConfig)
     #endif

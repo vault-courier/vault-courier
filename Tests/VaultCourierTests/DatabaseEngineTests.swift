@@ -44,7 +44,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
             let vaultClient = VaultClient.current
             let staticRoleName = "test_static_role"
             let databaseRoleName = env("STATIC_DB_ROLE") ?? "test_static_role_username"
-            let staticRole = DatabaseStaticRoleConfiguration.postgres(.init(vaultRoleName: staticRoleName,
+            let staticRole = DatabaseStaticRoleConfig.postgres(.init(vaultRoleName: staticRoleName,
                                                                             databaseUsername: databaseRoleName,
                                                                             databaseConnectionName: connectionName,
                                                                             rotation: .period(.seconds(28 * 24 * 60 * 60))))
@@ -69,7 +69,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
         func create_dynamic_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
             let dynamicRoleName = "test_dynamic_role"
-            let dynamicRole = DatabaseDynamicRoleConfiguration.postgres(.init(vaultRoleName: dynamicRoleName,
+            let dynamicRole = DatabaseDynamicRoleConfig.postgres(.init(vaultRoleName: dynamicRoleName,
                                                                               databaseConnectionName: connectionName,
                                                                               creationStatements: [
                                                                                 "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
@@ -163,7 +163,7 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
             let vaultClient = VaultClient.current
             let staticRoleName = "test_static_role"
             let databaseRoleName = env("STATIC_DB_ROLE") ?? "test_static_role_username"
-            let staticRole = DatabaseStaticRoleConfiguration.valkey(.init(vaultRoleName: staticRoleName,
+            let staticRole = DatabaseStaticRoleConfig.valkey(.init(vaultRoleName: staticRoleName,
                                                                           databaseUsername: databaseRoleName,
                                                                           databaseConnectionName: connectionName,
                                                                           rotation: .period(.seconds(28 * 24 * 60 * 60))))
@@ -188,7 +188,7 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
         func create_dynamic_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
             let dynamicRoleName = "test_dynamic_role"
-            let dynamicRole = DatabaseDynamicRoleConfiguration.valkey(.init(vaultRoleName: dynamicRoleName,
+            let dynamicRole = DatabaseDynamicRoleConfig.valkey(.init(vaultRoleName: dynamicRoleName,
                                                                             databaseConnectionName: connectionName,
                                                                             creationStatements: [
                                                                                 "+@admin",

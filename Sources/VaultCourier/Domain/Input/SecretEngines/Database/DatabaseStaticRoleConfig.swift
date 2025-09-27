@@ -14,11 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-
-#if DatabaseEngineSupport
-
 #if PostgresPluginSupport || ValkeyPluginSupport
-public enum DatabaseStaticRoleConfiguration: Sendable {
+public enum DatabaseStaticRoleConfig: Sendable {
     #if PostgresPluginSupport
     case postgres(PostgresStaticRoleConfig)
     #endif
@@ -28,8 +25,9 @@ public enum DatabaseStaticRoleConfiguration: Sendable {
 }
 #endif
 
+#if DatabaseEngineSupport
 public enum RotationStrategy: Sendable {
-    /// Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds. Uses duration format strings.
+    /// Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds
     case period(Duration)
 
     /// A cron-style string that will define the schedule on which rotations should occur.
@@ -40,7 +38,7 @@ public struct ScheduledRotation: Sendable {
     /// This should be a "standard" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of  "0 0 * * SAT" will set rotations to occur on Saturday at 00:00.
     public let schedule: String
 
-    /// Specifies the amount of time in which the rotation is allowed to occur starting from a given ``schedule``. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour. Uses duration format strings.
+    /// Specifies the amount of time in which the rotation is allowed to occur starting from a given ``schedule``. If the credential is not rotated during this window, due to a failure or otherwise, it will not be rotated until the next scheduled rotation. The minimum is 1 hour
     public let window: Duration?
 
     public init(schedule: String, window: Duration?) {
@@ -68,5 +66,4 @@ extension RotationStrategy: CustomDebugStringConvertible {
         }
     }
 }
-
 #endif

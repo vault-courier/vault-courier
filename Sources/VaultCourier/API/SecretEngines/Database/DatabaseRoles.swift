@@ -21,7 +21,7 @@ extension VaultClient {
     ///   - staticRole: static role configuration
     ///   - enginePath: mount path of secret engine
     public func create(
-        staticRole: DatabaseStaticRoleConfiguration,
+        staticRole: DatabaseStaticRoleConfig,
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
@@ -33,7 +33,7 @@ extension VaultClient {
     /// - Parameter dynamicRole: dynamic role configuration
     /// - Parameter enginePath: mount path of database secret engine, e.g. `database`
     public func create(
-        dynamicRole: DatabaseDynamicRoleConfiguration,
+        dynamicRole: DatabaseDynamicRoleConfig,
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
