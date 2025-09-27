@@ -17,7 +17,7 @@
 #if PklSupport
 import VaultCourier
 #if PostgresPluginSupport
-extension CreatePostgresRole {
+extension PostgresRoleConfig {
     init(_ module: PostgresRole.Module) {
         let credentialType: DatabaseCredentialMethod = if let credentialMethod = module.credential_type?.rawValue {
             .init(rawValue: credentialMethod) ?? .password

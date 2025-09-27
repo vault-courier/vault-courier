@@ -18,7 +18,7 @@
 #if PostgresPluginSupport
 import VaultCourier
 
-extension PostgresConnectionConfiguration {
+extension PostgresConnectionConfig {
     init(_ module: PostgresDatabaseConnection.Module) {
         self.init(connection: module.connection,
                   verifyConnection: module.verify_connection ?? true,

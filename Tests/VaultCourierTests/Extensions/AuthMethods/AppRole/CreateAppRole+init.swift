@@ -17,7 +17,7 @@
 #if PklSupport
 import VaultCourier
 
-extension CreateAppRole {
+extension AppRoleCreationConfig {
   init(_ module: VaultAppRole.Module) {
       self.init(
         name: module.role_name,

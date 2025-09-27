@@ -40,7 +40,7 @@ extension IntegrationTests.Pkl {
             await #expect(throws: Never.self) {
                 let config = try await PostgresStaticRole.loadFrom(source: .url(url))
 
-                guard CreateDatabaseStaticRole(config) != nil else {
+                guard PostgresStaticRoleConfig(config) != nil else {
                     Issue.record("Failed to init CreateDatabaseStaticRole from pkl-generated payload")
                     return
                 }

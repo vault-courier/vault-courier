@@ -17,7 +17,7 @@
 #if PklSupport
 import VaultCourier
 #if PostgresPluginSupport
-extension CreateDatabaseStaticRole {
+extension PostgresStaticRoleConfig {
     init?(_ module: PostgresStaticRole.Module) {
         let rotation: RotationStrategy
         if let rotationPeriod = module.rotation_period {

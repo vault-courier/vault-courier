@@ -24,7 +24,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 
-extension GenerateAppRoleToken {
+extension AppRoleTokenGenerationConfig {
     init(_ module: AppRoleToken.Module) {
         let roleName = module.role_name
 

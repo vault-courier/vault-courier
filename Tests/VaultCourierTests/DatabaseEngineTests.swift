@@ -92,11 +92,11 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                 let vaultClient = VaultClient.current
                 let staticRoleName = "test_static_role"
                 let databaseRoleName = env("STATIC_DB_ROLE") ?? "test_static_role_username"
-                let staticRole = CreateDatabaseStaticRole(vaultRoleName: staticRoleName,
+                let staticRole = PostgresStaticRoleConfig(vaultRoleName: staticRoleName,
                                                           databaseUsername: databaseRoleName,
                                                           databaseConnectionName: connectionName,
                                                           rotation: .period(.seconds(28 * 24 * 60 * 60)))
-                try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
+                try await vaultClient.create(staticRole: .postgres(staticRole), enginePath: enginePath)
 
                 let sut = try await vaultClient.makeResourceReader(
                     scheme: "vault",
@@ -120,12 +120,12 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
             func read_dynamic_database_secret_from_module_source() async throws {
                 let vaultClient = VaultClient.current
                 let dynamicRoleName = "test_dynamic_role"
-                let dynamicRole = CreatePostgresRole(vaultRoleName: dynamicRoleName,
+                let dynamicRole = PostgresRoleConfig(vaultRoleName: dynamicRoleName,
                                                      databaseConnectionName: connectionName,
                                                      creationStatements: [
                                                         "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
                                                      ])
-                try await vaultClient.createPostgres(dynamicRole: dynamicRole, enginePath: enginePath)
+                try await vaultClient.create(dynamicRole: .postgres(dynamicRole), enginePath: enginePath)
 
                 let sut = try await vaultClient.makeResourceReader(
                     scheme: "vault",

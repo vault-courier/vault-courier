@@ -17,7 +17,7 @@
 #if PklSupport
 import VaultCourier
 
-extension CreateVaultToken {
+extension TokenCreationConfig {
     init(_ module: VaultToken.Module) {
         self.init(id: module.id,
                   roleName: module.role_name,
