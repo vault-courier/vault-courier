@@ -27,7 +27,26 @@ import SystemWrapping
 
 /// REST Client for Hashicorp Vault and OpenBao.
 ///
-/// Before a client can interact with Vault, it must authenticate against an auth method. This actor protects the state of the mutating token during this process.
+/// This is the main client to interact with the Vault server. Either you call one-shot operations or use the scoped functions like
+/// e.g. ``withKeyValueClient(mountPath:execute:)`` for multiple calls to the same group of endpoints.
+///
+/// Before a client can interact with Vault, it must authenticate against an ``AuthMethod``. For example,
+///
+/// ```swift
+/// let vaultClient = VaultClient(
+///     configuration: .defaultHttps(),
+///     clientTransport: AsyncHTTPClientTransport()
+/// )
+/// try await vaultClient.login(
+///     method: .appRole(
+///         path: "path/to/approle/mount",
+///         credentials: .init(
+///             roleID: "app_role_id",
+///             secretID: "s3cret_id"
+///         )
+///     )
+/// )
+/// ```
 public actor VaultClient {
     public struct Configuration: Sendable {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
@@ -85,7 +104,7 @@ public actor VaultClient {
     
     /// Session token
     /// - Returns: current client session token
-    /// - Throws: when client is not logged in
+    /// - Throws: ``VaultClientError`` when client is not logged in
     public func sessionToken() throws -> String {
         guard let token else {
             throw VaultClientError.clientIsNotLoggedIn()

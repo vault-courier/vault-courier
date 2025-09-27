@@ -41,6 +41,20 @@ extension VaultClient {
             try await client.databaseConnection(configuration: configuration)
         }
     }
+
+    /// Reads vault-postgres connection
+    /// - Parameters:
+    ///   - name: connection name
+    ///   - enginePath: mount path of database secrets
+    /// - Returns: Connection properties
+    public func postgresConnection(
+        name: String,
+        enginePath: String
+    ) async throws -> PostgresConnectionResponse {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.postgresConnection(name: name)
+        }
+    }
     #endif
 
     #if ValkeyPluginSupport
@@ -56,26 +70,8 @@ extension VaultClient {
             try await client.databaseConnection(configuration: configuration)
         }
     }
-    #endif
 
-    #if PostgresPluginSupport
-    /// Reads vault-database connection
-    /// - Parameters:
-    ///   - name: connection name
-    ///   - enginePath: mount path of database secrets
-    /// - Returns: Connection properties
-    public func databaseConnection(
-        name: String,
-        enginePath: String
-    ) async throws -> PostgresConnectionResponse {
-        try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.postgresConnection(name: name)
-        }
-    }
-    #endif
-
-    #if ValkeyPluginSupport
-    /// Reads vault-database connection
+    /// Reads vault-valkey connection
     /// - Parameters:
     ///   - name: connection name
     ///   - enginePath: mount path of database secrets

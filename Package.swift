@@ -84,9 +84,9 @@ let package = Package(
         .default(enabledTraits: [
             MockTrait.name,
             AppRoleTrait.name,
-//            DatabaseEngineTrait.name,
-//            PostgresDatabasePluginTrait.name,
-//            ValkeyDatabasePluginTrait.name,
+            DatabaseEngineTrait.name,
+            PostgresDatabasePluginTrait.name,
+            ValkeyDatabasePluginTrait.name,
 //            PklTrait.name,
         ])
     ],

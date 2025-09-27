@@ -49,7 +49,10 @@ extension IntegrationTests {
 
 extension IntegrationTests.Auth {
     @Suite struct Token {}
-    @Suite(.serialized) struct AppRole {}
+
+    #if AppRoleSupport
+    @Suite struct AppRole {}
+    #endif
 }
 
 extension IntegrationTests.SecretEngine {
@@ -62,8 +65,13 @@ extension IntegrationTests.SecretEngine {
 }
 
 extension IntegrationTests.SecretEngine.Database {
+    #if PostgresPluginSupport
     @Suite struct Postgres {}
+    #endif
+
+    #if ValkeyPluginSupport
     @Suite struct Valkey {}
+    #endif
 }
 #endif
 
