@@ -1,0 +1,59 @@
+//===----------------------------------------------------------------------===//
+//  Copyright (c) 2025 Javier Cuesta
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//===----------------------------------------------------------------------===//
+
+import OpenAPIRuntime
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+#endif
+
+import TokenAuth
+#if AppRoleSupport
+import AppRoleAuth
+#endif
+
+public enum AuthMethod {
+    case token(String)
+
+    #if AppRoleSupport
+    case appRole(path: String, credentials: AppRoleCredentials)
+    #endif
+}
+
+package func makeAuthenticator(_ method: AuthMethod,
+                               apiURL: URL,
+                               clientTransport: ClientTransport) -> VaultAuthMethod {
+    switch method {
+        case .token(let token):
+            return TokenAuth(
+                apiURL: apiURL,
+                clientTransport: clientTransport,
+                token: token
+            )
+        #if AppRoleSupport
+        case let .appRole(path: path, credentials: credentials):
+            return AppRoleAuth(
+                configuration: .init(
+                    apiURL: apiURL,
+                    mountPath: path
+                ),
+                clientTransport: clientTransport,
+                credentials: credentials
+            )
+        #endif
+    }
+}

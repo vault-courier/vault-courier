@@ -42,14 +42,44 @@ extension Tag {
 enum IntegrationTests {}
 
 extension IntegrationTests {
-    @Suite struct KeyValue {}
-    @Suite(.serialized) struct Database {}
     @Suite struct Auth {}
+    @Suite struct SecretEngine {}
+    @Suite struct System {}
 }
 
 extension IntegrationTests.Auth {
     @Suite struct Token {}
-    @Suite(.serialized) struct AppRole {}
+
+    #if AppRoleSupport
+    @Suite struct AppRole {}
+    #endif
+}
+
+extension IntegrationTests.SecretEngine {
+    @Suite struct KeyValue {}
+}
+
+#if DatabaseEngineSupport
+extension IntegrationTests.SecretEngine {
+    @Suite(.serialized) struct Database {}
+}
+
+extension IntegrationTests.SecretEngine.Database {
+    #if PostgresPluginSupport
+    @Suite struct Postgres {}
+    #endif
+
+    #if ValkeyPluginSupport
+    @Suite struct Valkey {}
+    #endif
+}
+#endif
+
+extension IntegrationTests.System {
+    @Suite struct Wrapping {}
+    @Suite struct Auth {}
+    @Suite struct Policies {}
+    @Suite struct Mounts {}
 }
 
 public func enableIntegrationTests() -> Bool {
@@ -59,21 +89,9 @@ public func enableIntegrationTests() -> Bool {
     return rawValue.lowercased() == "yes"
 }
 
-#if Pkl
+#if PklSupport
 extension IntegrationTests {
-    @Suite(.enabled(if: isPklEnabled())) struct Pkl {}
-}
-
-extension IntegrationTests.Pkl {
-    @Suite(
-        .bug(
-            "https://github.com/swiftlang/swift-package-manager/issues/8394",
-            "swift test is hanging on GitHub Actions, started in Swift 6.0+"
-        )
-    ) struct ModuleSourceReader {
-        let localApiURL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
-        var configuration: VaultClient.Configuration { .init(apiURL: localApiURL) }
-    }
+    @Suite struct Pkl {}
 }
 
 public func isPklEnabled() -> Bool {

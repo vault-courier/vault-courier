@@ -27,21 +27,14 @@ import Logging
 
 extension VaultClient {
     @TaskLocal static var current = VaultClient(
-        configuration: .init(apiURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")),
-        client: Client(
-            serverURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
-            transport: AsyncHTTPClientTransport()
-        ),
-        authentication: .token("integration_token")
+        configuration: .init(apiURL: VaultClient.Server.defaultHttpURL),
+        clientTransport: AsyncHTTPClientTransport()
     )
 }
 
 struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
     let apiURL: URL
     let token: String
-    let appRolePath: String?
-    let kvMountPath: String?
-    let databaseMountPath: String?
     let logger: Logger?
     let middlewares: [any ClientMiddleware]
 
@@ -49,17 +42,10 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
         let vaultClient = VaultClient(
             configuration: .init(
                 apiURL: apiURL,
-                appRolePath: appRolePath,
-                kvMountPath: kvMountPath,
-                databaseMountPath: databaseMountPath,
                 backgroundActivityLogger: logger),
-            client: Client(
-                serverURL: apiURL,
-                transport: AsyncHTTPClientTransport(),
-                middlewares: middlewares
-            ),
-            authentication: .token(token))
-        try await vaultClient.authenticate()
+            clientTransport: AsyncHTTPClientTransport(),
+            middlewares: middlewares)
+        try await vaultClient.login(method: .token("integration_token"))
         return vaultClient
     }
 
@@ -72,84 +58,27 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
 }
 
 extension SuiteTrait where Self == VaultClientTrait {
-    static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
+    static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
-                                 appRolePath: String? = nil,
-                                 kvMountPath: String? = nil,
-                                 databaseMountPath: String? = nil,
                                  logger: Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
     ) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
-                    appRolePath: appRolePath,
-                    kvMountPath: kvMountPath,
-                    databaseMountPath: databaseMountPath,
                     logger: logger,
                     middlewares: middlewares)
     }
 }
 
 extension TestTrait where Self == VaultClientTrait {
-    static func setupVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
+    static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
-                                 appRolePath: String? = nil,
-                                 kvMountPath: String? = nil,
-                                 databaseMountPath: String? = nil,
                                  logger: Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
     ) -> Self {
         return Self(apiURL: apiURL,
                     token: token,
-                    appRolePath: appRolePath,
-                    kvMountPath: kvMountPath,
-                    databaseMountPath: databaseMountPath,
                     logger: logger,
                     middlewares: middlewares)
-    }
-}
-
-// MARK: Mock
-
-struct MockVaultClient: SuiteTrait, TestTrait, TestScoping {
-    let apiURL: URL
-    let token: String
-    let appRolePath: String?
-    let kvMountPath: String?
-    let databaseMountPath: String?
-    let logger: Logger?
-
-    func setupClient() async throws -> VaultClient {
-        let vaultClient = VaultClient(configuration: .init(apiURL: apiURL,
-                                                           appRolePath: appRolePath,
-                                                           kvMountPath: kvMountPath,
-                                                           databaseMountPath: databaseMountPath,
-                                                           backgroundActivityLogger: logger),
-                                      client: MockClient(),
-                                      authentication: .token(token))
-        return vaultClient
-    }
-
-    func provideScope(for test: Test, testCase: Test.Case?, performing function: @Sendable () async throws -> Void) async throws {
-        let vaultClient = try await setupClient()
-        try await VaultClient.$current.withValue(vaultClient) {
-            try await function()
-        }
-    }
-}
-
-extension TestTrait where Self == MockVaultClient {
-    static func setupMockVaultClient(apiURL: URL = try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
-                                     token: String = "test_token",
-                                     appRolePath: String? = nil,
-                                     kvMountPath: String? = nil,
-                                     databaseMountPath: String? = nil,
-                                     logger: Logger? = nil) -> Self {
-        return Self(apiURL: apiURL,
-                    token: token,
-                    appRolePath: appRolePath,
-                    kvMountPath: kvMountPath,
-                    databaseMountPath: databaseMountPath,
-                    logger: logger)
     }
 }

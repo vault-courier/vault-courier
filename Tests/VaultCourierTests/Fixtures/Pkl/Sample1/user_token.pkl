@@ -1,4 +1,4 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.6#/Payloads/VaultToken.pkl"
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultToken.pkl"
 
 role_name = "test_user"
 

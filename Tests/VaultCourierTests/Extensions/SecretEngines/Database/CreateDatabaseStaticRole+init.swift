@@ -14,10 +14,10 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
+#if PklSupport
 import VaultCourier
-
-extension CreateDatabaseStaticRole {
+#if PostgresPluginSupport
+extension PostgresStaticRoleConfig {
     init?(_ module: PostgresStaticRole.Module) {
         let rotation: RotationStrategy
         if let rotationPeriod = module.rotation_period {
@@ -44,4 +44,5 @@ extension CreateDatabaseStaticRole {
                   credentialConfig: module.credential_config)
     }
 }
+#endif
 #endif

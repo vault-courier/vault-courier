@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
+#if PklSupport
 import Testing
 
 #if canImport(FoundationEssentials)
@@ -27,8 +27,12 @@ import PklSwift
 import VaultCourier
 
 extension IntegrationTests.Pkl {
-    @Suite(.disabled())
+    @Suite(
+        .disabled(), // Bug: This suite can only be called individually. Otherwise, it blocks when run with other suits. Seems to be due to Pkl
+        .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
+    )
     struct Payloads {
+#if PostgresPluginSupport
         @Test
         func create_database_static_role_with_pkl_file() async throws {
             let url = pklFixtureUrl(for: "Sample1/static_role.pkl")
@@ -36,12 +40,13 @@ extension IntegrationTests.Pkl {
             await #expect(throws: Never.self) {
                 let config = try await PostgresStaticRole.loadFrom(source: .url(url))
 
-                guard CreateDatabaseStaticRole(config) != nil else {
+                guard PostgresStaticRoleConfig(config) != nil else {
                     Issue.record("Failed to init CreateDatabaseStaticRole from pkl-generated payload")
                     return
                 }
             }
         }
+#endif
 
         @Test
         func create_approle_with_pkl_file() async throws {

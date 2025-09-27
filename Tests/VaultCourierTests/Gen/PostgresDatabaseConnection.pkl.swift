@@ -1,5 +1,5 @@
 
-#if Pkl
+#if PklSupport
 // Code generated from Pkl module `PostgresDatabaseConnection`. DO NOT EDIT.
 import PklSwift
 

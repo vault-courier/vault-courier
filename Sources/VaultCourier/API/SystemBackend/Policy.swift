@@ -14,31 +14,53 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+#endif
+
 extension VaultClient {
     
     /// Add a new or update an existing ACL policy.
     ///
     /// - Parameters:
+    ///   - hcl: ACL policy in HCL format
+    public func createPolicy(
+        hcl: ACLPolicyHCL
+    ) async throws {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.createPolicy(hcl)
+        }
+    }
+
+    /// Add a new or update an existing ACL policy.
+    ///
+    /// - Parameters:
     ///   - name: name of the policy
-    ///   - hclPolicy: policy in hcl format
+    ///   - contentOf: URL to a ACL policy in HCL format
     public func createPolicy(
         name: String,
-        hclPolicy: String
+        contentOf: URL
     ) async throws {
-        let sessionToken = try sessionToken()
+        let policy = try String(contentsOf: contentOf, encoding: .utf8)
+        try await createPolicy(hcl: .init(name: name, policy: policy))
+    }
+    
+    /// Retrieves an ACL policy
+    /// - Parameter name: name of the policy
+    /// - Returns: Named ACL policy in HCL format
+    public func readPolicy(name: String) async throws -> ACLPolicyHCL {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.readPolicy(name: name)
+        }
+    }
 
-        let response = try await client.policiesWriteAclPolicy(.init(
-            path: .init(name: name),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(policy: hclPolicy)))
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("Policy written successfully!")
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)."))
-                throw VaultClientError.operationFailed(statusCode)
+    /// Deletes an ACL policy
+    /// - Parameter name: name of ACL policy
+    public func deletePolicy(name: String) async throws {
+        try await withSystemBackend { systemBackend in
+            try await systemBackend.deletePolicy(name: name)
         }
     }
 }

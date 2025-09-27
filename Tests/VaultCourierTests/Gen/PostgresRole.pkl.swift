@@ -1,4 +1,4 @@
-#if Pkl
+#if PklSupport
 // Code generated from Pkl module `PostgresRole`. DO NOT EDIT.
 import PklSwift
 

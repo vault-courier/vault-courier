@@ -1,4 +1,4 @@
-#if Pkl
+#if PklSupport
 // Code generated from Pkl module `VaultPolicy`. DO NOT EDIT.
 import PklSwift
 

@@ -17,13 +17,8 @@
 import struct OpenAPIRuntime.OpenAPIObjectContainer
 #if canImport(FoundationEssentials)
 import FoundationEssentials
-import protocol Foundation.LocalizedError
 #else
-import struct Foundation.URL
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
 import struct Foundation.Data
-import protocol Foundation.LocalizedError
 #endif
 
 extension VaultClient {
@@ -37,41 +32,12 @@ extension VaultClient {
     /// - Returns: Metadata about the secret, like its current version and creation time
     @discardableResult
     public func writeKeyValue(
-        enginePath: String? = nil,
+        enginePath: String,
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata {
-        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let data = try JSONEncoder().encode(secret)
-        let json: OpenAPIObjectContainer
-        do {
-            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
-        } catch {
-            throw VaultClientError.invalidSecretType()
-        }
-
-        let response = try await client.writeKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
-                options: .init(cas: nil),
-                data: json)
-            )
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return json.metadata
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.writeKeyValue(secret: secret, key: key)
         }
     }
 
@@ -83,64 +49,12 @@ extension VaultClient {
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: value of the secret
     public func readKeyValueSecret<T: Decodable & Sendable>(
-        enginePath: String? = nil,
+        enginePath: String,
         key: String,
         version: Int? = nil
     ) async throws -> T {
-        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.readKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let data = try JSONEncoder().encode(json.data.data)
-                return try JSONDecoder().decode(T.self, from: data)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
-        }
-    }
-
-    /// Retrieves the secret at the specified path location.
-    ///
-    /// - Parameters:
-    ///   - key: It's the path to the secret relative to the kv secret mount.
-    ///   - version: Specifies the version to return. If not set the latest version is returned.
-    /// - Returns: value of the secret with its requestID
-    public func readKeyValue<T: Decodable & Sendable>(
-        key: String,
-        version: Int? = nil
-    ) async throws -> KeyValueResponse<T> {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.readKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.secret()
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readKeyValueSecret(key: key, version: version)
         }
     }
 
@@ -153,32 +67,13 @@ extension VaultClient {
     ///   - subkeysDepth: Specifies the deepest nesting level to provide in the output. The default value `nil` will not impose any limit.
     /// - Returns: Data of the secret
     public func readKeyValueSecretData(
-        enginePath: String? = nil,
+        enginePath: String,
         key: String,
         version: Int? = nil,
         subkeysDepth: Int? = nil
     ) async throws -> Data {
-        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.readKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let data = try JSONEncoder().encode(json.data.data)
-                return data
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readKeyValueSecretData(key: key, version: version, subkeysDepth: subkeysDepth)
         }
     }
 
@@ -191,32 +86,13 @@ extension VaultClient {
     ///   - depth: Specifies the deepest nesting level to provide in the output. The default value `nil` will not impose any limit. If non-zero, keys that reside at the specified depth value will be artificially treated as leaves and will thus be null even if further underlying subkeys exist.
     /// - Returns: Data corresponding to stripped subkeys
     public func readSecretSubkeys(
-        enginePath: String? = nil,
+        enginePath: String,
         key: String,
         version: Int? = nil,
         depth: Int? = nil
     ) async throws -> Data? {
-        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.subkeysKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version, depth: depth),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let data = try JSONEncoder().encode(json.data.subkeys)
-                return data
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                return nil
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readSecretSubkeys(key: key, version: version, depth: depth)
         }
     }
 
@@ -230,40 +106,12 @@ extension VaultClient {
     /// - Returns: Metadata associated to the secret.
     @discardableResult
     public func patchKeyValue(
-        enginePath: String? = nil,
+        enginePath: String,
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata? {
-        let enginePath = enginePath ?? self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let data = try JSONEncoder().encode(secret)
-        let json: OpenAPIObjectContainer
-        do {
-            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
-        } catch {
-            throw VaultClientError.invalidSecretType()
-        }
-
-        let response = try await client.patchKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .applicationMergePatchJson(.init(
-                options: .init(cas: nil),
-                data: json))
-            )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return json.metadata
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                return nil
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode)"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.patchKeyValue(secret: secret, key: key)
         }
     }
 
@@ -271,173 +119,89 @@ extension VaultClient {
     /// 
     /// This marks the version as deleted and will stop it from being returned from reads, but the underlying data will not be removed.
     ///
-    /// A delete can be undone using the ``VaultCourier/VaultClient/undelete(key:versions:)`` operation.
+    /// A delete can be undone using the ``VaultCourier/VaultClient/undelete(enginePath:key:versions:)`` operation.
+    /// - Parameter enginePath: mount path of secret engine
     /// - Parameter key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Parameter versions: The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in the read secret operations. Defaults to empty array, which deletes the latest version.
-    public func delete(key: String, versions: [String] = []) async throws {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        if versions.isEmpty {
-            let response = try await client.deleteLatestKvSecrets(
-                path: .init(kvPath: enginePath, secretKey: key),
-                headers: .init(xVaultToken: sessionToken)
-            )
-
-            switch response {
-                case .noContent:
-                    logger.info("secret deleted successfully")
-                case .badRequest(let content):
-                    let errors = (try? content.body.json.errors) ?? []
-                    logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                    throw VaultClientError.badRequest(errors)
-                case .undocumented(statusCode: let statusCode, _):
-                    logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                    throw VaultClientError.operationFailed(statusCode)
-            }
-        } else {
-            let response = try await client.deleteKvSecrets(
-                path: .init(kvPath: enginePath, secretKey: key),
-                headers: .init(xVaultToken: sessionToken),
-                body: .json(.init(versions: versions))
-            )
-
-            switch response {
-                case .noContent:
-                    logger.info("secret deleted successfully")
-                case .badRequest(let content):
-                    let errors = (try? content.body.json.errors) ?? []
-                    logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                    throw VaultClientError.badRequest(errors)
-                case .undocumented(statusCode: let statusCode, _):
-                    logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                    throw VaultClientError.operationFailed(statusCode)
-            }
+    public func delete(
+        enginePath: String,
+        key: String,
+        versions: [String] = []
+    ) async throws {
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.delete(key: key, versions: versions)
         }
     }
 
     /// Undeletes the data for the provided version and path in the key-value store. This restores the data, allowing it to be returned on get requests.
     ///
-    /// This reverses the  ``VaultCourier/VaultClient/delete(key:versions:)`` operation.
+    /// This reverses the  ``VaultCourier/VaultClient/delete(enginePath:key:versions:)`` operation.
     ///
     /// - Parameters:
+    ///   - enginePath: mount path of secret engine
     ///   - key: It's the path to the secret relative to the secret mount.
     ///   - versions: The versions to undelete. The versions will be restored and their data will be returned on normal read secret requests.
-    public func undelete(key: String, versions: [String]) async throws {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.undeleteKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(versions: versions))
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("secret undeleted successfully")
-                return
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+    public func undelete(
+        enginePath: String,
+        key: String,
+        versions: [String]
+    ) async throws {
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.undelete(key: key, versions: versions)
         }
     }
 
     
     /// Creates or updates the metadata of a secret at the specified location. It does not create a new version of the secret.
     /// - Parameters:
-    ///   - key: It's the path to the secret relative to the secret mount.
-    ///   - isCasRequired: If `true`, the key will require the cas parameter to be set on all write requests. If `false`, the backend’s configuration will be used. Defaults to `false`
-    ///   - customMetadata: A Dictionary of user-provided metadata meant to describe the secret.
-    ///   - deleteVersionAfter: Specify the deletion time for all new versions written to this key.
-    ///   - versionLimit: The number of versions to keep per key. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted.
+    /// - Parameter enginePath: mount path of secret engine
+    /// - Parameter key: It's the path to the secret relative to the secret mount.
+    /// - Parameter isCasRequired: If `true`, the key will require the cas parameter to be set on all write requests. If `false`, the backend’s configuration will be used. Defaults to `false`
+    /// - Parameter customMetadata: A Dictionary of user-provided metadata meant to describe the secret.
+    /// - Parameter deleteVersionAfter: Specify the deletion time for all new versions written to this key.
+    /// - Parameter versionLimit: The number of versions to keep per key. Once a key has more than the configured allowed versions, the oldest version will be permanently deleted.
     public func writeMetadata(
+        enginePath: String,
         key: String,
         isCasRequired: Bool = false,
         customMetadata: [String: String],
         deleteVersionAfter: String? = nil,
         versionLimit: Int = 10
     ) async throws {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.updateMetadataKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
-                casRequired: isCasRequired,
-                customMetadata: .init(additionalProperties: customMetadata),
-                deleteVersionAfter: deleteVersionAfter ?? "",
-                maxVersions: versionLimit)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.writeMetadata(
+                key: key,
+                isCasRequired: isCasRequired,
+                customMetadata: customMetadata,
+                deleteVersionAfter: deleteVersionAfter,
+                versionLimit: versionLimit
             )
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("Secret metadata updated.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
         }
     }
     
     /// Retrieves the metadata and versions for the secret at the specified path. Metadata is version-agnostic.
+    /// - Parameter enginePath: mount path of secret engine
     /// - Parameter key: It's the path to the secret relative to the secret mount.
     /// - Returns: All the versioned secret metadata
-    public func readMetadata(key: String) async throws -> KeyValueStoreMetadata {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-        
-        let response = try await client.readMetadataKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return try json.metadata
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+    public func readMetadata(
+        enginePath: String,
+        key: String
+    ) async throws -> KeyValueStoreMetadata {
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readMetadata(key: key)
         }
     }
-
     
     /// Permanently deletes the key metadata _and all version data_ for the specified key.
     /// All version history will be removed.
+    /// - Parameter enginePath: mount path of secret engine
     /// - Parameter key: It's the path to the secret relative to the secret mount.
-    public func deleteAllMetadata(key: String) async throws {
-        let enginePath = self.mounts.kv.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.deleteMetadataKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("Metadata deleted successfully.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(statusCode: let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+    public func deleteAllMetadata(
+        enginePath: String,
+        key: String
+    ) async throws {
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.deleteAllMetadata(key: key)
         }
     }
 }

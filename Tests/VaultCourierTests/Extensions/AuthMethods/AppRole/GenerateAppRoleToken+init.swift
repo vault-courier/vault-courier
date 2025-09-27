@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
+#if PklSupport
 import VaultCourier
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -24,7 +24,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 
-extension GenerateAppRoleToken {
+extension AppRoleTokenGenerationConfig {
     init(_ module: AppRoleToken.Module) {
         let roleName = module.role_name
 
@@ -41,8 +41,8 @@ extension GenerateAppRoleToken {
                   cidrList: cidrList,
                   tokenNumberOfUses: tokenNumberOfUses,
                   tokenBoundCIDRS: tokenBoundCIDRS,
-                  tokenTTL: tokenTTL?.toSwiftDuration(),
-                  wrapTTL: wrapTTL?.toSwiftDuration())
+                  tokenTimeToLive: tokenTTL?.toSwiftDuration(),
+                  wrapTimeToLive: wrapTTL?.toSwiftDuration())
     }
 }
 #endif

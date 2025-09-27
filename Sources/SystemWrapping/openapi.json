@@ -1,0 +1,383 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vault Courier System Wrapping API",
+    "version": "0.2.0",
+    "description": "Wrapping endpoints. Vault Courier is a Swift client for Hashicorp Vault and OpenBao",
+    "license": {
+      "name": "Apache License 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8200/v1",
+      "description": "Default http server url"
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
+    }
+  ],
+  "paths": {
+    "/sys/wrapping/wrap": {
+      "description": "Wraps the given user-supplied json data inside a response-wrapped token.",
+      "post": {
+        "tags": [
+          "wrapping"
+        ],
+        "operationId": "wrap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultWrappedResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/sys/wrapping/rewrap": {
+      "description": "Rewraps an existing response-wrapped token. The newly generated token inherits the original token's creation TTL and preserves the same response data. Once rewrapped, the old token is invalidated. This mechanism is useful for securely storing secrets in response-wrapped tokens when periodic rotation is required.",
+      "post": {
+        "tags": [
+          "wrapping"
+        ],
+        "operationId": "rewrap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultWrappedResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/sys/wrapping/unwrap": {
+      "description": "Unwraps a wrapped response",
+      "post": {
+        "tags": [
+          "wrapping"
+        ],
+        "operationId": "unwrap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultApiResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/sys/wrapping/lookup": {
+      "description": "Looks up wrapping properties for the given token",
+      "post": {
+        "tags": [
+          "wrapping"
+        ],
+        "operationId": "lookup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "creation_path": {
+                          "type": "string"
+                        },
+                        "creation_time": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "creation_ttl": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "creation_path",
+                        "creation_time",
+                        "creation_ttl"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "VaultApiResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ]
+      },
+      "VaultWrappedResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "creation_time": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "creation_path": {
+                "type": "string"
+              },
+              "wrapped_accessor": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token",
+              "accessor",
+              "ttl",
+              "creation_time",
+              "creation_path"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "wrap_info"
+        ]
+      },
+      "VaultErrorsResponseBody": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "List of errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "VaultTokenHeader": {
+        "description": "Vault Token required for authentication",
+        "name": "X-Vault-Token",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WrapTTLHeader": {
+        "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
+        "name": "X-Vault-Wrap-TTL",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

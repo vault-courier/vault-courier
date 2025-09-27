@@ -1,0 +1,193 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vault Courier System Policies API",
+    "version": "0.2.0",
+    "description": "System Policies endpoints. Vault Courier is a Swift client for Hashicorp Vault and OpenBao",
+    "license": {
+      "name": "Apache License 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8200/v1",
+      "description": "Default http server url"
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
+    }
+  ],
+  "paths": {
+    "/sys/policies/acl/{name}": {
+      "description": "Read, Modify, or Delete an access control policy.",
+      "get": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Read ACL policy.",
+        "description": "Retrieves information about the named ACL policy",
+        "operationId": "policies-read-acl-policy",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadACLPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Add/update ACL policy.",
+        "description": "Add a new or update an existing ACL policy.",
+        "operationId": "policies-write-acl-policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoliciesWriteAclPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "policies"
+        ],
+        "summary": "Delete Policy",
+        "description": "Deletes the ACL policy with the given name. This will immediately affect all users associated with this policy. (A deleted policy set on a token acts as an empty policy.)",
+        "operationId": "policies-delete-acl-policy",
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "The name of the policy. Example: \"ops\"",
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "PoliciesWriteAclPolicyRequest": {
+        "type": "object",
+        "properties": {
+          "policy": {
+            "type": "string",
+            "description": "The rules of the policy."
+          }
+        }
+      },
+      "ReadACLPolicyResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the policy."
+              },
+              "policy": {
+                "type": "string",
+                "description": "The rules of the policy."
+              }
+            },
+            "required": [
+              "name",
+              "policy"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "VaultErrorsResponseBody": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "List of errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "VaultTokenHeader": {
+        "description": "Vault Token required for authentication",
+        "name": "X-Vault-Token",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WrapTTLHeader": {
+        "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
+        "name": "X-Vault-Wrap-TTL",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

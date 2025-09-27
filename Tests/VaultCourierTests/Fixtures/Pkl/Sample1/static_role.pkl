@@ -1,4 +1,4 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.5#/Payloads/PostgresStaticRole.pkl"
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresStaticRole.pkl"
 
 vault_role_name = "test_static_role"
 

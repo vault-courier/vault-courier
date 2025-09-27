@@ -1,0 +1,1245 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vault Courier Token Authentication Method",
+    "version": "0.1.0",
+    "description": "Token Authentication endpoints. VaultCourier is a Swift client for Hashicorp Vault and OpenBao",
+    "license": {
+      "name": "Apache License 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8200/v1",
+      "description": "Default http server url"
+    },
+    {
+      "url": "https://127.0.0.1:8200/v1",
+      "description": "Default https server url"
+    }
+  ],
+  "paths": {
+    "/auth/token/create": {
+      "description": "The token create path is used to create new tokens.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Create new Token",
+        "operationId": "token-create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/lookup": {
+      "description": "Returns information about the given token.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Lookup Token",
+        "description": "Returns information about the given token.",
+        "operationId": "lookup-token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenBodyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenLookupResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/auth/token/lookup-self": {
+      "description": "Returns information about the current client token.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Lookup client Token",
+        "description": "Returns information about the current client token.",
+        "operationId": "lookup-token-self",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenLookupResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/auth/token/lookup-accessor": {
+      "description": "Returns information about the client token from the accessor.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Lookup Token via accessor",
+        "description": "Returns information about the client token from the accessor.",
+        "operationId": "lookup-token-accessor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessorBodyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenLookupResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/auth/token/renew": {
+      "description": "This endpoint will renew the given token and prevent expiration.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Renew Token",
+        "description": "This endpoint will renew the given token and prevent expiration.",
+        "operationId": "token-renew",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRenewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/renew-self": {
+      "description": "Renews a lease associated with the calling token. This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Renew client Token",
+        "description": "Renews a lease associated with the calling token.",
+        "operationId": "token-renew-self",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRenewSelfRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/renew-accessor": {
+      "description": "Renews a lease associated with a token using its accessor. This is used to prevent the expiration of a token, and the automatic revocation of it. Token renewal is possible only if there is a lease associated with it.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Renew Token via accessor.",
+        "description": "Renews a lease associated with a token using its accessor.",
+        "operationId": "token-renew-accessor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRenewAccessorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultAuthResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/revoke": {
+      "description": "Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Revoke Token",
+        "description": "Revokes a token and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+        "operationId": "token-revoke",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRevokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/revoke-self": {
+      "description": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Revoke client Token",
+        "description": "Revokes the token used to call it and all child tokens. When the token is revoked, all dynamic secrets generated with it are also revoked.",
+        "operationId": "token-revoke-self",
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/revoke-accessor": {
+      "description": "Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Revoke token via accessor",
+        "description": "Revoke the token associated with the accessor and all the child tokens. This is meant for purposes where there is no access to token ID but there is need to revoke a token and its children.",
+        "operationId": "token-revoke-accessor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRevokeAccessorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/revoke-orphan": {
+      "description": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using `/auth/token/revoke/`. This is a root-protected endpoint.",
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Revoke Orphan Token",
+        "description": "Revokes a token but not its child tokens. When the token is revoked, all secrets generated with it are also revoked. All child tokens are orphaned, but can be revoked sub-sequently using `/auth/token/revoke/`. This is a root-protected endpoint.",
+        "operationId": "token-revoke-orphan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRevokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        },
+        {
+          "$ref": "#/components/parameters/WrapTTLHeader"
+        }
+      ]
+    },
+    "/auth/token/roles/{role_name}": {
+      "description": "Fetches the named role configuration.",
+      "get": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Get token role configuration",
+        "description": "Fetches the named role configuration.",
+        "operationId": "read-token-role",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenReadRoleResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Create/Update token role",
+        "description": "Creates (or replaces) the named role. Roles enforce specific behavior when creating tokens that allow token functionality that is otherwise not available or would require sudo/root privileges to access. Role parameters, when set, override any provided options to the create endpoints. The role name is also included in the token path, allowing all tokens created against a role to be revoked using the `/sys/leases/revoke-prefix` endpoint.",
+        "operationId": "update-token-role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenUpdateRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "token"
+        ],
+        "summary": "Delete token role.",
+        "description": "deletes the named token role.",
+        "operationId": "delete-token-role",
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "The name of the approle. Example: \"my-app-role\"",
+          "name": "role_name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "TokenCreateRequest": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "description": "Name to associate with this token"
+          },
+          "entity_alias": {
+            "type": "string",
+            "description": "Name of the entity alias to associate with this token"
+          },
+          "explicit_max_ttl": {
+            "type": "string",
+            "description": "Explicit Max TTL of this token"
+          },
+          "id": {
+            "type": "string",
+            "description": "Value for the token"
+          },
+          "meta": {
+            "type": "object",
+            "format": "kvpairs",
+            "description": "Arbitrary key=value metadata to associate with the token"
+          },
+          "no_default_policy": {
+            "type": "boolean",
+            "description": "Do not include default policy for this token"
+          },
+          "no_parent": {
+            "type": "boolean",
+            "description": "Create the token with no parent"
+          },
+          "num_uses": {
+            "type": "integer",
+            "description": "Max number of uses for this token"
+          },
+          "period": {
+            "type": "string",
+            "description": "Renew period"
+          },
+          "policies": {
+            "type": "array",
+            "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "renewable": {
+            "type": "boolean",
+            "description": "Allow token to be renewed past its initial TTL up to system/mount maximum TTL",
+            "default": true
+          },
+          "ttl": {
+            "type": "string",
+            "description": "Time to live for this token"
+          },
+          "type": {
+            "type": "string",
+            "description": "Token type",
+            "enum": [
+              "batch",
+              "service",
+              "default",
+              "default-service",
+              "default-batch"
+            ]
+          }
+        }
+      },
+      "TokenLookupResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessor": {
+                "type": "string"
+              },
+              "creation_time": {
+                "type": "integer",
+                "description": "creation time in unix time stamp"
+              },
+              "creation_ttl": {
+                "type": "integer"
+              },
+              "display_name": {
+                "type": "string",
+                "description": "Name to associate with this token"
+              },
+              "entity_id": {
+                "type": "string",
+                "description": "Name of the entity id to associate with this token"
+              },
+              "expire_time": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Optional expire time date in string format."
+              },
+              "explicit_max_ttl": {
+                "type": "integer"
+              },
+              "id": {
+                "type": "string",
+                "description": "Value for the token"
+              },
+              "issue_time": {
+                "type": "string",
+                "description": "Value for the token"
+              },
+              "meta": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Arbitrary key=value metadata to associate with the token",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "num_uses": {
+                "type": "integer",
+                "description": "Max number of uses for this token"
+              },
+              "orphan": {
+                "type": "boolean"
+              },
+              "path": {
+                "type": "string"
+              },
+              "policies": {
+                "type": "array",
+                "description": "A list of policies for the token.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "renewable": {
+                "type": "boolean",
+                "description": "Allow token to be renewed past its initial TTL up to system/mount maximum TTL"
+              },
+              "ttl": {
+                "type": "integer",
+                "description": "Time to live for this token"
+              },
+              "type": {
+                "type": "string",
+                "description": "Token type",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              }
+            },
+            "required": [
+              "accessor",
+              "creation_time",
+              "creation_ttl",
+              "display_name",
+              "entity_id",
+              "id",
+              "issue_time",
+              "num_uses",
+              "orphan",
+              "path",
+              "policies",
+              "renewable",
+              "ttl",
+              "type"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "TokenBodyRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "AccessorBodyRequest": {
+        "type": "object",
+        "properties": {
+          "accessor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessor"
+        ]
+      },
+      "TokenUpdateRoleRequest": {
+        "type": "object",
+        "properties": {
+          "allowed_policies": {
+            "type": "array",
+            "description": "If set, tokens can be created with any subset of the policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy names. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disallowed_policies": {
+            "type": "array",
+            "description": "If set, successful token creation via this role will require that no policies in the given list are requested. The parameter is a comma-delimited string of policy names. Adding \"default\" to this list will prevent \"default\" from being added automatically to created tokens.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowed_policies_glob": {
+            "type": "array",
+            "description": "If set, tokens can be created with any subset of glob matched policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy name globs. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically. If combined with allowed_policies policies need to only match one of the two lists to be permitted. Note that unlike allowed_policies the policies listed in allowed_policies_glob will not be added to the token when no policies are specified in the call to /auth/token/create/:role_name.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disallowed_policies_glob": {
+            "type": "array",
+            "description": "If set, successful token creation via this role will require that no requested policies glob match any of policies in this list. The parameter is a comma-delimited string of policy name globs. Adding any glob that matches \"default\" to this list will prevent \"default\" from being added automatically to created tokens. If combined with disallowed_policies policies need to only match one of the two lists to be blocked.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "orphan": {
+            "type": "boolean",
+            "description": "If true, tokens created against this policy will be orphan tokens (they will have no parent). As such, they will not be automatically revoked by the revocation of any other token."
+          },
+          "renewable": {
+            "type": "boolean",
+            "description": "Set to false to disable the ability of the token to be renewed past its initial TTL. Setting the value to true will allow the token to be renewable up to the system/mount maximum TTL."
+          },
+          "path_suffix": {
+            "type": "string",
+            "description": " If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios, such as keeping the same role name in the future but revoking all tokens created against it before some point in time. The suffix can be changed, allowing new callers to have the new suffix as part of their path, and then tokens with the old suffix can be revoked via /sys/leases/revoke-prefix."
+          },
+          "allowed_entity_aliases": {
+            "type": "array",
+            "description": "String or JSON list of allowed entity aliases. If set, specifies the entity aliases which are allowed to be used during token generation. This field supports globbing. Note that allowed_entity_aliases is not case sensitive.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_bound_cidrs": {
+            "type": "array",
+            "description": "List of CIDR blocks; if set, specifies blocks of IP addresses which can authenticate successfully, and ties the resulting token to these blocks as well.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "token_explicit_max_ttl": {
+            "type": "string",
+            "description": "If set, will encode an explicit max TTL onto the token. This is a hard cap even if token_ttl and token_max_ttl would otherwise allow a renewal."
+          },
+          "token_no_default_policy": {
+            "type": "boolean",
+            "description": "If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in token_policies."
+          },
+          "token_num_uses": {
+            "type": "integer",
+            "description": "The maximum number of times a generated token may be used (within its lifetime); 0 means unlimited. If you require the token to have the ability to create child tokens, you will need to set this value to 0."
+          },
+          "token_period": {
+            "type": "string",
+            "description": "The maximum allowed period value when a periodic token is requested from this role."
+          },
+          "token_type": {
+            "type": "string",
+            "description": "The type of token that should be generated. Can be service, batch, or default to use the mount's tuned default (which unless changed will be service tokens). For token store roles, there are two additional possibilities: default-service and default-batch which specify the type to return unless the client requests a different type at generation time. For machine based authentication cases, you should use batch type tokens.",
+            "enum": [
+              "batch",
+              "service",
+              "default",
+              "default-service",
+              "default-batch"
+            ]
+          }
+        }
+      },
+      "TokenRenewRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token to renew (request body)"
+          },
+          "increment": {
+            "type": "string",
+            "format": "duration",
+            "description": "The desired increment in seconds to the token expiration",
+            "default": "0"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "TokenRenewSelfRequest": {
+        "type": "object",
+        "properties": {
+          "increment": {
+            "type": "string",
+            "format": "duration",
+            "description": "The desired increment in seconds to the token expiration",
+            "default": "0"
+          }
+        }
+      },
+      "TokenRenewAccessorRequest": {
+        "type": "object",
+        "properties": {
+          "accessor": {
+            "type": "string",
+            "description": "Accessor associated with the token to renew."
+          },
+          "increment": {
+            "type": "string",
+            "format": "duration",
+            "description": "The desired increment in seconds to the token expiration",
+            "default": "0"
+          }
+        },
+        "required": [
+          "accessor"
+        ]
+      },
+      "TokenRevokeRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token to renew (request body)"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "TokenRevokeAccessorRequest": {
+        "type": "object",
+        "properties": {
+          "accessor": {
+            "type": "string",
+            "description": "Accessor associated with the token to renew."
+          }
+        },
+        "required": [
+          "accessor"
+        ]
+      },
+      "TokenReadRoleResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "allowed_policies": {
+                "type": "array",
+                "description": "If set, tokens can be created with any subset of the policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy names. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disallowed_policies": {
+                "type": "array",
+                "description": "If set, successful token creation via this role will require that no policies in the given list are requested. The parameter is a comma-delimited string of policy names. Adding \"default\" to this list will prevent \"default\" from being added automatically to created tokens.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allowed_policies_glob": {
+                "type": "array",
+                "description": "If set, tokens can be created with any subset of glob matched policies in this list, rather than the normal semantics of tokens being a subset of the calling token's policies. The parameter is a comma-delimited string of policy name globs. If at creation time no_default_policy is not set and \"default\" is not contained in disallowed_policies or glob matched in disallowed_policies_glob, the \"default\" policy will be added to the created token automatically. If combined with allowed_policies policies need to only match one of the two lists to be permitted. Note that unlike allowed_policies the policies listed in allowed_policies_glob will not be added to the token when no policies are specified in the call to /auth/token/create/:role_name.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disallowed_policies_glob": {
+                "type": "array",
+                "description": "If set, successful token creation via this role will require that no requested policies glob match any of policies in this list. The parameter is a comma-delimited string of policy name globs. Adding any glob that matches \"default\" to this list will prevent \"default\" from being added automatically to created tokens. If combined with disallowed_policies policies need to only match one of the two lists to be blocked.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "orphan": {
+                "type": "boolean",
+                "description": "If true, tokens created against this policy will be orphan tokens (they will have no parent). As such, they will not be automatically revoked by the revocation of any other token."
+              },
+              "renewable": {
+                "type": "boolean",
+                "description": "Set to false to disable the ability of the token to be renewed past its initial TTL. Setting the value to true will allow the token to be renewable up to the system/mount maximum TTL."
+              },
+              "path_suffix": {
+                "type": "string",
+                "description": " If set, tokens created against this role will have the given suffix as part of their path in addition to the role name. This can be useful in certain scenarios, such as keeping the same role name in the future but revoking all tokens created against it before some point in time. The suffix can be changed, allowing new callers to have the new suffix as part of their path, and then tokens with the old suffix can be revoked via /sys/leases/revoke-prefix."
+              },
+              "allowed_entity_aliases": {
+                "type": "array",
+                "description": "String or JSON list of allowed entity aliases. If set, specifies the entity aliases which are allowed to be used during token generation. This field supports globbing. Note that allowed_entity_aliases is not case sensitive.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "token_bound_cidrs": {
+                "type": "array",
+                "description": "List of CIDR blocks; if set, specifies blocks of IP addresses which can authenticate successfully, and ties the resulting token to these blocks as well.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "token_explicit_max_ttl": {
+                "type": "integer",
+                "description": "If set, will encode an explicit max TTL onto the token. This is a hard cap even if token_ttl and token_max_ttl would otherwise allow a renewal."
+              },
+              "token_no_default_policy": {
+                "type": "boolean",
+                "description": "If set, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in token_policies."
+              },
+              "token_num_uses": {
+                "type": "integer",
+                "description": "The maximum number of times a generated token may be used (within its lifetime); 0 means unlimited. If you require the token to have the ability to create child tokens, you will need to set this value to 0."
+              },
+              "token_period": {
+                "type": "integer",
+                "description": "The maximum allowed period value when a periodic token is requested from this role."
+              },
+              "token_type": {
+                "type": "string",
+                "description": "The type of token that should be generated. Can be service, batch, or default to use the mount's tuned default (which unless changed will be service tokens). For token store roles, there are two additional possibilities: default-service and default-batch which specify the type to return unless the client requests a different type at generation time. For machine based authentication cases, you should use batch type tokens.",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the token role."
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "VaultApiResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ]
+      },
+      "VaultAuthResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object",
+            "properties": {
+              "client_token": {
+                "type": "string"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "token_policies": {
+                "type": "array",
+                "description": "A list of policies for the token. This must be a subset of the policies belonging to the token making the request, unless the calling token is root or contains sudo capabilities to auth/token/create. If not specified, defaults to all the policies of the calling token.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "Arbitrary key=value metadata to associate with the token",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "lease_duration": {
+                "type": "integer"
+              },
+              "renewable": {
+                "type": "boolean"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "token_type": {
+                "type": "string",
+                "enum": [
+                  "batch",
+                  "service",
+                  "default",
+                  "default-service",
+                  "default-batch"
+                ]
+              },
+              "orphan": {
+                "type": "boolean"
+              },
+              "mfa_requirement": {
+                "type": "boolean"
+              },
+              "num_uses": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "client_token",
+              "accessor",
+              "token_policies",
+              "lease_duration",
+              "token_type",
+              "orphan",
+              "num_uses",
+              "renewable"
+            ]
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "auth"
+        ]
+      },
+      "VaultWrappedResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object"
+          },
+          "wrap_info": {
+            "type": "object",
+            "properties": {
+              "token": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "integer"
+              },
+              "creation_time": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "accessor": {
+                "type": "string"
+              },
+              "creation_path": {
+                "type": "string"
+              },
+              "wrapped_accessor": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "token",
+              "accessor",
+              "ttl",
+              "creation_time",
+              "creation_path"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "wrap_info"
+        ]
+      },
+      "VaultErrorsResponseBody": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "List of errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "VaultTokenHeader": {
+        "description": "Vault Token required for authentication",
+        "name": "X-Vault-Token",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WrapTTLHeader": {
+        "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
+        "name": "X-Vault-Wrap-TTL",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,4 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.5#/Payloads/VaultAppRole.pkl"
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultAppRole.pkl"
 
 role_name = "server_app_us_west"
 

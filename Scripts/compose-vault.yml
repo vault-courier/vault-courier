@@ -46,6 +46,22 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  redis:
+    image: 'redis:latest'
+    container_name: redis-local
+    command: redis-server --requirepass default-pa55w0rd --aclfile /etc/valkey/users.acl
+    restart: always 
+    environment:
+      REDIS_EXTRA_FLAGS: '--loglevel verbose'
+      # SKIP_FIX_PERMS: '1' # only works on Redis, not Valkey
+    ports:
+      - "6379:6379"
+    networks:
+      - vaultnet
+    volumes:
+      - ./valkey/data:/data
+      - ./valkey/users.acl:/etc/valkey/users.acl
+
 networks:
   vaultnet:
     driver: bridge

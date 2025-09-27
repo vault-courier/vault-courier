@@ -14,6 +14,8 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+#if DatabaseEngineSupport
+
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 import protocol Foundation.LocalizedError
@@ -26,165 +28,103 @@ import protocol Foundation.LocalizedError
 #endif
 
 extension VaultClient {
-    /// Creates a database conection between Vault and a Postgres Database
-    public func databaseConnection(
-        configuration: PostgresConnectionConfiguration,
+    #if PostgresPluginSupport
+    /// Creates a database connection between Vault and a Postgres Database
+    /// - Parameters:
+    ///   - configuration: postgres connection configuration
+    ///   - enginePath: mount path of secret engine
+    public func createPostgresConnection(
+        configuration: PostgresConnectionConfig,
         enginePath: String
     ) async throws {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.configureDatabase(
-            path: .init(enginePath: enginePath, connectionName: configuration.connection),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(pluginName: configuration.pluginName,
-                              verifyConnection: configuration.verifyConnection,
-                              allowedRoles: configuration.allowedRoles,
-                              connectionUrl: configuration.connectionUrl,
-                              maxOpenConnections: configuration.maxOpenConnections,
-                              maxIdleConnections: configuration.maxIdleConnections,
-                              maxConnectionLifetime: configuration.maxConnectionLifetime,
-                              username: configuration.username,
-                              password: configuration.password,
-                              tlsCa: configuration.tlsCa,
-                              tlsCertificate: configuration.tlsCertificate,
-                              privateKey: configuration.privateKey,
-                              usernameTemplate: configuration.usernameTemplate,
-                              disableEscaping: configuration.disableEscaping,
-                              passwordAuthentication: configuration.passwordAuthentication.rawValue,
-                              rootRotationStatements: configuration.rootRotationStatements))
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("Postgres database connection configured")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.databaseConnection(configuration: configuration)
         }
     }
 
-    /// Reads vault-database conection
-    public func databaseConnection(
+    /// Reads vault-postgres connection
+    /// - Parameters:
+    ///   - name: connection name
+    ///   - enginePath: mount path of database secrets
+    /// - Returns: Connection properties
+    public func postgresConnection(
         name: String,
         enginePath: String
-    ) async throws -> DatabaseConnectionResponse {
-        let sessionToken = try sessionToken()
+    ) async throws -> PostgresConnectionResponse {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.postgresConnection(name: name)
+        }
+    }
+    #endif
 
-        let response = try await client.readDatabaseConfiguration(
-            path: .init(enginePath: enginePath, connectionName: name),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(component: json)
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+    #if ValkeyPluginSupport
+    /// Creates a database connection between Vault and a Valkey Database
+    /// - Parameters:
+    ///   - configuration: valkey connection configuration
+    ///   - enginePath: mount path of secret engine
+    public func createValkeyConnection(
+        configuration: ValkeyConnectionConfig,
+        enginePath: String
+    ) async throws {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.databaseConnection(configuration: configuration)
         }
     }
 
-    /// Deletes a database conection between Vault and a Postgres Database
+    /// Reads vault-valkey connection
+    /// - Parameters:
+    ///   - name: connection name
+    ///   - enginePath: mount path of database secrets
+    /// - Returns: Connection properties
+    public func valkeyConnection(
+        name: String,
+        enginePath: String
+    ) async throws -> ValkeyConnectionResponse {
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.valkeyConnection(name: name)
+        }
+    }
+    #endif
+
+    /// Deletes a database connection between Vault and a Postgres Database
     /// - Note: The roles in the database are not deleted
     public func deleteDatabaseConnection(
         _ connectionName: String,
         enginePath: String
     ) async throws {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.deleteDatabaseConnection(
-            path: .init(enginePath: enginePath, connectionName: connectionName),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("Postgres database connection deleted")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.internalServerError(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.deleteDatabaseConnection(connectionName)
         }
     }
 
     /// Rotates Vault database password
     /// - Note: After this action only vault knows this user's password
+    /// - Parameters:
+    ///   - connection: connection name
+    ///   - enginePath: mount path of database secrets
     public func rotateRoot(
         connection: String,
         enginePath: String
     ) async throws {
-        let sessionToken = try sessionToken()
-
-        let response = try await client.databaseRotateRoot(
-            path: .init(enginePath: enginePath, connectionName: connection),
-            headers: .init(xVaultToken: sessionToken))
-
-        switch response {
-            case .noContent:
-                logger.info("Vault root credentials rotated")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.rotateRoot(connection: connection)
         }
     }
 
     /// Closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.
-    /// 
+    ///  
     /// - Note: This method resets the connection, but vault's database password is still the same
+    /// - Parameters:
+    ///   - connectionName: connection name
+    ///   - enginePath: mount path of database secrets
     public func resetDatabaseConnection(
         _ connectionName: String,
-        enginePath: String? = nil
+        enginePath: String
     ) async throws {
-        let enginePath = enginePath ?? self.mounts.database.relativePath.removeSlash()
-        let sessionToken = try sessionToken()
-
-        let response = try await client.databaseReset(
-            path: .init(enginePath: enginePath, connectionName: connectionName),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .noContent:
-                logger.info("Connection \(connectionName) reset successfully.")
-            case .badRequest(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Bad request: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.badRequest(errors)
-            case .internalServerError(let content):
-                let errors = (try? content.body.json.errors) ?? []
-                logger.debug("Internal server error: \(errors.joined(separator: ", ")).")
-                throw VaultClientError.operationFailed(500)
-            case .undocumented(let statusCode, _):
-                logger.debug(.init(stringLiteral: "operation failed with \(statusCode):"))
-                throw VaultClientError.operationFailed(statusCode)
+        try await withDatabaseClient(mountPath: enginePath) { client in
+            try await client.resetDatabaseConnection(connectionName)
         }
     }
 }
+
+#endif

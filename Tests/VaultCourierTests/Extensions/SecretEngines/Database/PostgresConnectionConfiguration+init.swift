@@ -14,10 +14,11 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if Pkl
+#if PklSupport
+#if PostgresPluginSupport
 import VaultCourier
 
-extension PostgresConnectionConfiguration {
+extension PostgresConnectionConfig {
     init(_ module: PostgresDatabaseConnection.Module) {
         self.init(connection: module.connection,
                   verifyConnection: module.verify_connection ?? true,
@@ -37,4 +38,5 @@ extension PostgresConnectionConfiguration {
                   rootRotationStatements: module.root_rotation_statements ?? [])
     }
 }
+#endif
 #endif
