@@ -46,7 +46,7 @@ public struct VaultTokenRole: Sendable {
     /// revocation of any other token.
     public var orphan: Bool
 
-    /// If `true`, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in ``CreateVaultToken/policies``
+    /// If `true`, the default policy will not be set on generated tokens; otherwise it will be added to the policies set in ``TokenCreationConfig/policies``
     public var noDefaultPolicy: Bool
 
     /// Set to false to disable the ability of the token to be renewed past its initial TTL. Setting the value to true will allow the token to be renewable up to

@@ -26,7 +26,7 @@ public struct GenerateAppRoleToken: Sendable {
     public let metadata: String?
 
     /// Comma separated string or list of CIDR blocks enforcing secret IDs to be used from specific set of IP addresses.
-    /// If ``VaultCourier/CreateAppRole/secretIdBoundCIDRS`` is set on the role, then the list of CIDR blocks listed here should be a subset of the CIDR blocks listed on the role.
+    /// If ``VaultCourier/AppRoleCreationConfig/secretIdBoundCIDRS`` is set on the role, then the list of CIDR blocks listed here should be a subset of the CIDR blocks listed on the role.
     public let cidrList: [String]?
 
     /// The maximum uses for the given token. This can be used to create a one-time-token or limited use token. The value of 0 or `nil` has no limit to the number of uses.

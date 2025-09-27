@@ -26,7 +26,7 @@ import Synchronization
 import Logging
 import TokenAuth
 
-/// Client for AppRole Authentication
+/// Client for Token Authentication
 public final class TokenProvider: Sendable {
     static var loggingDisabled: Logger { .init(label: "token-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
@@ -77,7 +77,7 @@ extension TokenProvider {
     ///   - wrapTimeToLive: Optional wrapped time to live of the token
     /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func createToken(
-        _ capabilities: CreateVaultToken,
+        _ capabilities: TokenCreationConfig,
         wrapTimeToLive: Duration? = nil
     ) async throws -> VaultAuthResponse {
         let sessionToken = auth.token

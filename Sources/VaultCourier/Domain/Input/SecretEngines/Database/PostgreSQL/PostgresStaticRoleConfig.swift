@@ -16,7 +16,7 @@
 
 #if PostgresPluginSupport
 
-public struct PostgresStaticRoleConfiguration: Sendable {
+public struct PostgresStaticRoleConfig: Sendable {
     /// The corresponding role in the database of ``databaseUsername``
     public var vaultRoleName: String
 

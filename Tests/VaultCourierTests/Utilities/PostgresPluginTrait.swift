@@ -13,7 +13,7 @@ struct PostgresPluginTrait: SuiteTrait, TestScoping {
     let connectionName: String
     let enginePath: String
 
-    static func postgresConnectionConfiguration(_ name: String) -> PostgresConnectionConfiguration {
+    static func postgresConnectionConfiguration(_ name: String) -> PostgresConnectionConfig {
         // Host name inside container
         let host = env("POSTGRES_HOSTNAME") ?? "pg-db"
         let port = env("POSTGRES_PORT").flatMap(Int.init(_:)) ?? 5432
@@ -22,7 +22,7 @@ struct PostgresPluginTrait: SuiteTrait, TestScoping {
         let connectionURL = "postgresql://{{username}}:{{password}}@\(host):\(port)/\(databaseName)?sslmode=\(sslMode)"
         let vaultUsername = env("VAULT_DB_USERNAME") ?? "vault_user"
         let vaultPassword = env("VAULT_DB_PASSWORD") ?? "init_password"
-        let config = PostgresConnectionConfiguration(connection: name,
+        let config = PostgresConnectionConfig(connection: name,
                                                      allowedRoles: ["*"],
                                                      connectionUrl: connectionURL,
                                                      username: vaultUsername,

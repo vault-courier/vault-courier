@@ -80,7 +80,7 @@ extension DatabaseEngineClient {
     #if PostgresPluginSupport
     /// Creates a database connection between Vault and a Postgres Database
     public func databaseConnection(
-        configuration: PostgresConnectionConfiguration
+        configuration: PostgresConnectionConfig
     ) async throws {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
@@ -120,7 +120,7 @@ extension DatabaseEngineClient {
     #if ValkeyPluginSupport
     /// Creates a database connection between Vault and a Valkey Database
     public func databaseConnection(
-        configuration: ValkeyConnectionConfiguration
+        configuration: ValkeyConnectionConfig
     ) async throws {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath

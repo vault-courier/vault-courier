@@ -20,7 +20,7 @@ extension VaultClient {
     /// - Parameter appRole: AppRole creation configuration
     /// - Parameter mountPath: mount path of AppRole authentication. If not set it defaults to mount path `approle`
     public func createAppRole(
-        _ appRole: CreateAppRole,
+        _ appRole: AppRoleCreationConfig,
         mountPath: String? = nil
     ) async throws {
         try await withAppRoleProvider(mountPath: mountPath) { provider in
@@ -97,7 +97,7 @@ extension VaultClient {
 
     /// Fetches the login session token and its information.
     /// 
-    /// if ``VaultCourier/CreateAppRole/bindSecretID`` is enabled (the default) on the AppRole, `secretID` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
+    /// if ``VaultCourier/AppRoleCreationConfig/bindSecretID`` is enabled (the default) on the AppRole, `secretID` is required too. Any other bound authentication values on the AppRole (such as client IP CIDR) are also evaluated.
     /// 
     /// - Note: this method does not set the token session of the vault client. See the ``VaultCourier/VaultClient/login(method:)`` which initiates login from the given authentication
     /// method and sets the session token of the client.

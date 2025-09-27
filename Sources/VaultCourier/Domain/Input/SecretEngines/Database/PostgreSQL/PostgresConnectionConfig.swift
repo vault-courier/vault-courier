@@ -16,7 +16,7 @@
 
 #if PostgresPluginSupport
 /// Request type with the connection configuration for Vault and a database
-public struct PostgresConnectionConfiguration: Sendable, Decodable {
+public struct PostgresConnectionConfig: Sendable, Decodable {
     /// The name of the connection
     public var connection: String
 

@@ -17,7 +17,7 @@
 #if ValkeyPluginSupport
 
 /// Connection configuration for Vault and Valkey
-public struct ValkeyConnectionConfiguration: Sendable, Decodable {
+public struct ValkeyConnectionConfig: Sendable, Decodable {
     /// The name of the connection
     public var connection: String
 

@@ -34,7 +34,7 @@ extension VaultClient {
     ///   - configuration: postgres connection configuration
     ///   - enginePath: mount path of secret engine
     public func createPostgresConnection(
-        configuration: PostgresConnectionConfiguration,
+        configuration: PostgresConnectionConfig,
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
@@ -49,7 +49,7 @@ extension VaultClient {
     ///   - configuration: valkey connection configuration
     ///   - enginePath: mount path of secret engine
     public func createValkeyConnection(
-        configuration: ValkeyConnectionConfiguration,
+        configuration: ValkeyConnectionConfig,
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in

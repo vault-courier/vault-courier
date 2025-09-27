@@ -24,7 +24,7 @@ extension VaultClient {
     ///   - wrapTimeToLive: Optional wrapped time to live of the token
     /// - Returns: ``VaultCourier/VaultAuthResponse``
     public func createToken(
-        _ capabilities: CreateVaultToken,
+        _ capabilities: TokenCreationConfig,
         wrapTimeToLive: Duration? = nil
     ) async throws -> VaultAuthResponse {
         try await withTokenProvider { provider in

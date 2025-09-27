@@ -20,10 +20,10 @@
 #if PostgresPluginSupport || ValkeyPluginSupport
 public enum DatabaseStaticRoleConfiguration: Sendable {
     #if PostgresPluginSupport
-    case postgres(PostgresStaticRoleConfiguration)
+    case postgres(PostgresStaticRoleConfig)
     #endif
     #if ValkeyPluginSupport
-    case valkey(ValkeyStaticRoleConfiguration)
+    case valkey(ValkeyStaticRoleConfig)
     #endif
 }
 #endif

@@ -16,7 +16,7 @@
 
 #if ValkeyPluginSupport
 
-public struct ValkeyStaticRoleConfiguration: Sendable {
+public struct ValkeyStaticRoleConfig: Sendable {
     /// The corresponding role in the database of ``databaseUsername``
     public var vaultRoleName: String
 

@@ -15,8 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 #if AppRoleSupport
-/// Request type for creating an AppRole
-public struct CreateAppRole: Sendable {
+/// Configuration for creating an AppRole
+public struct AppRoleCreationConfig: Sendable {
     /// Name of the app role
     public var name: String
 
