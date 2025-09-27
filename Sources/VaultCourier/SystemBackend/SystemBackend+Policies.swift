@@ -25,8 +25,7 @@ extension SystemBackend {
     /// Add a new or update an existing ACL policy.
     ///
     /// - Parameters:
-    ///   - name: name of the policy
-    ///   - hclPolicy: policy in hcl format
+    ///   - policy: policy in hcl format
     public func createPolicy(
         _ policy: ACLPolicyHCL
     ) async throws {

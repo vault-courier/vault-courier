@@ -28,8 +28,10 @@ import Synchronization
 import Logging
 import KeyValue
 
-/// Client for KeyValue secret engine
-public final class KeyValueSecretProvider: Sendable {
+/// Client for Key/Value secret engine
+///
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withKeyValueClient(mountPath:execute:)`` to interact with this type
+public final class KeyValueEngineClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "key-value-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
@@ -75,7 +77,7 @@ public final class KeyValueSecretProvider: Sendable {
     let logger: Logging.Logger
 }
 
-extension KeyValueSecretProvider {
+extension KeyValueEngineClient {
     /// Creates a new version of a secret at the specified location. If the value does not yet exist, the calling token must have an ACL policy granting the create capability.
     /// If the value already exists, the calling token must have an ACL policy granting the update capability.
     ///
@@ -321,7 +323,7 @@ extension KeyValueSecretProvider {
     ///
     /// This marks the version as deleted and will stop it from being returned from reads, but the underlying data will not be removed.
     ///
-    /// A delete can be undone using the ``VaultCourier/KeyValueSecretProvider/undelete(key:versions:)`` operation.
+    /// A delete can be undone using the ``VaultCourier/KeyValueEngineClient/undelete(key:versions:)`` operation.
     /// - Parameter key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Parameter versions: The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in the read secret operations. Defaults to empty array, which deletes the latest version.
     public func delete(
@@ -365,7 +367,7 @@ extension KeyValueSecretProvider {
 
     /// Undeletes the data for the provided version and path in the key-value store. This restores the data, allowing it to be returned on get requests.
     ///
-    /// This reverses the  ``VaultCourier/KeyValueSecretProvider/delete(key:versions:)`` operation.
+    /// This reverses the  ``VaultCourier/KeyValueEngineClient/delete(key:versions:)`` operation.
     ///
     /// - Parameters:
     ///   - key: It's the path to the secret relative to the secret mount.

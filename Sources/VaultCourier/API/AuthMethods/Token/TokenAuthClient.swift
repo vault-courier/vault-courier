@@ -27,7 +27,9 @@ import Logging
 import TokenAuth
 
 /// Client for Token Authentication
-public final class TokenProvider: Sendable {
+///
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withTokenAuthClient(execute:)`` to interact with this type
+public final class TokenAuthClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "token-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
@@ -68,7 +70,7 @@ public final class TokenProvider: Sendable {
     let logger: Logging.Logger
 }
 
-extension TokenProvider {
+extension TokenAuthClient {
     /// Creates a new token.
     ///
     /// - Note: Certain options are only available when called by a root token.

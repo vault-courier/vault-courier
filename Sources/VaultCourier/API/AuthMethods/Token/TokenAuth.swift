@@ -27,8 +27,8 @@ extension VaultClient {
         _ capabilities: TokenCreationConfig,
         wrapTimeToLive: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        try await withTokenProvider { provider in
-            try await provider.createToken(capabilities, wrapTimeToLive: wrapTimeToLive)
+        try await withTokenAuthClient { client in
+            try await client.createToken(capabilities, wrapTimeToLive: wrapTimeToLive)
         }
     }
 
@@ -38,16 +38,16 @@ extension VaultClient {
     /// - Parameter token: token ID
     /// - Returns: Token properties
     public func lookup(token: String) async throws -> LookupTokenResponse {
-        try await withTokenProvider { provider in
-            try await provider.lookup(token: token)
+        try await withTokenAuthClient { client in
+            try await client.lookup(token: token)
         }
     }
 
     /// Get client's token information
     /// - Returns: Returns information about the client token.
     public func lookupCurrentToken() async throws -> LookupTokenResponse {
-        try await withTokenProvider { provider in
-            try await provider.lookupCurrentToken()
+        try await withTokenAuthClient { client in
+            try await client.lookupCurrentToken()
         }
     }
 
@@ -55,8 +55,8 @@ extension VaultClient {
     /// - Parameter accessor: accessor ID
     /// - Returns: Returns information about the reference token which is referenced by the accessor.
     public func lookupToken(accessor: String) async throws -> LookupTokenResponse {
-        try await withTokenProvider { provider in
-            try await provider.lookupToken(accessor: accessor)
+        try await withTokenAuthClient { client in
+            try await client.lookupToken(accessor: accessor)
         }
     }
 
@@ -73,8 +73,8 @@ extension VaultClient {
         _ token: String,
         by increment: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        try await withTokenProvider { provider in
-            try await provider.renewToken(token, by: increment)
+        try await withTokenAuthClient { client in
+            try await client.renewToken(token, by: increment)
         }
     }
 
@@ -87,7 +87,7 @@ extension VaultClient {
     public func renewToken(
         by increment: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        try await withTokenProvider { provider in
+        try await withTokenAuthClient { provider in
             try await provider.renewToken(by: increment)
         }
     }
@@ -103,8 +103,8 @@ extension VaultClient {
         accessor: String,
         by increment: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        try await withTokenProvider { provider in
-            try await provider.renewToken(accessor: accessor, by: increment)
+        try await withTokenAuthClient { client in
+            try await client.renewToken(accessor: accessor, by: increment)
         }
     }
 
@@ -119,8 +119,8 @@ extension VaultClient {
         token: String,
         orphan: Bool = false
     ) async throws {
-        try await withTokenProvider { provider in
-            try await provider.revoke(token: token, orphan: orphan)
+        try await withTokenAuthClient { client in
+            try await client.revoke(token: token, orphan: orphan)
         }
     }
 
@@ -128,8 +128,8 @@ extension VaultClient {
     ///
     /// When the token is revoked, all dynamic secrets generated with it are also revoked.
     public func revokeCurrentToken() async throws {
-        try await withTokenProvider { provider in
-            try await provider.revokeCurrentToken()
+        try await withTokenAuthClient { client in
+            try await client.revokeCurrentToken()
         }
     }
 
@@ -140,8 +140,8 @@ extension VaultClient {
     public func revokeToken(
         accessor: String
     ) async throws {
-        try await withTokenProvider { provider in
-            try await provider.revokeToken(accessor: accessor)
+        try await withTokenAuthClient { client in
+            try await client.revokeToken(accessor: accessor)
         }
     }
 
@@ -150,8 +150,8 @@ extension VaultClient {
     /// - Parameter name: The name of the token role.
     /// - Returns: ``VaultTokenRole``
     public func readTokenRole(name: String) async throws -> VaultTokenRole {
-        try await withTokenProvider { provider in
-            try await provider.readTokenRole(name: name)
+        try await withTokenAuthClient { client in
+            try await client.readTokenRole(name: name)
         }
     }
     
@@ -160,8 +160,8 @@ extension VaultClient {
     public func updateTokenRole(
         _ capabilities: VaultTokenRole
     ) async throws {
-        try await withTokenProvider { provider in
-            try await provider.updateTokenRole(capabilities)
+        try await withTokenAuthClient { client in
+            try await client.updateTokenRole(capabilities)
         }
     }
 
@@ -169,8 +169,8 @@ extension VaultClient {
     /// Deletes the named token role.
     /// - Parameter name:The name of the token role.
     public func deleteTokenRole(name: String) async throws {
-        try await withTokenProvider { provider in
-            try await provider.deleteTokenRole(name: name)
+        try await withTokenAuthClient { client in
+            try await client.deleteTokenRole(name: name)
         }
     }
 }

@@ -23,8 +23,8 @@ extension VaultClient {
         _ appRole: AppRoleCreationConfig,
         mountPath: String? = nil
     ) async throws {
-        try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.createAppRole(appRole)
+        try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.createAppRole(appRole)
         }
     }
 
@@ -35,8 +35,8 @@ extension VaultClient {
         name: String,
         mountPath: String? = nil
     ) async throws -> ReadAppRoleResponse {
-        return try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.readAppRole(name: name)
+        return try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.readAppRole(name: name)
         }
     }
 
@@ -48,8 +48,8 @@ extension VaultClient {
         name: String,
         mountPath: String? = nil
     ) async throws {
-        return try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.deleteAppRole(name: name)
+        return try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.deleteAppRole(name: name)
         }
     }
 
@@ -62,8 +62,8 @@ extension VaultClient {
         name: String,
         mountPath: String? = nil
     ) async throws -> AppRoleIDResponse {
-        return try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.appRoleID(name: name)
+        return try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.appRoleID(name: name)
         }
     }
 
@@ -77,8 +77,8 @@ extension VaultClient {
         mountPath: String? = nil,
         wrapTimeToLive: Duration
     ) async throws -> WrappedTokenResponse {
-        return try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.wrapAppRoleID(name: name, wrapTimeToLive: wrapTimeToLive)
+        return try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.wrapAppRoleID(name: name, wrapTimeToLive: wrapTimeToLive)
         }
     }
     
@@ -87,11 +87,11 @@ extension VaultClient {
     /// - Parameter mountPath: mount path of AppRole authentication. If not set it defaults to mount path `approle`
     /// - Returns: Either a wrapped response token or the secretID
     public func generateAppSecretID(
-        capabilities: GenerateAppRoleToken,
+        capabilities: AppRoleTokenGenerationConfig,
         mountPath: String? = nil
     ) async throws -> AppRoleSecretIdResponse {
-        return try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.generateAppSecretId(capabilities: capabilities)
+        return try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.generateAppSecretId(capabilities: capabilities)
         }
     }
 
@@ -111,8 +111,8 @@ extension VaultClient {
         secretID: String,
         mountPath: String? = nil
     ) async throws -> VaultAuthResponse {
-        return try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.loginToken(roleID: roleID, secretID: secretID)
+        return try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.loginToken(roleID: roleID, secretID: secretID)
         }
     }
 
@@ -128,8 +128,8 @@ extension VaultClient {
         accessorSecretID: String,
         mountPath: String? = nil
     ) async throws -> LookupAppRoleSecretIDResponse {
-        return try await withAppRoleProvider(mountPath: mountPath) { provider in
-            try await provider.lookupSecretID(role: role, accessorSecretID: accessorSecretID)
+        return try await withAppRoleClient(mountPath: mountPath) { client in
+            try await client.lookupSecretID(role: role, accessorSecretID: accessorSecretID)
         }
     }
 }

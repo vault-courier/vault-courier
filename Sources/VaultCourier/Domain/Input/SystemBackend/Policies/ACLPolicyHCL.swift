@@ -14,9 +14,12 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+/// Access-Control-List policy in HCL format
 public struct ACLPolicyHCL: Sendable {
+    /// Name of the policy
     public let name: String
 
+    /// Policy in HCL format
     public let policy: String
 
     public init(name: String, policy: String) {

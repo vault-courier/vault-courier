@@ -36,8 +36,8 @@ extension VaultClient {
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.writeKeyValue(secret: secret, key: key)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.writeKeyValue(secret: secret, key: key)
         }
     }
 
@@ -53,8 +53,8 @@ extension VaultClient {
         key: String,
         version: Int? = nil
     ) async throws -> T {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.readKeyValueSecret(key: key, version: version)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readKeyValueSecret(key: key, version: version)
         }
     }
 
@@ -72,8 +72,8 @@ extension VaultClient {
         version: Int? = nil,
         subkeysDepth: Int? = nil
     ) async throws -> Data {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.readKeyValueSecretData(key: key, version: version, subkeysDepth: subkeysDepth)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readKeyValueSecretData(key: key, version: version, subkeysDepth: subkeysDepth)
         }
     }
 
@@ -91,8 +91,8 @@ extension VaultClient {
         version: Int? = nil,
         depth: Int? = nil
     ) async throws -> Data? {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.readSecretSubkeys(key: key, version: version, depth: depth)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readSecretSubkeys(key: key, version: version, depth: depth)
         }
     }
 
@@ -110,8 +110,8 @@ extension VaultClient {
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata? {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.patchKeyValue(secret: secret, key: key)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.patchKeyValue(secret: secret, key: key)
         }
     }
 
@@ -128,8 +128,8 @@ extension VaultClient {
         key: String,
         versions: [String] = []
     ) async throws {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.delete(key: key, versions: versions)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.delete(key: key, versions: versions)
         }
     }
 
@@ -146,8 +146,8 @@ extension VaultClient {
         key: String,
         versions: [String]
     ) async throws {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.undelete(key: key, versions: versions)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.undelete(key: key, versions: versions)
         }
     }
 
@@ -168,8 +168,8 @@ extension VaultClient {
         deleteVersionAfter: String? = nil,
         versionLimit: Int = 10
     ) async throws {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.writeMetadata(
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.writeMetadata(
                 key: key,
                 isCasRequired: isCasRequired,
                 customMetadata: customMetadata,
@@ -187,8 +187,8 @@ extension VaultClient {
         enginePath: String,
         key: String
     ) async throws -> KeyValueStoreMetadata {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.readMetadata(key: key)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.readMetadata(key: key)
         }
     }
     
@@ -200,8 +200,8 @@ extension VaultClient {
         enginePath: String,
         key: String
     ) async throws {
-        try await withKeyValueProvider(mountPath: enginePath) { provider in
-            try await provider.deleteAllMetadata(key: key)
+        try await withKeyValueClient(mountPath: enginePath) { client in
+            try await client.deleteAllMetadata(key: key)
         }
     }
 }

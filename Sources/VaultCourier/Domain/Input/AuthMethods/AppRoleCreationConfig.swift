@@ -26,10 +26,10 @@ public struct AppRoleCreationConfig: Sendable {
     /// list of CIDR blocks; if set, specifies blocks of IP addresses which can perform the login operation.
     public var secretIdBoundCIDRS: [String]?
 
-    /// Number of times any particular SecretID can be used to fetch a token from this AppRole, after which the SecretID by default will expire. A value of `nil` will allow unlimited uses. However, this option may be overridden by the request's ``VaultCourier/GenerateAppRoleToken/tokenNumberOfUses`` field when generating a SecretID.
+    /// Number of times any particular SecretID can be used to fetch a token from this AppRole, after which the SecretID by default will expire. A value of `nil` will allow unlimited uses. However, this option may be overridden by the request's ``VaultCourier/AppRoleTokenGenerationConfig/tokenNumberOfUses`` field when generating a SecretID.
     public var secretIdNumberOfUses: Int?
 
-    /// Duration after which by default any SecretID expires. A value of `nil` will allow the SecretID to not expire. However, this option may be overridden by the request's ``VaultCourier/GenerateAppRoleToken/tokenTimeToLive`` field when generating a SecretID.
+    /// Duration after which by default any SecretID expires. A value of `nil` will allow the SecretID to not expire. However, this option may be overridden by the request's ``VaultCourier/AppRoleTokenGenerationConfig/tokenTimeToLive`` field when generating a SecretID.
     public var secretIdTimeToLive: Duration?
 
     /// If set, the secret IDs generated using this role will be cluster local. This can only be set during role creation and once set, it can't be reset later.

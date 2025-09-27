@@ -29,6 +29,8 @@ import SystemMounts
 
 /// The `SystemBackend` is the client for all Vault endpoints under `/sys`.
 /// This client is used to configure Vault and interact with many of Vault's internal features.
+///
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withSystemBackend(execute:)`` to interact with this type
 public final class SystemBackend: Sendable {
     static var loggingDisabled: Logger { .init(label: "sys-backend-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 

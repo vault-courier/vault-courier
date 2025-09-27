@@ -26,7 +26,9 @@ import Logging
 import AppRoleAuth
 
 /// Client for AppRole Authentication
-public final class AppRoleProvider: Sendable {
+///
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withAppRoleClient(mountPath:execute:)`` to interact with this type
+public final class AppRoleAuthClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "app-role-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
@@ -71,7 +73,7 @@ public final class AppRoleProvider: Sendable {
     let logger: Logging.Logger
 }
 
-extension AppRoleProvider {
+extension AppRoleAuthClient {
     /// Creates a new AppRole
     public func createAppRole(
         _ appRole: AppRoleCreationConfig
@@ -271,7 +273,7 @@ extension AppRoleProvider {
     /// - Parameter capabilities: the properties this generated secretID must have
     /// - Returns: Either a wrapped response token or the secretID
     public func generateAppSecretId(
-        capabilities: GenerateAppRoleToken
+        capabilities: AppRoleTokenGenerationConfig
     ) async throws -> AppRoleSecretIdResponse {
         guard let sessionToken = token else {
             throw VaultClientError.clientIsNotLoggedIn()

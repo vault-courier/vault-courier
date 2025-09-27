@@ -62,6 +62,7 @@ public actor VaultClient {
     /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
     public let apiURL: URL
 
+    /// Client transport, e.g. `AsyncHTTPClientTransport`, `URLSessionTransport` or any mock client transport
     let clientTransport: any ClientTransport
 
     let logger: Logging.Logger
@@ -81,11 +82,20 @@ public actor VaultClient {
         self.logger = configuration.backgroundActivityLogger
     }
 
+    
+    /// Session token
+    /// - Returns: current client session token
+    /// - Throws: when client is not logged in
     public func sessionToken() throws -> String {
         guard let token else {
             throw VaultClientError.clientIsNotLoggedIn()
         }
         return token
+    }
+
+    /// Remove current session token
+    public func resetSession() {
+        self.token = nil
     }
 }
 
@@ -99,6 +109,7 @@ extension VaultClient {
 }
 
 extension VaultClient {
+    /// Handler to interact with the system backend endpoints
     public func withSystemBackend<ReturnType: Sendable>(
         execute: (SystemBackend) async throws -> ReturnType
     ) async throws -> ReturnType {
@@ -114,12 +125,20 @@ extension VaultClient {
 }
 
 extension VaultClient {
-    public func withKeyValueProvider<ReturnType: Sendable>(
+    /// Handler to interact with the key/value secret endpoints
+    ///
+    /// A key/value client is created with the current session token and middlewares
+    ///
+    /// - Parameters:
+    ///   - mountPath: mount path of key/value secrets
+    ///   - execute: action closure to execute with the key/value client
+    /// - Returns: return type of the `execute` closure
+    public func withKeyValueClient<ReturnType: Sendable>(
         mountPath: String,
-        execute: (KeyValueSecretProvider) async throws -> ReturnType
+        execute: (KeyValueEngineClient) async throws -> ReturnType
     ) async throws -> ReturnType {
         let sessionToken = try? sessionToken()
-        let client = KeyValueSecretProvider(
+        let client = KeyValueEngineClient(
             apiURL: apiURL,
             clientTransport: clientTransport,
             mountPath: mountPath,
@@ -130,6 +149,15 @@ extension VaultClient {
     }
 
     #if DatabaseEngineSupport
+    
+    /// Handler to interact with the database secret endpoints
+    ///
+    /// A database client is created with the current session token and middlewares
+    ///
+    /// - Parameters:
+    ///   - mountPath: mount path of database secrets
+    ///   - execute: action closure to execute with the database client
+    /// - Returns: return type of the `execute` closure
     public func withDatabaseClient<ReturnType: Sendable>(
         mountPath: String,
         execute: (DatabaseEngineClient) async throws -> ReturnType
@@ -149,11 +177,17 @@ extension VaultClient {
 
 
 extension VaultClient {
-    public func withTokenProvider<ReturnType: Sendable>(
-        execute: (TokenProvider) async throws -> ReturnType
+    /// Handler to interact with the token authentication endpoints
+    ///
+    /// A token-auth client is created with the current session token and middlewares
+    ///
+    /// - Parameter execute: action closure to execute with the token-auth client
+    /// - Returns: return type of the `execute` closure
+    public func withTokenAuthClient<ReturnType: Sendable>(
+        execute: (TokenAuthClient) async throws -> ReturnType
     ) async throws -> ReturnType {
         let sessionToken = try? sessionToken()
-        let client = TokenProvider(
+        let client = TokenAuthClient(
             apiURL: apiURL,
             clientTransport: clientTransport,
             middlewares: middlewares,
@@ -163,12 +197,19 @@ extension VaultClient {
     }
 
 #if AppRoleSupport
-    public func withAppRoleProvider<ReturnType: Sendable>(
+    /// Handler to interact with the AppRole authentication endpoints
+    /// 
+    /// An Approle-auth client is created with the current session token and middlewares
+    /// 
+    /// - Parameter execute: action closure to execute with the token-auth client
+    /// - Parameter mountPath: path to approle authentication mount
+    /// - Returns: return type of the `execute` closure
+    public func withAppRoleClient<ReturnType: Sendable>(
         mountPath: String? = nil,
-        execute: (AppRoleProvider) async throws -> ReturnType
+        execute: (AppRoleAuthClient) async throws -> ReturnType
     ) async throws -> ReturnType {
         let sessionToken = try? sessionToken()
-        let client = AppRoleProvider(
+        let client = AppRoleAuthClient(
             apiURL: apiURL,
             clientTransport: clientTransport,
             mountPath: mountPath,
