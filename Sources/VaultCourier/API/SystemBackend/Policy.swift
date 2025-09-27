@@ -25,7 +25,6 @@ extension VaultClient {
     /// Add a new or update an existing ACL policy.
     ///
     /// - Parameters:
-    ///   - name: name of the policy
     ///   - hcl: ACL policy in HCL format
     public func createPolicy(
         hcl: ACLPolicyHCL

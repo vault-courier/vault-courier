@@ -13,7 +13,7 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
     let connectionName: String
     let enginePath: String
 
-    static func valkeyConnectionConfiguration(_ name: String) -> ValkeyConnectionConfig {
+    static func valkeyConnectionConfiguration(_ name: String) -> ValkeyConnectionConfiguration {
         // Host name inside container
         let host = env("VALKEY_HOST") ?? "valkey-cache"
         let port = env("VALKEY_PORT").flatMap(Int.init(_:)) ?? 6379
@@ -21,7 +21,7 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
         let vaultUsername = env("VAULT_DB_USERNAME") ?? "vault_user"
         let vaultPassword = env("VAULT_DB_PASSWORD") ?? "init_password"
 
-        let config = ValkeyConnectionConfig(
+        let config = ValkeyConnectionConfiguration(
             connection: name,
             verifyConnection: false,
             allowedRoles: ["*"],
