@@ -37,7 +37,7 @@ extension VaultClient {
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.createRole(configuration: dynamicRole)
+            try await client.create(dynamicRole: dynamicRole)
         }
     }
 }

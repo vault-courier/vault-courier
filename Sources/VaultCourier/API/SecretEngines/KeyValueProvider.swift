@@ -134,7 +134,6 @@ extension KeyValueSecretProvider {
     /// Retrieves the secret at the specified path location.
     ///
     /// - Parameters:
-    ///   - enginePath: path to key/value secret engine mount
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: value of the secret
@@ -201,7 +200,6 @@ extension KeyValueSecretProvider {
     /// Retrieves the secret at the specified path location as Foundation `Data`.
     ///
     /// - Parameters:
-    ///   - enginePath: path to key/value secret engine mount
     ///   - key: It's the path to the secret relative to the secret mount `enginePath`
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     ///   - subkeysDepth: Specifies the deepest nesting level to provide in the output. The default value `nil` will not impose any limit.
@@ -323,7 +321,7 @@ extension KeyValueSecretProvider {
     ///
     /// This marks the version as deleted and will stop it from being returned from reads, but the underlying data will not be removed.
     ///
-    /// A delete can be undone using the ``VaultCourier/VaultClient/undelete(key:versions:)`` operation.
+    /// A delete can be undone using the ``VaultCourier/KeyValueSecretProvider/undelete(key:versions:)`` operation.
     /// - Parameter key: It's the path to the secret relative to the secret mount `enginePath`
     /// - Parameter versions: The versions to be deleted. The versioned data will not be deleted, but it will no longer be returned in the read secret operations. Defaults to empty array, which deletes the latest version.
     public func delete(
@@ -367,7 +365,7 @@ extension KeyValueSecretProvider {
 
     /// Undeletes the data for the provided version and path in the key-value store. This restores the data, allowing it to be returned on get requests.
     ///
-    /// This reverses the  ``VaultCourier/VaultClient/delete(key:versions:)`` operation.
+    /// This reverses the  ``VaultCourier/KeyValueSecretProvider/delete(key:versions:)`` operation.
     ///
     /// - Parameters:
     ///   - key: It's the path to the secret relative to the secret mount.

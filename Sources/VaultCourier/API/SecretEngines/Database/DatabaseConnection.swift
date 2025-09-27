@@ -30,7 +30,10 @@ import protocol Foundation.LocalizedError
 extension VaultClient {
     #if PostgresPluginSupport
     /// Creates a database connection between Vault and a Postgres Database
-    public func databaseConnection(
+    /// - Parameters:
+    ///   - configuration: postgres connection configuration
+    ///   - enginePath: mount path of secret engine
+    public func createPostgresConnection(
         configuration: PostgresConnectionConfiguration,
         enginePath: String
     ) async throws {
@@ -42,8 +45,11 @@ extension VaultClient {
 
     #if ValkeyPluginSupport
     /// Creates a database connection between Vault and a Valkey Database
-    public func valkeyConnection(
-        configuration: ValkeyConnection,
+    /// - Parameters:
+    ///   - configuration: valkey connection configuration
+    ///   - enginePath: mount path of secret engine
+    public func createValkeyConnection(
+        configuration: ValkeyConnectionConfiguration,
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
@@ -63,7 +69,7 @@ extension VaultClient {
         enginePath: String
     ) async throws -> PostgresConnectionResponse {
         try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.databaseConnection(name: name)
+            try await client.postgresConnection(name: name)
         }
     }
     #endif
@@ -79,7 +85,7 @@ extension VaultClient {
         enginePath: String
     ) async throws -> ValkeyConnectionResponse {
         try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.databaseConnection(name: name)
+            try await client.valkeyConnection(name: name)
         }
     }
     #endif

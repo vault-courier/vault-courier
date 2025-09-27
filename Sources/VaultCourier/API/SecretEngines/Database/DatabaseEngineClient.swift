@@ -118,9 +118,9 @@ extension DatabaseEngineClient {
     #endif
 
     #if ValkeyPluginSupport
-    /// Creates a database connection between Vault and a Postgres Database
+    /// Creates a database connection between Vault and a Valkey Database
     public func databaseConnection(
-        configuration: ValkeyConnection
+        configuration: ValkeyConnectionConfiguration
     ) async throws {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
@@ -154,7 +154,7 @@ extension DatabaseEngineClient {
     /// - Parameters:
     ///   - name: Connection name
     /// - Returns: Connection properties
-    public func databaseConnection(
+    public func postgresConnection(
         name: String
     ) async throws -> PostgresConnectionResponse {
         let sessionToken = self.engine.token
@@ -214,7 +214,7 @@ extension DatabaseEngineClient {
     /// - Parameters:
     ///   - name: Connection name
     /// - Returns: Connection properties
-    public func databaseConnection(
+    public func valkeyConnection(
         name: String
     ) async throws -> ValkeyConnectionResponse {
         let sessionToken = self.engine.token

@@ -13,7 +13,7 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
     let connectionName: String
     let enginePath: String
 
-    static func valkeyConnectionConfiguration(_ name: String) -> ValkeyConnection {
+    static func valkeyConnectionConfiguration(_ name: String) -> ValkeyConnectionConfig {
         // Host name inside container
         let host = env("VALKEY_HOST") ?? "valkey-cache"
         let port = env("VALKEY_PORT").flatMap(Int.init(_:)) ?? 6379
@@ -21,7 +21,7 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
         let vaultUsername = env("VAULT_DB_USERNAME") ?? "vault_user"
         let vaultPassword = env("VAULT_DB_PASSWORD") ?? "init_password"
 
-        let config = ValkeyConnection(
+        let config = ValkeyConnectionConfig(
             connection: name,
             verifyConnection: false,
             allowedRoles: ["*"],
@@ -40,7 +40,7 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
         let mountConfig = EnableSecretMountConfig(mountType: "database", path: enginePath)
         let config = Self.valkeyConnectionConfiguration(connectionName)
         try await vaultClient.enableSecretEngine(mountConfig: mountConfig)
-        try await vaultClient.valkeyConnection(configuration: config, enginePath: enginePath)
+        try await vaultClient.createValkeyConnection(configuration: config, enginePath: enginePath)
         try await vaultClient.rotateRoot(connection: connectionName, enginePath: enginePath)
 
         try await function()

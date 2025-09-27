@@ -109,53 +109,53 @@ extension DatabaseEngineClient {
     }
 
     /// Creates a dynamic database role
-    /// - Parameter configuration: configuration of dynamic role creation
-    public func createRole(
-        configuration: DatabaseDynamicRoleConfiguration
+    /// - Parameter dynamicRole: configuration of dynamic role creation
+    public func create(
+        dynamicRole: DatabaseDynamicRoleConfiguration
     ) async throws {
         let sessionToken = self.engine.token
         let enginePath = self.engine.mountPath
 
         let response:  Operations.DatabaseCreateRole.Output
         let data: Data
-        switch configuration {
-            case .postgres(let dynamicRole):
-                data = try JSONEncoder().encode(dynamicRole.creationStatements)
+        switch dynamicRole {
+            case .postgres(let config):
+                data = try JSONEncoder().encode(config.creationStatements)
                 guard let statements = String(data: data, encoding: .utf8) else {
-                    throw VaultClientError.invalidRole(statements: dynamicRole.creationStatements)
+                    throw VaultClientError.invalidRole(statements: config.creationStatements)
                 }
 
                 response = try await engine.client.databaseCreateRole(
                     .init(
-                        path: .init(enginePath: enginePath, roleName: dynamicRole.vaultRoleName),
+                        path: .init(enginePath: enginePath, roleName: config.vaultRoleName),
                         headers: .init(xVaultToken: sessionToken),
                         body: .json(.WritePostgresRoleRequest(.init(
-                            dbName: dynamicRole.databaseConnectionName,
-                            defaultTtl: dynamicRole.defaultTimeToLive?.formatted(.vaultSeconds),
-                            maxTtl: dynamicRole.maxTimeToLive?.formatted(.vaultSeconds),
+                            dbName: config.databaseConnectionName,
+                            defaultTtl: config.defaultTimeToLive?.formatted(.vaultSeconds),
+                            maxTtl: config.maxTimeToLive?.formatted(.vaultSeconds),
                             creationStatements: [statements],
-                            revocationStatements: dynamicRole.revocationStatements,
-                            rollbackStatements: dynamicRole.rollbackStatements,
-                            renewStatements: dynamicRole.renewStatements,
-                            rotationStatements: dynamicRole.rotationStatements,
-                            credentialType: dynamicRole.credentialType?.rawValue,
-                            credentialConfig: .init(unvalidatedValue: dynamicRole.credentialConfig ?? [:]))))
+                            revocationStatements: config.revocationStatements,
+                            rollbackStatements: config.rollbackStatements,
+                            renewStatements: config.renewStatements,
+                            rotationStatements: config.rotationStatements,
+                            credentialType: config.credentialType?.rawValue,
+                            credentialConfig: .init(unvalidatedValue: config.credentialConfig ?? [:]))))
                     )
                 )
-            case .valkey(let dynamicRole):
-                data = try JSONEncoder().encode(dynamicRole.creationStatements)
+            case .valkey(let config):
+                data = try JSONEncoder().encode(config.creationStatements)
                 guard let statements = String(data: data, encoding: .utf8) else {
-                    throw VaultClientError.invalidRole(statements: dynamicRole.creationStatements)
+                    throw VaultClientError.invalidRole(statements: config.creationStatements)
                 }
 
                 response = try await engine.client.databaseCreateRole(
                     .init(
-                        path: .init(enginePath: enginePath, roleName: dynamicRole.vaultRoleName),
+                        path: .init(enginePath: enginePath, roleName: config.vaultRoleName),
                         headers: .init(xVaultToken: sessionToken),
                         body: .json(.WriteValkeyRoleRequest(.init(
-                            dbName: dynamicRole.databaseConnectionName,
-                            defaultTtl: dynamicRole.defaultTimeToLive?.formatted(.vaultSeconds),
-                            maxTtl: dynamicRole.maxTimeToLive?.formatted(.vaultSeconds),
+                            dbName: config.databaseConnectionName,
+                            defaultTtl: config.defaultTimeToLive?.formatted(.vaultSeconds),
+                            maxTtl: config.maxTimeToLive?.formatted(.vaultSeconds),
                             creationStatements: [statements]) // Filed a bug for this which can simplify the api: https://github.com/openbao/openbao/issues/1813
                         ))
                     )
