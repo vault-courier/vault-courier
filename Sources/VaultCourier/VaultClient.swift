@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import Synchronization
 import OpenAPIRuntime
 import Logging
 #if canImport(FoundationEssentials)
@@ -30,7 +31,7 @@ import SystemWrapping
 /// This is the main client to interact with the Vault server. Either you call one-shot operations or use the scoped functions like
 /// e.g. ``withKeyValueClient(mountPath:execute:)`` for multiple calls to the same group of endpoints.
 ///
-/// Before a client can interact with Vault, it must authenticate against an ``AuthMethod``. For example,
+/// Before a client can interact with Vault, it must authenticate against an ``AuthMethod``. For example, authenticate with AppRole credentials
 ///
 /// ```swift
 /// let vaultClient = VaultClient(
@@ -47,7 +48,8 @@ import SystemWrapping
 ///     )
 /// )
 /// ```
-public actor VaultClient {
+public final class VaultClient: Sendable {
+    /// Vault client configuration
     public struct Configuration: Sendable {
         /// Vault's base URL, e.g. `https://127.0.0.1:8200/v1`
         public let apiURL: URL
@@ -91,8 +93,19 @@ public actor VaultClient {
     /// Middlewares to be invoked before the transport.
     let middlewares: [any ClientMiddleware]
 
+    private let _token: Mutex<String?>
+
     /// Session token
-    private var token: String?
+    private var token: String? {
+        get {
+            _token.withLock { $0 }
+        }
+        set {
+            _token.withLock {
+                $0 = newValue
+            }
+        }
+    }
 
     public init(configuration: Configuration,
                 clientTransport: any ClientTransport,
@@ -101,6 +114,7 @@ public actor VaultClient {
         self.clientTransport = clientTransport
         self.middlewares = middlewares
         self.logger = configuration.backgroundActivityLogger
+        self._token = .init(nil)
     }
 
     

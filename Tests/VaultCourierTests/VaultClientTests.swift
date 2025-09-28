@@ -103,7 +103,7 @@ struct VaultClientTests {
         try await vaultClient.login(method: .appRole(path: approleMount,
                                                      credentials: .init(roleID: roleID,
                                                                         secretID: secretID)))
-        #expect(try await vaultClient.sessionToken() == clientToken)
+        #expect(try vaultClient.sessionToken() == clientToken)
     }
     #endif
 
@@ -223,7 +223,7 @@ extension VaultClientTests {
                                           clientTransport: transportClient)
             try await vaultClient.login(method: .appRole(path: apppRoleMountPath,
                                                          credentials: .init(roleID: roleID, secretID: secretID)))
-            #expect(try await vaultClient.sessionToken() == clientToken)
+            #expect(try vaultClient.sessionToken() == clientToken)
         }
 
         @Test func unwrap_approle_login_and_secrets_read() async throws {
