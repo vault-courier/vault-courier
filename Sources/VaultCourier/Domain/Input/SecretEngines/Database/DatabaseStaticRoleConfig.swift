@@ -19,7 +19,7 @@
 ///
 /// ## Package traits
 ///
-/// This type is guarded by any of the database-plugin package .
+/// This type is guarded by any of the database-plugin package traits.
 ///
 public enum DatabaseStaticRoleConfig: Sendable {
     #if PostgresPluginSupport

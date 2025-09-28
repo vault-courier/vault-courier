@@ -21,7 +21,7 @@
 ///
 /// ## Package traits
 ///
-/// This handler is guarded by the `AppRoleSupport` package trait.
+/// This configuration is guarded by the `AppRoleSupport` package trait.
 ///
 public struct AppRoleTokenGenerationConfig: Sendable {
     /// Name of the AppRole. Must be less than 4096 bytes.

@@ -19,7 +19,11 @@ import PklSwift
 
 /// Perfoms `action`, returns its result and then closes the manager.
 /// Executing on the global concurrent or task preferred executor
-/// 
+///
+/// ## Package traits
+///
+/// This function is guarded by the `PklSupport` package trait.
+///
 /// - Parameter action: The action to perform
 /// - Parameter isolation: run under the given actor isolation. Defaults to surrounding actor
 /// - Returns: The result of `action`

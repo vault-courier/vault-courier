@@ -16,6 +16,11 @@
 
 #if AppRoleSupport
 /// Configuration for creating an AppRole
+///
+/// ## Package traits
+///
+/// This configuration is guarded by the `AppRoleSupport` package trait.
+///
 public struct AppRoleCreationConfig: Sendable {
     /// Name of the app role
     public var name: String

@@ -43,7 +43,7 @@ extension VaultClient {
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.databaseConnection(configuration: configuration)
+            try await client.createPostgresConnection(configuration: configuration)
         }
     }
 
@@ -107,6 +107,11 @@ extension VaultClient {
     #endif
 
     /// Deletes a database connection between Vault and a Postgres Database
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Note: The roles in the database are not deleted
     public func deleteDatabaseConnection(
         _ connectionName: String,
@@ -118,6 +123,11 @@ extension VaultClient {
     }
 
     /// Rotates Vault database password
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Note: After this action only vault knows this user's password
     /// - Parameters:
     ///   - connection: connection name
@@ -132,7 +142,11 @@ extension VaultClient {
     }
 
     /// Closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.
-    ///  
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Note: This method resets the connection, but vault's database password is still the same
     /// - Parameters:
     ///   - connectionName: connection name
