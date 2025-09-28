@@ -98,15 +98,17 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                           rotation: .period(.seconds(28 * 24 * 60 * 60)))
                 try await vaultClient.create(staticRole: .postgres(staticRole), enginePath: enginePath)
 
-                let sut = try await vaultClient.makeResourceReader(
+                let sut = try vaultClient.makeResourceReader(
                     scheme: "vault",
                     databaseReaderParsers: [.mount(enginePath)]
                 )
                 // MUT
-                let output = try await sut.readConfiguration(
-                    source: .url(pklFixtureUrl(for: "Sample1/appConfig2.pkl")),
-                    as: AppConfig.Module.self
-                )
+                let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                    try await AppConfig.loadFrom(
+                        evaluator: evaluator,
+                        source: .url(pklFixtureUrl(for: "Sample1/appConfig2.pkl"))
+                    )
+                }
 
                 let databaseConfig = try #require(output.database)
                 let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))
@@ -127,15 +129,17 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                      ])
                 try await vaultClient.create(dynamicRole: .postgres(dynamicRole), enginePath: enginePath)
 
-                let sut = try await vaultClient.makeResourceReader(
+                let sut = try vaultClient.makeResourceReader(
                     scheme: "vault",
                     databaseReaderParsers: [.mount(enginePath)]
                 )
                 // MUT
-                let output = try await sut.readConfiguration(
-                    source: .url(pklFixtureUrl(for: "Sample1/appConfig3.pkl")),
-                    as: AppConfig.Module.self
-                )
+                let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                    try await AppConfig.loadFrom(
+                        evaluator: evaluator,
+                        source: .url(pklFixtureUrl(for: "Sample1/appConfig3.pkl"))
+                    )
+                }
 
                 let databaseConfig = try #require(output.database)
                 let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))

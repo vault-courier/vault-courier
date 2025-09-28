@@ -37,7 +37,8 @@ extension IntegrationTests.Pkl {
             "swift test is hanging on GitHub Actions, started in Swift 6.0+"
         ),
         .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
-    ) struct ModuleSourceReader {
+    )
+    struct ModuleSourceReader {
 
         @Test
         func resource_reader_schema_cannot_be_empty() async throws {
@@ -48,8 +49,8 @@ extension IntegrationTests.Pkl {
             let schema = ""
             let kvMountPath = "path/to/secrets"
 
-            await #expect(throws: VaultClientError.self) {
-                try await vaultClient.makeResourceReader(
+            #expect(throws: VaultClientError.self) {
+                try vaultClient.makeResourceReader(
                     scheme: schema,
                     keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
                 )
@@ -65,15 +66,20 @@ extension IntegrationTests.Pkl {
             let schema = "my_schema"
             let kvMountPath = ""
 
-            let sut = try await vaultClient.makeResourceReader(
+            let sut = try vaultClient.makeResourceReader(
                 scheme: schema,
                 keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
             )
 
-            await #expect(throws: VaultClientError.self) {
-                try await sut.readConfiguration(text:"""
-                appKeys = read("\(schema):/\(kvMountPath)/key?version=2").text
-                """)
+            await #expect(throws: PklError.self) {
+                try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                    try await evaluator.evaluateModule(
+                        source: .text("""
+                        appKeys = read("\(schema):/\(kvMountPath)/key?version=2").text
+                        """),
+                        as: String.self
+                    )
+                }
             }
         }
 
@@ -114,13 +120,20 @@ extension IntegrationTests.Pkl {
 
             let schema = "vault"
             let kvMountPath = "path/to/secrets"
-            let sut = try await vaultClient.makeResourceReader(
-                scheme: "vault",
+            let sut = try vaultClient.makeResourceReader(
+                scheme: schema,
                 keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
             )
-            let output = try await sut.readConfiguration(text:"""
-            appKeys = read("\(schema):/\(kvMountPath)/key?version=2").text
-            """)
+
+            // MUT
+            let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                try await evaluator.evaluateOutputText(
+                    source: .text("""
+                    appKeys: String = read("\(schema):/\(kvMountPath)/key?version=2").text
+                    """)
+                )
+            }
+
             // Note: Pkl adds `\#n"` at the end of the file
             let expected = #"appKeys = "{\"\#(secret)\":\"\#(value)\"}"\#n"#
             #expect(output == expected)
@@ -163,17 +176,20 @@ extension IntegrationTests.Pkl {
             try await vaultClient.login(method: .token("test_token"))
 
             let scheme = "vault"
-            let sut = try await vaultClient.makeResourceReader(
+            let sut = try vaultClient.makeResourceReader(
                 scheme: "vault",
                 databaseReaderParsers: [DatabaseReaderParser(mount: databaseMount)]
             )
 
             // MUT
-            let output = try await sut.readConfiguration(
-                source: .text("""
-                databaseCredentials: String = read("\(scheme):/\(databaseMount)/static-creds/qa_role").text
-                """),
-                as: DatabaseSecret.self)
+            let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                try await evaluator.evaluateModule(
+                    source: .text("""
+                    databaseCredentials: String = read("\(scheme):/\(databaseMount)/static-creds/qa_role").text
+                    """),
+                    as: DatabaseSecret.self
+                )
+            }
     
             let secrets = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.databaseCredentials.utf8))
             #expect(secrets.username == username)
@@ -214,16 +230,19 @@ extension IntegrationTests.Pkl {
             try await vaultClient.login(method: .token("test_token"))
 
             let scheme = "vault"
-            let sut = try await vaultClient.makeResourceReader(
+            let sut = try vaultClient.makeResourceReader(
                 scheme: scheme,
                 databaseReaderParsers: [DatabaseReaderParser(mount: databaseMount)]
             )
             // MUT
-            let output = try await sut.readConfiguration(
-                source: .text("""
-                databaseCredentials: String = read("vault:/\(databaseMount)/creds/\(dynamicRole)").text
-                """),
-                as: DatabaseSecret.self)
+            let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                try await evaluator.evaluateModule(
+                    source: .text("""
+                    databaseCredentials: String = read("vault:/\(databaseMount)/creds/\(dynamicRole)").text
+                    """),
+                    as: DatabaseSecret.self
+                )
+            }
     
             let secrets = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.databaseCredentials.utf8))
             #expect(secrets.username == username)
@@ -378,18 +397,21 @@ extension IntegrationTests.Pkl {
             try await vaultClient.login(method: .token("test_token"))
 
             let scheme = "vault"
-            let sut = try await vaultClient.makeResourceReader(
+            let sut = try vaultClient.makeResourceReader(
                 scheme: scheme,
                 databaseReaderParsers: [.mount(databaseMount1), .mount(databaseMount2)]
             )
 
             // MUT
-            let output = try await sut.readConfiguration(
-                source: .text("""
-                postgresRoleCredentials: String = read("\(scheme):/\(databaseMount1)/static-creds/\(vaultRole1)").text
-                valkeyRoleCredentials: String = read("\(scheme):/\(databaseMount2)/static-creds/\(vaultRole2)").text
-                """),
-                as: DatabaseSecrets.self)
+            let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                try await evaluator.evaluateModule(
+                    source: .text("""
+                    postgresRoleCredentials: String = read("\(scheme):/\(databaseMount1)/static-creds/\(vaultRole1)").text
+                    valkeyRoleCredentials: String = read("\(scheme):/\(databaseMount2)/static-creds/\(vaultRole2)").text
+                    """),
+                    as: DatabaseSecrets.self
+                )
+            }
 
             let databaseSecrets1 = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.postgresRoleCredentials.utf8))
             let databaseSecrets2 = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.valkeyRoleCredentials.utf8))
@@ -439,17 +461,20 @@ extension IntegrationTests.Pkl {
             try await vaultClient.login(method: .token("test_token"))
 
             let scheme = "vault"
-            let sut = try await vaultClient.makeResourceReader(
+            let sut = try vaultClient.makeResourceReader(
                 scheme: scheme,
                 customResourceReaderParsers: [vaultClient.unwrapReader(customPath: customPath)]
             )
 
             // MUT
-            let output = try await sut.readConfiguration(
-                source: .text("""
-                secrets: String = read("\(scheme):\(customPath)?token=wrapping_token").text
-                """),
-                as: AppConfig.self)
+            let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                try await evaluator.evaluateModule(
+                    source: .text("""
+                    secrets: String = read("\(scheme):\(customPath)?token=wrapping_token").text
+                    """),
+                    as: AppConfig.self
+                )
+            }
 
             let secrets = try JSONDecoder().decode(WrappingTestSecret.self, from: Data(output.secrets.utf8))
             #expect(secrets.foo == fooValue)
