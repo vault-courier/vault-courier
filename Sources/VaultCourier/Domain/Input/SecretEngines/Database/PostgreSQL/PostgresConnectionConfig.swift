@@ -15,7 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #if PostgresPluginSupport
-/// Request type with the connection configuration for Vault and a database
+/// Connection configuration for Vault and Postgres
+///
+/// ## Package traits
+///
+/// This configuration is guarded by the `PostgresPluginSupport` package trait.
+///
 public struct PostgresConnectionConfig: Sendable, Decodable {
     /// The name of the connection
     public var connection: String

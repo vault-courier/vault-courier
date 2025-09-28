@@ -42,6 +42,10 @@ extension DatabaseResourceReaderStrategy where Self == DatabaseReaderParser {
 /// Example: given the URL `vault:/my_databases/static-creds/test_static_role`
 /// This parser with mount `my_databases` will parse a static role with name `test_static_role`.
 ///
+/// ## Package traits
+///
+/// This resource reader is guarded by the `PklSupport` package trait.
+///
 public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
     /// Mount path to Database secrets
     let mount: String

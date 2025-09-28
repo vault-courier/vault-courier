@@ -23,7 +23,12 @@ import struct Foundation.URL
 
 extension VaultClient {
     public enum Server {
+        /// Default local URL address
+        ///
+        /// - warning: Never run a Vault without TLS in production
         public static let defaultHttpURL: URL = try! Servers.Server1.url(_protocol: .http)
+
+        /// Default local URL address with TLS
         public static let defaultHttpsURL: URL = try! Servers.Server1.url(_protocol: .https)
     }
 }

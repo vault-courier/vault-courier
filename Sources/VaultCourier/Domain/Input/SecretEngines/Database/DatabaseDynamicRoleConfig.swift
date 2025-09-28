@@ -15,11 +15,25 @@
 //===----------------------------------------------------------------------===//
 
 #if PostgresPluginSupport || ValkeyPluginSupport
+/// Dynamic role configuration
+///
+/// ## Package traits
+///
+/// This type is guarded by any of the database-plugin package .
+///
 public enum DatabaseDynamicRoleConfig: Sendable {
     #if PostgresPluginSupport
+    /// ## Package traits
+    ///
+    /// This case is guarded by the `PostgresPluginSupport` package trait.
+    ///
     case postgres(PostgresRoleConfig)
     #endif
     #if ValkeyPluginSupport
+    /// ## Package traits
+    ///
+    /// This case is guarded by the `ValkeyPluginSupport` package trait.
+    ///
     case valkey(ValkeyRoleConfig)
     #endif
 }

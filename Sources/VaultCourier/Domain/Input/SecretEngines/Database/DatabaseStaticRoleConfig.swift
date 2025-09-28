@@ -15,17 +15,37 @@
 //===----------------------------------------------------------------------===//
 
 #if PostgresPluginSupport || ValkeyPluginSupport
+/// Static Role configuration
+///
+/// ## Package traits
+///
+/// This type is guarded by any of the database-plugin package .
+///
 public enum DatabaseStaticRoleConfig: Sendable {
     #if PostgresPluginSupport
+    /// ## Package traits
+    ///
+    /// This case is guarded by the `PostgresPluginSupport` package trait.
+    ///
     case postgres(PostgresStaticRoleConfig)
     #endif
     #if ValkeyPluginSupport
+    /// ## Package traits
+    ///
+    /// This case is guarded by the `ValkeyPluginSupport` package trait.
+    ///
     case valkey(ValkeyStaticRoleConfig)
     #endif
 }
 #endif
 
 #if DatabaseEngineSupport
+/// Credential rotation plans
+///
+/// ## Package traits
+///
+/// This case is guarded by the `DatabaseEngineSupport` package trait.
+///
 public enum RotationStrategy: Sendable {
     /// Specifies the amount of time Vault should wait before rotating the password. The minimum is 5 seconds
     case period(Duration)
@@ -34,6 +54,12 @@ public enum RotationStrategy: Sendable {
     case scheduled(ScheduledRotation)
 }
 
+/// Scheduled rotation plan
+///
+/// ## Package traits
+///
+/// This case is guarded by the `DatabaseEngineSupport` package trait.
+///
 public struct ScheduledRotation: Sendable {
     /// This should be a "standard" cron-style string made of five fields of which each entry defines the minute, hour, day of month, month, and day of week respectively. For example, a value of  "0 0 * * SAT" will set rotations to occur on Saturday at 00:00.
     public let schedule: String

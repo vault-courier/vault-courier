@@ -30,6 +30,11 @@ import protocol Foundation.LocalizedError
 extension VaultClient {
     #if PostgresPluginSupport
     /// Creates a database connection between Vault and a Postgres Database
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `PostgresPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - configuration: postgres connection configuration
     ///   - enginePath: mount path of secret engine
@@ -43,6 +48,11 @@ extension VaultClient {
     }
 
     /// Reads vault-postgres connection
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `PostgresPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - name: connection name
     ///   - enginePath: mount path of database secrets
@@ -59,6 +69,11 @@ extension VaultClient {
 
     #if ValkeyPluginSupport
     /// Creates a database connection between Vault and a Valkey Database
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `ValkeyPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - configuration: valkey connection configuration
     ///   - enginePath: mount path of secret engine
@@ -72,6 +87,11 @@ extension VaultClient {
     }
 
     /// Reads vault-valkey connection
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `ValkeyPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - name: connection name
     ///   - enginePath: mount path of database secrets

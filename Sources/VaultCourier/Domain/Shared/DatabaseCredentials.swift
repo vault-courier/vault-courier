@@ -15,6 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #if DatabaseEngineSupport
+/// Database credentials
+/// 
+/// ## Package traits
+///
+/// This type is guarded by the `DatabaseEngineSupport` package trait.
+///
 public struct DatabaseCredentials: Sendable, Codable {
     public var username: String
     public var password: String

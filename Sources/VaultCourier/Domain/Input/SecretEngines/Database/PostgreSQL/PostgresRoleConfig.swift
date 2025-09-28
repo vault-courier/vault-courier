@@ -15,7 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #if PostgresPluginSupport
-/// Database dynamic role creation configuration
+/// Postgres dynamic role creation configuration
+/// 
+/// ## Package traits
+///
+/// This configuration is guarded by the `PostgresPluginSupport` package trait.
+///
 public struct PostgresRoleConfig: Sendable {
     /// The vault role name which maps to a dynamically generated database username
     public var vaultRoleName: String
@@ -97,6 +102,12 @@ public struct PostgresRoleConfig: Sendable {
     }
 }
 
+/// Postgres credential method
+///
+/// ## Package traits
+///
+/// This resource reader is guarded by the `PostgresPluginSupport` package trait.
+///
 public enum DatabaseCredentialMethod: String, Sendable {
     case password
     case rsaPrivateKey = "rsa_private_key"
