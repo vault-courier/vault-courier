@@ -49,7 +49,7 @@ import SystemWrapping
 /// ```
 public actor VaultClient {
     public struct Configuration: Sendable {
-        /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
+        /// Vault's base URL, e.g. `https://127.0.0.1:8200/v1`
         public let apiURL: URL
 
         /// Vault client's logger
@@ -67,18 +67,20 @@ public actor VaultClient {
             self.backgroundActivityLogger = backgroundActivityLogger ?? Self.loggingDisabled
         }
 
+        /// Default Configuration with base URL `http://127.0.0.1:8200/v1`
         public static func defaultHttp(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
             .init(apiURL: VaultClient.Server.defaultHttpURL,
                   backgroundActivityLogger: backgroundActivityLogger)
         }
 
+        /// Default Configuration with base URL `https://127.0.0.1:8200/v1`
         public static func defaultHttps(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
             .init(apiURL: VaultClient.Server.defaultHttpsURL,
                   backgroundActivityLogger: backgroundActivityLogger)
         }
     }
 
-    /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
+    /// Vault's base URL, e.g. `https://127.0.0.1:8200/v1`
     public let apiURL: URL
 
     /// Client transport, e.g. `AsyncHTTPClientTransport`, `URLSessionTransport` or any mock client transport
@@ -173,6 +175,10 @@ extension VaultClient {
     ///
     /// A database client is created with the current session token and middlewares
     ///
+    /// ## Package traits
+    ///
+    /// This handler is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Parameters:
     ///   - mountPath: mount path of database secrets
     ///   - execute: action closure to execute with the database client
@@ -219,7 +225,11 @@ extension VaultClient {
     /// Handler to interact with the AppRole authentication endpoints
     /// 
     /// An Approle-auth client is created with the current session token and middlewares
-    /// 
+    ///
+    /// ## Package traits
+    ///
+    /// This handler is guarded by the `AppRoleSupport` package trait.
+    ///
     /// - Parameter execute: action closure to execute with the token-auth client
     /// - Parameter mountPath: path to approle authentication mount
     /// - Returns: return type of the `execute` closure

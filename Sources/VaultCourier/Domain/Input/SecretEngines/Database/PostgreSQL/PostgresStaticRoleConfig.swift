@@ -15,7 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #if PostgresPluginSupport
-
+/// Postgres static role configuration
+///
+/// ## Package traits
+///
+/// This configuration is guarded by the `PostgresPluginSupport` package trait.
+///
 public struct PostgresStaticRoleConfig: Sendable {
     /// The corresponding role in the database of ``databaseUsername``
     public var vaultRoleName: String

@@ -30,6 +30,11 @@ import protocol Foundation.LocalizedError
 extension VaultClient {
     #if PostgresPluginSupport
     /// Creates a database connection between Vault and a Postgres Database
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `PostgresPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - configuration: postgres connection configuration
     ///   - enginePath: mount path of secret engine
@@ -38,11 +43,16 @@ extension VaultClient {
         enginePath: String
     ) async throws {
         try await withDatabaseClient(mountPath: enginePath) { client in
-            try await client.databaseConnection(configuration: configuration)
+            try await client.createPostgresConnection(configuration: configuration)
         }
     }
 
     /// Reads vault-postgres connection
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `PostgresPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - name: connection name
     ///   - enginePath: mount path of database secrets
@@ -59,6 +69,11 @@ extension VaultClient {
 
     #if ValkeyPluginSupport
     /// Creates a database connection between Vault and a Valkey Database
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `ValkeyPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - configuration: valkey connection configuration
     ///   - enginePath: mount path of secret engine
@@ -72,6 +87,11 @@ extension VaultClient {
     }
 
     /// Reads vault-valkey connection
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `ValkeyPluginSupport` package trait.
+    ///
     /// - Parameters:
     ///   - name: connection name
     ///   - enginePath: mount path of database secrets
@@ -87,6 +107,11 @@ extension VaultClient {
     #endif
 
     /// Deletes a database connection between Vault and a Postgres Database
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Note: The roles in the database are not deleted
     public func deleteDatabaseConnection(
         _ connectionName: String,
@@ -98,6 +123,11 @@ extension VaultClient {
     }
 
     /// Rotates Vault database password
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Note: After this action only vault knows this user's password
     /// - Parameters:
     ///   - connection: connection name
@@ -112,7 +142,11 @@ extension VaultClient {
     }
 
     /// Closes a connection and it's underlying plugin and restarts it with the configuration stored in the barrier.
-    ///  
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Note: This method resets the connection, but vault's database password is still the same
     /// - Parameters:
     ///   - connectionName: connection name

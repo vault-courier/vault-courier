@@ -32,6 +32,11 @@ import DatabaseEngine
 extension DatabaseEngineClient {
 
     /// Creates a vault role for accessing database secrets
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by any of the database-plugin package traits.
+    ///
     /// - Parameters:
     ///   - staticRole: configuration for static role creation
     public func create(
@@ -177,6 +182,11 @@ extension DatabaseEngineClient {
 
 extension DatabaseEngineClient {
     /// Deletes a vault database static role
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Parameters:
     ///   - name: name of the role
     public func deleteStaticRole(
@@ -202,6 +212,11 @@ extension DatabaseEngineClient {
     }
 
     /// Deletes a dynamic database role
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Parameters:
     ///   - name: name of dynamic database role
     public func deleteRole(
@@ -230,6 +245,11 @@ extension DatabaseEngineClient {
 // MARK: Role Credentials
 extension DatabaseEngineClient {
     /// Reads database credentials for a static role
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Parameters:
     ///   - staticRole: static role name
     /// - Returns: Static database credentials
@@ -278,6 +298,11 @@ extension DatabaseEngineClient {
 
 
     /// Read current credentials for a dynamic role
+    ///
+    /// ## Package traits
+    ///
+    /// This method is guarded by the `DatabaseEngineSupport` package trait.
+    ///
     /// - Parameters:
     ///   - dynamicRole: dynamic role name
     /// - Returns: Dynamic role credentials

@@ -31,6 +31,11 @@ import DatabaseEngine
 
 /// Client for Database secret engine
 ///
+/// ## Package traits
+///
+/// This client is guarded by the `DatabaseEngineSupport` package trait.
+///
+///
 /// - Note: You don't usually create this type directly, but instead use ``VaultClient/withDatabaseClient(mountPath:execute:)`` to interact with this type
 public final class DatabaseEngineClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "database-engine-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
@@ -81,7 +86,7 @@ extension DatabaseEngineClient {
 
     #if PostgresPluginSupport
     /// Creates a database connection between Vault and a Postgres Database
-    public func databaseConnection(
+    public func createPostgresConnection(
         configuration: PostgresConnectionConfig
     ) async throws {
         let sessionToken = self.engine.token

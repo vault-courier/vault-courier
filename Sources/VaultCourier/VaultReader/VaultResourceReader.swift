@@ -32,6 +32,11 @@ extension ModuleSource: @unchecked Sendable {}
 /// A Pkl resource reader for Vault
 ///
 /// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeResourceReader(scheme:keyValueReaderParsers:databaseReaderParsers:customResourceReaderParsers:)``
+///
+/// ## Package traits
+///
+/// This Pkl resource reader is guarded by the `PklSupport` package trait.
+///
 public final class VaultResourceReader: Sendable {
     /// Vault client containing the base URL and secret engine mount paths used for requests.
     let client: VaultClient

@@ -18,6 +18,11 @@
 /// Configuration for generating a new SecretID for an AppRole
 ///
 /// See [AppRoleToken](https://github.com/vault-courier/vault-courier-pkl/blob/main/Payloads/AppRoleToken.pkl) and [Vault API](https://developer.hashicorp.com/vault/api-docs/auth/approle#parameters-5)
+///
+/// ## Package traits
+///
+/// This configuration is guarded by the `AppRoleSupport` package trait.
+///
 public struct AppRoleTokenGenerationConfig: Sendable {
     /// Name of the AppRole. Must be less than 4096 bytes.
     public let roleName: String

@@ -14,6 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+/// Vault Plugin Information
 public struct VaultPlugin: Sendable {
     public let name: String
     public let version: String?

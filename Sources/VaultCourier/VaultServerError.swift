@@ -25,7 +25,9 @@ import class Foundation.JSONDecoder
 import struct Foundation.Data
 #endif
 
-// https://developer.hashicorp.com/vault/api-docs#http-status-codes
+/// Error types returned by the Vault server
+/// 
+/// https://developer.hashicorp.com/vault/api-docs#http-status-codes
 public enum VaultServerError: Error {
     /// Invalid request, missing or invalid data.
     case invalidRequest(errors: String?)

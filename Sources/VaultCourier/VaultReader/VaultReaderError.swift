@@ -15,6 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #if PklSupport
+/// Vault resource reader error
+/// 
+/// ## Package traits
+///
+/// This type is guarded by the `PklSupport` package trait.
+///
 public struct VaultReaderError: Error, Sendable {
     public var message: String
 

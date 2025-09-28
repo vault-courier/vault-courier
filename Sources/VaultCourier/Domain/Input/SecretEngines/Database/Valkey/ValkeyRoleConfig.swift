@@ -16,6 +16,11 @@
 
 #if ValkeyPluginSupport
 /// Database dynamic role creation configuration for Valkey
+///
+/// ## Package traits
+///
+/// This configuration is guarded by the `ValkeyPluginSupport` package trait.
+///
 public struct ValkeyRoleConfig: Sendable {
     /// The vault role name which maps to a dynamically generated database username
     public var vaultRoleName: String

@@ -16,6 +16,12 @@
 
 #if ValkeyPluginSupport
 
+/// Valkey static role configuration
+///
+/// ## Package traits
+///
+/// This configuration is guarded by the `ValkeyPluginSupport` package trait.
+///
 public struct ValkeyStaticRoleConfig: Sendable {
     /// The corresponding role in the database of ``databaseUsername``
     public var vaultRoleName: String

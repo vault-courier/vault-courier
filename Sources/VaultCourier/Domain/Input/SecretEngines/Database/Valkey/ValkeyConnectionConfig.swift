@@ -17,6 +17,11 @@
 #if ValkeyPluginSupport
 
 /// Connection configuration for Vault and Valkey
+///
+/// ## Package traits
+///
+/// This configuration is guarded by the `ValkeyPluginSupport` package trait.
+///
 public struct ValkeyConnectionConfig: Sendable, Decodable {
     /// The name of the connection
     public var connection: String
