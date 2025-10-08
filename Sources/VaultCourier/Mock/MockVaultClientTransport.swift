@@ -68,6 +68,8 @@ public struct MockVaultClientTransport: ClientTransport {
 
     public static var successful: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .ok), HTTPBody("bye")) } }
 
+    public static var forbidden: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .forbidden), HTTPBody("error")) } }
+
     /// KeyValue response body
     ///
     /// Encodes the input `data` inside a response body of the form
@@ -233,7 +235,8 @@ extension MockVaultClientTransport {
                                                     timeToLive: .seconds(86400))
                                              )
                     )
-                case "/\(keyValueMount)/data/\(secretKeyPath)":
+                case "/\(keyValueMount)/data/\(secretKeyPath)",
+                    "/\(keyValueMount)/data/\(secretKeyPath)?version=2":
                     guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
                         return (.init(status: .unauthorized), nil)
                     }

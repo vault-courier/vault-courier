@@ -41,6 +41,11 @@ let PklTrait: Trait = .trait(
     description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
 )
 
+let ConfigProviderTrait: Trait = .trait(
+    name: "ConfigProviderSupport",
+    description: "Enable a Vault configuration provider. This trait provides Configuration.ConfigProvider implementation that can fetch Vault secrets"
+)
+
 let MockTrait: Trait = .trait(
     name: "MockSupport",
     description: "Provides a mock client transport for unit testing and development, and adds Encodable conformance to certain Vault response types."
@@ -76,6 +81,7 @@ let package = Package(
     ],
     traits: [
         PklTrait,
+        ConfigProviderTrait,
         MockTrait,
         AppRoleTrait,
         DatabaseEngineTrait,
@@ -87,7 +93,8 @@ let package = Package(
             DatabaseEngineTrait.name,
             PostgresDatabasePluginTrait.name,
             ValkeyDatabasePluginTrait.name,
-//            PklTrait.name,
+            ConfigProviderTrait.name,
+            PklTrait.name,
         ])
     ],
     dependencies: [
@@ -96,7 +103,8 @@ let package = Package(
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
         .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2"),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4")
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
+        .package(url: "https://github.com/apple/swift-configuration.git", from: "0.1.1")
     ],
     targets: [
         .target(
@@ -104,6 +112,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
+                .product(name: "Configuration", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
                 .target(name: "Utils"),
                 // Vault System backend
@@ -116,7 +125,7 @@ let package = Package(
                 .target(name: "AppRoleAuth", condition: .when(traits: [AppRoleTrait.name])),
                 // Secrets
                 .target(name: "KeyValue"),
-                .target(name: "DatabaseEngine", condition: .when(traits: [DatabaseEngineTrait.name])),
+                .target(name: "DatabaseEngine", condition: .when(traits: [DatabaseEngineTrait.name]))
             ]
         ),
         .target(
@@ -231,6 +240,8 @@ let package = Package(
                 .target(name: "VaultCourier"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "Configuration", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
+                .product(name: "ConfigurationTesting", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
             ],
             exclude: [
                 "Fixtures"

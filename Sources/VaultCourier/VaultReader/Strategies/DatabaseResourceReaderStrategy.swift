@@ -14,13 +14,14 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if PklSupport
+#if PklSupport || ConfigProviderSupport
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
 import struct Foundation.URL
 #endif
 
+/// Type that parses URL for database resource
 public protocol DatabaseResourceReaderStrategy: ResourceReaderStrategy, Sendable {
     /// Parses URL into the parameters the vault client needs to fetch a database secret.
     /// - Parameter url: URL to parse
