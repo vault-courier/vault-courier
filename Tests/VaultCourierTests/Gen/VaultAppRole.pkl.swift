@@ -5,7 +5,7 @@ import PklSwift
 public enum VaultAppRole {}
 
 extension VaultAppRole {
-    public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case batch = "batch"
         case service = "service"
         case `default` = "default"
@@ -13,7 +13,7 @@ extension VaultAppRole {
 
     /// Configuration for creating a Vault AppRole
     /// https://developer.hashicorp.com/vault/api-docs/auth/approle#create-update-approle
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "VaultAppRole"
 
         /// Custom approle auth path. This value was given in AuthMethodConfig

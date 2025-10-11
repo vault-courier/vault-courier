@@ -7,7 +7,7 @@ public enum AppRoleToken {}
 extension AppRoleToken {
     /// This is the DTO for generating a new Secret-ID for an AppRole
     /// See AppRoleAuth.pkl and [API](https://developer.hashicorp.com/vault/api-docs/auth/approle#parameters-5)
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "AppRoleToken"
 
         /// Name of the AppRole. Must be less than 4096 bytes.

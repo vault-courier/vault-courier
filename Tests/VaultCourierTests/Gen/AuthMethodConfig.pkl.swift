@@ -5,12 +5,12 @@ import PklSwift
 public enum AuthMethodConfig {}
 
 extension AuthMethodConfig {
-    public enum AuthMethod: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum AuthMethod: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case approle = "approle"
         case token = "token"
     }
 
-    public enum ConfigKey: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum ConfigKey: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case default_lease_ttl = "default_lease_ttl"
         case max_lease_ttl = "max_lease_ttl"
         case force_no_cache = "force_no_cache"
@@ -24,7 +24,7 @@ extension AuthMethodConfig {
     }
 
     /// Payload for enabling auth methods
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "AuthMethodConfig"
 
         /// Specifies the path in which to enable the auth method. This is part of the request URL.

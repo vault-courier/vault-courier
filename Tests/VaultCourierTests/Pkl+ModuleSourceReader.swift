@@ -330,7 +330,7 @@ extension IntegrationTests.Pkl {
             }
         }
 
-#if PostgresPluginSupport
+        #if PostgresPluginSupport
         @Test
         func read_credentials_for_two_database_secret_mounts() async throws {
             struct DatabaseSecrets: Codable, Sendable {

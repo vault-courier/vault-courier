@@ -1,4 +1,3 @@
-
 #if PklSupport
 // Code generated from Pkl module `PostgresDatabaseConnection`. DO NOT EDIT.
 import PklSwift
@@ -6,7 +5,7 @@ import PklSwift
 public enum PostgresDatabaseConnection {}
 
 extension PostgresDatabaseConnection {
-    public enum PostgresSSLMode: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum PostgresSSLMode: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case disable = "disable"
         case allow = "allow"
         case prefer = "prefer"
@@ -17,7 +16,7 @@ extension PostgresDatabaseConnection {
 
     /// This is the payload for configuring Vault and Postgres connections
     /// https://developer.hashicorp.com/vault/api-docs/secret/databases/postgresql
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "PostgresDatabaseConnection"
 
         /// Custom database engine path
