@@ -56,7 +56,6 @@ extension VaultProvider: CustomDebugStringConvertible {
     }
 }
 
-
 extension VaultProvider {
     /// Secret engines are Vault components for storing and generating secrets.
     public enum SecretEngine: String {
@@ -91,7 +90,7 @@ extension VaultProvider {
         url: String
     ) throws -> [String: ConfigContextValue] {
         guard let url = URL(string: url) else {
-            throw VaultProviderError.invalidContextURL(url, name: "")
+            throw VaultProviderError.malformed(url: url)
         }
         return Self.makeContext(secretEngine, mount: mount, url: url)
     }
@@ -144,7 +143,7 @@ extension VaultProvider: ConfigProvider, ConfigSnapshotProtocol {
     ) async throws -> LookupResult {
         let encodedKey = Self.keyEncoder.encode(key)
         
-        guard let secretsEngine = key.context[Self.engineContextKey],
+        guard let engineContext = key.context[Self.engineContextKey],
               let mount = key.context[Self.mountContextKey],
               case let .string(urlString) = key.context[Self.urlContextKey]
         else {
@@ -158,12 +157,12 @@ extension VaultProvider: ConfigProvider, ConfigSnapshotProtocol {
         }
 
         // Check supported secret engines
-        guard let engineContext = SecretEngine(rawValue: secretsEngine.description) else {
-            throw VaultProviderError.unsupported(engine: secretsEngine.description)
+        guard let engineType = SecretEngine(rawValue: engineContext.description) else {
+            throw VaultProviderError.unsupported(engine: engineContext.description)
         }
 
         let content: ConfigContent
-        switch engineContext {
+        switch engineType {
             case .keyValue:
                 let components: (secretKey: String, version: Int?)
                 if let (_, secretKey, version) = try KeyValueReaderParser(mount: mount.description).parse(url),

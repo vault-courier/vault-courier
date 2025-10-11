@@ -40,9 +40,8 @@ extension VaultClientTests {
 
             public init?(configString: String) {
                 guard let data = configString.data(using: .utf8),
-                      let apiKey = try? JSONDecoder().decode(ServiceSecret.self, from: data) else {
-                    return nil
-                }
+                      let apiKey = try? JSONDecoder().decode(ServiceSecret.self, from: data)
+                else { return nil }
                 self = apiKey
             }
 
@@ -454,12 +453,11 @@ extension VaultClientTests {
 
             let secretsURLString = try await sut.fetchRequiredString(forKey: "third_party.service.api_key")
 
-            let context = VaultProvider.makeContext(
+            let context = try VaultProvider.makeContext(
                 .keyValue,
                 mount: kvMount,
-                url: URL(configString: secretsURLString)!
+                url: secretsURLString
             )
-
 
             let secret = try await sut.fetchRequiredString(forKey: "third_party.service.api_key", context: context, as: ServiceSecret.self)
             #expect(secret.apiKey == "secret_api_key")
@@ -636,6 +634,135 @@ extension VaultClientTests.VaultConfigProvider {
     }
 }
 #endif
+
+// MARK: Alternative Implementation
+extension VaultClientTests.VaultConfigProvider {
+    @Test
+    func hierarchy_compatibility_with_json_provider() async throws {
+        let kvMount = "secret"
+        let secretKeyPath = "local_test"
+        let expectedSecrets = ["api_key": "secret_api_key"]
+        let databaseMount = "database_mount_path"
+        let staticRole = "test_static_role"
+        let staticUsername = "test_database_username"
+        let dynamicRole = "test_dynamic_role"
+        let dynamicRolePassword = "test_dynamic_role_password"
+        let expectedPassword = "test_database_password"
+        let transport = MockVaultClientTransport.dev(
+            databaseMount: databaseMount,
+            staticRole: staticRole,
+            staticRoleDatabaseUsername: staticUsername,
+            staticRoleDatabasePassword: expectedPassword,
+            dynamicRole: dynamicRole,
+            dynamicRoleDatabasePassword: dynamicRolePassword,
+            keyValueMount: kvMount,
+            secretKeyPath: secretKeyPath,
+            expectedSecrets: expectedSecrets
+        )
+        let vaultClient = VaultClient(configuration: .defaultHttps(),
+                                      clientTransport: transport)
+        try await vaultClient.login(method: .token("client_token"))
+
+        let absoluteKey1 = AbsoluteConfigKey(["third_party", "service", "api_key"])
+        let absoluteKey2 = AbsoluteConfigKey(["third_party", "service", "api_key"], context: ["version": 2])
+        let absoluteKey3 = AbsoluteConfigKey(["server", "database", "credentials"])
+
+        let secretProvider = VaultSecretProvider(
+            vaultClient: vaultClient,
+            evaluationMap: [
+                absoluteKey1: try await VaultSecretProvider.keyValueSecret(mount: kvMount, key: secretKeyPath),
+                absoluteKey2: try await VaultSecretProvider.keyValueSecret(mount: kvMount, key: secretKeyPath, version: 2),
+                absoluteKey3: try await VaultSecretProvider.databaseCredentials(mount: databaseMount, role: .static(name: staticRole))
+            ]
+        )
+
+        let sut = ConfigReader(providers: [
+            secretProvider,
+            try await JSONProvider(filePath: .init(fixtureUrl(for: "/SwiftConfiguration/config2.json").relativePath)),
+        ])
+
+        let secret = try await sut.fetchRequiredString(forKey: "third_party.service.api_key", context: ["version": 2], as: ServiceSecret.self)
+        #expect(secret.apiKey == "secret_api_key")
+
+        let staticCredentials = try await sut.fetchRequiredString(forKey: "server.database.credentials", as: DatabaseCredentials.self)
+        #expect(staticCredentials.username == staticUsername)
+        #expect(staticCredentials.password == expectedPassword)
+
+        // This ConfigKey has not been registered in VaultSecretProvider
+        let absoluteKey4 = AbsoluteConfigKey(["job", "database", "credentials"])
+        let databaseKey: String = absoluteKey4.components.joined(separator: ".")
+        var credentials = try await sut.fetchRequiredString(forKey: databaseKey, as: DatabaseCredentials.self)
+        #expect(credentials.username == "username_dev_local")
+        #expect(credentials.password == "password_local_dev")
+
+        secretProvider.updateEvaluation(absoluteKey4, with: try await VaultSecretProvider.databaseCredentials(mount: databaseMount, role: .dynamic(name: dynamicRole)))
+
+        // Register ConfigKey
+        credentials = try await sut.fetchRequiredString(forKey: databaseKey, as: DatabaseCredentials.self)
+        #expect(credentials.username != "username_dev_local")
+        #expect(credentials.password == dynamicRolePassword)
+    }
+
+    @Test
+    func compatibility_vault_secret_provider() async throws {
+        let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                      clientTransport: MockVaultClientTransport.successful)
+        try await vaultClient.login(method: .token("client_token"))
+
+        let provider = VaultSecretProvider(
+            vaultClient: vaultClient,
+            evaluationMap: [
+                .init(["string"]): { _ in Array("Hello".utf8) },
+                .init(["other", "string"]): { _ in Array("Other Hello".utf8) },
+                .init(["int"]): { _ in try Array(JSONEncoder().encode(42)) },
+                .init(["other", "int"]): { _ in try Array(JSONEncoder().encode(24)) },
+                .init(["double"]): { _ in try Array(JSONEncoder().encode(3.14)) },
+                .init(["other", "double"]): { _ in try Array(JSONEncoder().encode(2.72)) },
+                .init(["bool"]): { _ in try Array(JSONEncoder().encode(true)) },
+                .init(["other", "bool"]): { _ in try Array(JSONEncoder().encode(false)) },
+                .init(["bytes"]): { _ in .magic },
+                .init(["other", "bytes"]): { _ in .magic2 },
+                .init(["stringy", "array"]): { _ in try Array(JSONEncoder().encode(["Hello", "World"])) },
+                .init(["other", "stringy", "array"]): { _ in try Array(JSONEncoder().encode(["Hello", "Swift"])) },
+                .init(["inty", "array"]): { _ in try Array(JSONEncoder().encode([42, 24])) },
+                .init(["other", "inty", "array"]): { _ in try Array(JSONEncoder().encode([16, 32])) },
+                .init(["doubly", "array"]): { _ in try Array(JSONEncoder().encode([3.14, 2.72])) },
+                .init(["other", "doubly", "array"]): { _ in try Array(JSONEncoder().encode([0.9, 1.8])) },
+                .init(["booly", "array"]): { _ in try Array(JSONEncoder().encode([true, false])) },
+                .init(["other", "booly", "array"]): { _ in try Array(JSONEncoder().encode([false, true, true])) },
+                .init(["byteChunky", "array"]): { _ in try Array(JSONEncoder().encode([[UInt8].magic, [UInt8].magic2])) },
+                .init(["other", "byteChunky", "array"]): { _ in try Array(JSONEncoder().encode([[UInt8].magic, [UInt8].magic2, [UInt8].magic])) }
+            ],
+            initialValues: [
+                .init(["string"]): .init("Hello", isSecret: false),
+                .init(["other", "string"]): .init("Other Hello", isSecret: false),
+                .init(["int"]): .init(42, isSecret: false),
+                .init(["other", "int"]): .init(24, isSecret: false),
+                .init(["double"]): .init(3.14, isSecret: false),
+                .init(["other", "double"]): .init(2.72, isSecret: false),
+                .init(["bool"]): .init(true, isSecret: false),
+                .init(["other", "bool"]): .init(false, isSecret: false),
+                .init(["bytes"]): .init(.magic, isSecret: false),
+                .init(["other", "bytes"]): .init(.magic2, isSecret: false),
+                .init(["stringy", "array"]): .init(.stringArray(["Hello", "World"]), isSecret: false),
+                .init(["other", "stringy", "array"]): .init(.stringArray(["Hello", "Swift"]), isSecret: false),
+                .init(["inty", "array"]): .init(.intArray([42, 24]), isSecret: false),
+                .init(["other", "inty", "array"]): .init(.intArray([16, 32]), isSecret: false),
+                .init(["doubly", "array"]): .init(.doubleArray([3.14, 2.72]), isSecret: false),
+                .init(["other", "doubly", "array"]): .init(.doubleArray([0.9, 1.8]), isSecret: false),
+                .init(["booly", "array"]): .init(.boolArray([true, false]), isSecret: false),
+                .init(["other", "booly", "array"]): .init(.boolArray([false, true, true]), isSecret: false),
+                .init(["byteChunky", "array"]): .init(.byteChunkArray([.magic, .magic2]), isSecret: false),
+                .init(["other", "byteChunky", "array"]): .init(.byteChunkArray([.magic, .magic2, .magic]), isSecret: false)
+        ])
+
+        let test = ProviderCompatTest(
+            provider: provider,
+            configuration: .init()
+        )
+        try await test.run()
+    }
+}
 
 
 #endif

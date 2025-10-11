@@ -94,7 +94,7 @@ let package = Package(
             PostgresDatabasePluginTrait.name,
             ValkeyDatabasePluginTrait.name,
             ConfigProviderTrait.name,
-            PklTrait.name,
+//            PklTrait.name,
         ])
     ],
     dependencies: [
@@ -104,7 +104,7 @@ let package = Package(
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
         .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
-        .package(url: "https://github.com/apple/swift-configuration.git", from: "0.1.1")
+        .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1"))
     ],
     targets: [
         .target(
