@@ -5,7 +5,7 @@ import PklSwift
 public enum VaultToken {}
 
 extension VaultToken {
-    public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum TokenType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case batch = "batch"
         case service = "service"
     }
@@ -13,7 +13,7 @@ extension VaultToken {
     /// DTO for creating a Token.
     ///
     /// See <https://developer.hashicorp.com/vault/api-docs/auth/token#create-token>
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "VaultToken"
 
         /// The ID of the client token. Can only be specified by a root token. The ID provided may not contain a . character. Otherwise, the token ID is a randomly generated value.

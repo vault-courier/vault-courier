@@ -5,12 +5,12 @@ import PklSwift
 public enum MountConfiguration {}
 
 extension MountConfiguration {
-    public enum SecretEngine: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum SecretEngine: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case kv = "kv"
         case database = "database"
     }
 
-    public enum ConfigKey: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum ConfigKey: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case default_lease_ttl = "default_lease_ttl"
         case max_lease_ttl = "max_lease_ttl"
         case force_no_cache = "force_no_cache"
@@ -24,7 +24,7 @@ extension MountConfiguration {
     }
 
     /// Vault System Mount. Enables a new secrets engine at the given path
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "MountConfiguration"
 
         /// Specifies the type of the backend, such as "kv", "database", "aws", etc...

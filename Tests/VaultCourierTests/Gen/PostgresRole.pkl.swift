@@ -5,7 +5,7 @@ import PklSwift
 public enum PostgresRole {}
 
 extension PostgresRole {
-    public enum CredentialType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable {
+    public enum CredentialType: String, CaseIterable, CodingKeyRepresentable, Decodable, Hashable, Sendable {
         case password = "password"
         case rsa_private_key = "rsa_private_key"
         case client_certificate = "client_certificate"
@@ -14,7 +14,7 @@ extension PostgresRole {
     /// Dynamic Postgres Database Role
     ///
     /// [Vault documentation](https://developer.hashicorp.com/vault/api-docs/secret/databases#create-role)
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "PostgresRole"
 
         /// Specifies the name of the role to create. This is specified as part of the URL.
@@ -85,7 +85,7 @@ extension PostgresRole {
         }
     }
 
-    public struct PasswordCredential: PklRegisteredType, Decodable, Hashable {
+    public struct PasswordCredential: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "PostgresRole#PasswordCredential"
 
         public var passwordPolicy: String?
@@ -95,7 +95,7 @@ extension PostgresRole {
         }
     }
 
-    public struct RSAPrivateKey: PklRegisteredType, Decodable, Hashable {
+    public struct RSAPrivateKey: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "PostgresRole#RSAPrivateKey"
 
         public var key_bits: Int?
@@ -108,7 +108,7 @@ extension PostgresRole {
         }
     }
 
-    public struct ClientCertificate: PklRegisteredType, Decodable, Hashable {
+    public struct ClientCertificate: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "PostgresRole#ClientCertificate"
 
         /// A username template to be used for the client certificate common name.

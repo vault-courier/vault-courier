@@ -87,7 +87,7 @@ let package = Package(
             DatabaseEngineTrait.name,
             PostgresDatabasePluginTrait.name,
             ValkeyDatabasePluginTrait.name,
-//            PklTrait.name,
+//            PklTrait.name
         ])
     ],
     dependencies: [
@@ -95,7 +95,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.7.0"),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
-        .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2"),
+        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4")
     ],
     targets: [

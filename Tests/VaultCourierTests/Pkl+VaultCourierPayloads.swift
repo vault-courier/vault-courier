@@ -28,7 +28,6 @@ import VaultCourier
 
 extension IntegrationTests.Pkl {
     @Suite(
-        .disabled(), // Bug: This suite can only be called individually. Otherwise, it blocks when run with other suits. Seems to be due to Pkl
         .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
     )
     struct Payloads {
