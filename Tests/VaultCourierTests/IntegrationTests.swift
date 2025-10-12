@@ -91,7 +91,9 @@ public func enableIntegrationTests() -> Bool {
 
 #if PklSupport
 extension IntegrationTests {
-    @Suite struct Pkl {}
+    @Suite struct Pkl {
+        static let localExecPath = "/opt/homebrew/bin/pkl"
+    }
 }
 
 public func isPklEnabled() -> Bool {

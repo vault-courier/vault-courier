@@ -85,7 +85,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
 
         #if PklSupport
         @Suite(.setupVaultClient(),
-               .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl"))
+               .setupPkl(execPath: env("PKL_EXEC") ?? IntegrationTests.Pkl.localExecPath))
         struct Pkl {
             @Test
             func read_static_database_secret_from_module_source() async throws {
