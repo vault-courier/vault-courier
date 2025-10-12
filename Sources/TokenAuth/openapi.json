@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Vault Courier Token Authentication Method",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Token Authentication endpoints. VaultCourier is a Swift client for Hashicorp Vault and OpenBao",
     "license": {
       "name": "Apache License 2.0"
@@ -607,7 +607,8 @@
               },
               "issue_time": {
                 "type": "string",
-                "description": "Value for the token"
+                "format": "date-time",
+                "description": "issue time date in string format"
               },
               "meta": {
                 "type": "object",
