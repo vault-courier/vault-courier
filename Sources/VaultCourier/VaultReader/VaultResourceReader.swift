@@ -27,8 +27,6 @@ import struct Foundation.Data
 import Logging
 import Utils
 
-extension ModuleSource: @unchecked Sendable {}
-
 /// A Pkl resource reader for Vault
 ///
 /// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeResourceReader(scheme:keyValueReaderParsers:databaseReaderParsers:customResourceReaderParsers:)``
