@@ -11,10 +11,10 @@
 ### Features
 
 - Arbitrary storage of Key/Value secrets (KV-v2)
-- Generation of static and dynamic credentials; database engine with PostgreSQL support.
+- Manage third-party secrets: generate and revoke on-demand credentials for database systems, like PostgreSQL and Valkey.
 - AppRole Authentication
 - Token Authentication
-- Pkl Resource Reader (Enabled with PackageTrait `Pkl`).
+- Pkl Resource Reader (Enabled with PackageTrait `PklSupport`).
 
 ## Documentation
 
@@ -22,7 +22,7 @@ You can find reference documentation and user guides for VaultCourier [here](htt
 
 ## Security
 
-This library is currently under-development. Please try it out and give us feedback! Please do not use it in production.
+This library is currently under-development, so use `.upToNextMinor` in your Package.swift when depending on `vault-courier`. It's likely we'll have breaking changes between minors pre-1.0. Please try it out and give us feedback! Please do not use it in production.
 If you believe you have identified a vulnerability in VaultCourier or any of its related repositories please do not post this in a public forum, do not create a GitHub Issue. Instead please responsibly disclose by contacting us at contact@beamsplitter.co.
 
 ## License
