@@ -157,7 +157,8 @@ extension VaultClient {
             scheme: scheme,
             keyValueReaderParsers: keyValueReaderParsers,
             databaseReaderParsers: databaseReaderParsers,
-            customParsers: customResourceReaderParsers
+            customParsers: customResourceReaderParsers,
+            backgroundActivityLogger: logger
         )
     }
 }

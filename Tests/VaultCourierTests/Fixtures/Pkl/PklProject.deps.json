@@ -3,9 +3,9 @@
   "resolvedDependencies": {
     "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0": {
       "type": "remote",
-      "uri": "projectpackage://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0",
+      "uri": "projectpackage://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0",
       "checksums": {
-        "sha256": "ed054ca9ab835a2bfacd605eb353f29cfae7fbd15c616fced9a105c4efacc2a2"
+        "sha256": "71b8b55ec474e19d769f4ccf54c88b80274c1151373249554d8a1dd08ea1478f"
       }
     },
     "package://pkg.pkl-lang.org/pkl-pantry/pkl.experimental.net@1": {

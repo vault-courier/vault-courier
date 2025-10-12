@@ -185,7 +185,7 @@ extension IntegrationTests.Pkl {
             #expect(output == expected)
         }
 
-#if PostgresPluginSupport
+        #if PostgresPluginSupport
         @Test
         func vault_reader_regex_url_for_custom_database_engine_path_and_static_role() async throws {
             struct DatabaseSecret: Codable, Sendable {

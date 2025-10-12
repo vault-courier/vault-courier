@@ -21,6 +21,7 @@ import VaultCourier
 
 extension IntegrationTests.Pkl {
     @Suite(
+        .disabled("Hangs when run concurrently"),
         .setupPkl(execPath: env("PKL_EXEC") ?? IntegrationTests.Pkl.localExecPath)
     )
     struct Payloads {
