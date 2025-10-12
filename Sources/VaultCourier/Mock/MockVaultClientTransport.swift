@@ -233,7 +233,8 @@ extension MockVaultClientTransport {
                                                     timeToLive: .seconds(86400))
                                              )
                     )
-                case "/\(keyValueMount)/data/\(secretKeyPath)":
+                case "/\(keyValueMount)/data/\(secretKeyPath)",
+                    "/\(keyValueMount)/data/\(secretKeyPath)?version=2":
                     guard req.headerFields[VaultHeaderName.vaultToken] == clientToken else {
                         return (.init(status: .unauthorized), nil)
                     }

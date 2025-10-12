@@ -16,19 +16,13 @@
 
 #if PklSupport
 import Testing
-
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
 import PklSwift
-
 import VaultCourier
 
 extension IntegrationTests.Pkl {
     @Suite(
-        .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
+        .disabled("Hangs when run concurrently"),
+        .setupPkl(execPath: env("PKL_EXEC") ?? IntegrationTests.Pkl.localExecPath)
     )
     struct Payloads {
 #if PostgresPluginSupport

@@ -1,4 +1,4 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.4#/Payloads/MountConfiguration.pkl"
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0#/Payloads/BackendSystem/Mounts/MountConfiguration.pkl"
 
 `type` = "kv"
 

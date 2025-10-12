@@ -36,7 +36,7 @@ extension IntegrationTests.Pkl {
             "https://github.com/swiftlang/swift-package-manager/issues/8394",
             "swift test is hanging on GitHub Actions, started in Swift 6.0+"
         ),
-        .setupPkl(execPath: env("PKL_EXEC") ?? "/opt/homebrew/bin/pkl")
+        .setupPkl(execPath: env("PKL_EXEC") ?? Self.localExecPath)
     )
     struct ModuleSourceReader {
 
@@ -139,7 +139,53 @@ extension IntegrationTests.Pkl {
             #expect(output == expected)
         }
 
-#if PostgresPluginSupport
+        @Test
+        func vault_key_value_reader() async throws {
+            let secret = "api_key"
+            let value = "abcde12345"
+            let secretPath = "key"
+            let kvMountPath = "path/to/secrets"
+            let clientToken = "test_token"
+            let mockClient = MockVaultClientTransport.dev(
+                clientToken: clientToken,
+                keyValueMount: kvMountPath,
+                secretKeyPath: secretPath,
+                expectedSecrets: [secret: value]
+            )
+
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                          clientTransport: mockClient)
+            try await vaultClient.login(method: .token(clientToken))
+
+            let schema = "vaultKeyValue"
+
+            let reader: ResourceReader = .vaultKeyValue(
+                client: vaultClient,
+                scheme: schema,
+                mount: kvMountPath,
+                key: secretPath,
+                version: 2,
+                backgroundActivityLogger: .init(label: "test")
+            )
+            // MUT
+            let output = try await withEvaluator(options:
+                    .preconfigured.withResourceReader(
+                        reader
+                    )
+            ) { evaluator in
+                try await evaluator.evaluateOutputText(
+                    source: .text("""
+                    appKeys: String = read("\(schema):/\(kvMountPath)/data/\(secretPath)?version=2").text
+                    """)
+                )
+            }
+
+            // Note: Pkl adds `\#n"` at the end of the file
+            let expected = #"appKeys = "{\"\#(secret)\":\"\#(value)\"}"\#n"#
+            #expect(output == expected)
+        }
+
+        #if PostgresPluginSupport
         @Test
         func vault_reader_regex_url_for_custom_database_engine_path_and_static_role() async throws {
             struct DatabaseSecret: Codable, Sendable {
