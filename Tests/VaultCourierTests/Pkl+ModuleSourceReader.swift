@@ -36,6 +36,7 @@ extension IntegrationTests.Pkl {
             "https://github.com/swiftlang/swift-package-manager/issues/8394",
             "swift test is hanging on GitHub Actions, started in Swift 6.0+"
         ),
+        .serialized,
         .setupPkl(execPath: env("PKL_EXEC") ?? Self.localExecPath)
     )
     struct ModuleSourceReader {
