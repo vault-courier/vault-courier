@@ -36,7 +36,7 @@ extension Tag {
 
 @Suite(
     .tags(.integration),
-//    .enabled(if: enableIntegrationTests()),
+    .enabled(if: enableIntegrationTests()),
     .setupVaultClient()
 )
 enum IntegrationTests {}
