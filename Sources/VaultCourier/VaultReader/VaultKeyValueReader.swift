@@ -74,7 +74,7 @@ extension VaultKeyValueReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
         do {
             let buffer = try await client.readKeyValueSecretData(
-                enginePath: mount.removeSlash(),
+                mountPath: mount.removeSlash(),
                 key: key,
                 version: version
             )
@@ -98,13 +98,13 @@ extension VaultClient {
     /// 
     /// 
     /// - Parameters:
-    ///   - scheme: The URL scheme this reader handles. Defaults to `vault_kv`.
+    ///   - scheme: The URL scheme this reader handles. Defaults to `vault.kv`.
     ///   - mount: keyValue mount path
     ///   - key: key name of the secret
     ///   - version: version of the secret. `nil` reads the latest.
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeKeyValueSecretReader(
-        scheme: String = "vault_kv",
+        scheme: String = "vault.kv",
         mount: String,
         key: String,
         version: Int? = nil

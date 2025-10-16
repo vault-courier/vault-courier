@@ -157,7 +157,7 @@ extension IntegrationTests.Pkl {
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token(clientToken))
 
-            let schema = "vaultKeyValue"
+            let schema = "vault.kv"
 
             let reader: ResourceReader = .vaultKeyValue(
                 client: vaultClient,

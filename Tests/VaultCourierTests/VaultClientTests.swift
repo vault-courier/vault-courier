@@ -277,7 +277,7 @@ extension VaultClientTests {
                     credentials: .init(roleID: roleID,secretID: response.secretID)
                 )
             )
-            let secrets: Secrets = try await vaultClient.readKeyValueSecret(enginePath: keyValueMount,
+            let secrets: Secrets = try await vaultClient.readKeyValueSecret(mountPath: keyValueMount,
                                                                             key: secretKeyPath)
             #expect(secrets == expectedSecrets)
 

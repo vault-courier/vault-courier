@@ -87,7 +87,7 @@ extension VaultResourceReader: ResourceReader {
             for parser in keyValueReaderParsers {
                 if let (mount,key, version) = try parser.parse(url) {
                     let buffer = try await client.readKeyValueSecretData(
-                        enginePath: mount.removeSlash(),
+                        mountPath: mount.removeSlash(),
                         key: key,
                         version: version
                     )
