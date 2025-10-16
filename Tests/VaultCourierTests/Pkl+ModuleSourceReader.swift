@@ -64,11 +64,11 @@ extension IntegrationTests.Pkl {
                                           clientTransport: MockVaultClientTransport.successful)
             try await vaultClient.login(method: .token("test_token"))
 
-            let schema = "my_schema"
+            let scheme = "my.schema"
             let kvMountPath = ""
 
             let sut = try vaultClient.makeResourceReader(
-                scheme: schema,
+                scheme: scheme,
                 keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
             )
 
@@ -76,11 +76,30 @@ extension IntegrationTests.Pkl {
                 try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
                     try await evaluator.evaluateModule(
                         source: .text("""
-                        appKeys = read("\(schema):/\(kvMountPath)/key?version=2").text
+                        appKeys = read("\(scheme):/\(kvMountPath)/key?version=2").text
                         """),
                         as: String.self
                     )
                 }
+            }
+        }
+
+        @Test
+        func mount_path_in_vault_key_value_reader_cannot_be_empty() async throws {
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                          clientTransport: MockVaultClientTransport.successful)
+            try await vaultClient.login(method: .token("test_token"))
+
+            let scheme = "my.schema"
+            let kvMountPath = ""
+            let key = "secret_key"
+
+            #expect(throws: VaultClientError.self) {
+                try vaultClient.makeKeyValueSecretReader(
+                    scheme: scheme,
+                    mount: kvMountPath,
+                    key: key
+                )
             }
         }
 
@@ -187,6 +206,60 @@ extension IntegrationTests.Pkl {
         }
 
         #if PostgresPluginSupport
+        @Test
+        func vault_database_credential_reader() async throws {
+            struct DatabaseSecret: Codable, Sendable {
+                var databaseCredentials: String
+            }
+
+            let username = "test_static_role_username"
+            let password = "XS-bh8o95yFzdd3N9Gv-"
+
+            let mockClient = MockVaultClientTransport { _, _, _, _ in
+                (.init(status: .ok), .init("""
+                    {
+                      "request_id": "04c78e0d-141e-3a13-5d38-17821fbdb3c1",
+                      "lease_id": "",
+                      "renewable": false,
+                      "lease_duration": 0,
+                      "data": {
+                        "last_vault_rotation": "2025-09-14T15:44:15.5738422Z",
+                        "password": "\(password)",
+                        "rotation_period": 3600,
+                        "ttl": 3555,
+                        "username": "\(username)"
+                      },
+                      "wrap_info": null,
+                      "warnings": null,
+                      "auth": null
+                    }
+                    """))
+            }
+
+            let databaseMount = "path/to/database/secrets"
+            let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                          clientTransport: mockClient)
+            try await vaultClient.login(method: .token("test_token"))
+
+            let schemPrefix = "test"
+            let scheme = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: databaseMount, prefix: schemPrefix)
+            let sut = try vaultClient.makeDatabaseCredentialReader(mountPath: databaseMount, prefix: schemPrefix)
+
+            // MUT
+            let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
+                try await evaluator.evaluateModule(
+                    source: .text("""
+                    databaseCredentials: String = read("\(scheme):/static-creds/qa_role").text
+                    """),
+                    as: DatabaseSecret.self
+                )
+            }
+
+            let secrets = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.databaseCredentials.utf8))
+            #expect(secrets.username == username)
+            #expect(secrets.password == password)
+        }
+
         @Test
         func vault_reader_regex_url_for_custom_database_engine_path_and_static_role() async throws {
             struct DatabaseSecret: Codable, Sendable {

@@ -25,6 +25,7 @@ import struct Foundation.URL
 import AppRoleAuth
 import TokenAuth
 import SystemWrapping
+import RegexBuilder
 
 /// REST Client for Hashicorp Vault and OpenBao.
 ///
@@ -264,3 +265,68 @@ extension VaultClient {
 #endif
 }
 
+extension String {
+    /// Check if the string is a valid Vault mount path
+    ///
+    /// Mount paths cannot contain:
+    /// - Spaces
+    /// - Control characters (e.g. newline `\n`, tab `\t`)
+    /// - URL-reserved characters that aren’t properly encoded, such as: `?, #, %, &, =, +, <, >, ;, "`
+    /// - Backslashes (`\`). Only forward slashes (`/`) are valid separators
+    /// - Double slashes (`//`). Vault normalizes paths, and these may cause conflicts
+    /// - Leading slashes (e.g. `/secret/` instead of `secret/`)
+    package func checkValidVaultMountPath() throws {
+        let regex = Regex {
+          /^/
+          NegativeLookahead {
+            ChoiceOf {
+              "sys/"
+              "auth/"
+              "identity/"
+              "cubbyhole/"
+            }
+          }
+          NegativeLookahead {
+            "/"
+          }
+          NegativeLookahead {
+            Regex {
+              ZeroOrMore {
+                /./
+              }
+              "//"
+            }
+          }
+          OneOrMore {
+            CharacterClass(
+              .anyOf("_-"),
+              ("a"..."z"),
+              ("0"..."9")
+            )
+          }
+          ZeroOrMore {
+            Regex {
+              "/"
+              OneOrMore {
+                CharacterClass(
+                  .anyOf("_-"),
+                  ("a"..."z"),
+                  ("0"..."9")
+                )
+              }
+            }
+          }
+          Optionally {
+            "/"
+          }
+          /$/
+        }
+        .anchorsMatchLineEndings()
+        
+        guard !isEmpty,
+              self.contains(regex)
+        else {
+            throw VaultClientError.invalidVault(mountPath: self)
+        }
+    }
+}

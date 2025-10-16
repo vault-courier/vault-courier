@@ -28,6 +28,10 @@ public struct VaultReaderError: Error, Sendable {
         .init(message: "Reading module failed")
     }
 
+    static func invalidURI(scheme: String) -> VaultReaderError {
+        .init(message: "Invalid Vault URI scheme '\(scheme)'")
+    }
+
     static func invalidKeyValueURL(_ relativePath: String) -> VaultReaderError {
         .init(message: "Invalid key-value relative path: \(relativePath).")
     }
