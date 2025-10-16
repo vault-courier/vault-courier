@@ -36,12 +36,12 @@ struct PostgresPluginTrait: SuiteTrait, TestScoping {
         let mountConfig = EnableSecretMountConfig(mountType: "database", path: enginePath)
         let config = Self.postgresConnectionConfiguration(connectionName)
         try await vaultClient.enableSecretEngine(mountConfig: mountConfig)
-        try await vaultClient.createPostgresConnection(configuration: config, enginePath: enginePath)
-        try await vaultClient.rotateRoot(connection: connectionName, enginePath: enginePath)
+        try await vaultClient.createPostgresConnection(configuration: config, mountPath: enginePath)
+        try await vaultClient.rotateRoot(connection: connectionName, mountPath: enginePath)
 
         try await function()
 
-        try await vaultClient.deleteDatabaseConnection(connectionName, enginePath: enginePath)
+        try await vaultClient.deleteDatabaseConnection(connectionName, mountPath: enginePath)
     }
 }
 

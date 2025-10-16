@@ -50,10 +50,10 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                                             rotation: .period(.seconds(28 * 24 * 60 * 60))))
 
             // MUT
-            try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
+            try await vaultClient.create(staticRole: staticRole, mountPath: enginePath)
 
             // MUT
-            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, enginePath: enginePath)
+            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, mountPath: enginePath)
             guard case .period(let period) =  response.rotation else {
                 Issue.record("Response does not correspond to given request")
                 return
@@ -62,7 +62,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
             #expect(period == .seconds(2419200))
 
             // MUT
-            try await vaultClient.deleteStaticRole(name: staticRoleName, enginePath: enginePath)
+            try await vaultClient.deleteStaticRole(name: staticRoleName, mountPath: enginePath)
         }
 
         @Test
@@ -75,12 +75,12 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                                                 "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
                                                                               ]))
             // MUT
-            try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+            try await vaultClient.create(dynamicRole: dynamicRole, mountPath: enginePath)
 
-            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, enginePath: enginePath)
+            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, mountPath: enginePath)
 
             // MUT
-            try await vaultClient.deleteRole(name: dynamicRoleName, enginePath: enginePath)
+            try await vaultClient.deleteRole(name: dynamicRoleName, mountPath: enginePath)
         }
 
         #if PklSupport
@@ -96,7 +96,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                           databaseUsername: databaseRoleName,
                                                           databaseConnectionName: connectionName,
                                                           rotation: .period(.seconds(28 * 24 * 60 * 60)))
-                try await vaultClient.create(staticRole: .postgres(staticRole), enginePath: enginePath)
+                try await vaultClient.create(staticRole: .postgres(staticRole), mountPath: enginePath)
 
                 let sut = try vaultClient.makeResourceReader(
                     scheme: "vault",
@@ -115,7 +115,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
 
                 #expect(outputSecret.username == databaseRoleName)
 
-                try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, enginePath: enginePath)
+                try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, mountPath: enginePath)
             }
 
             @Test
@@ -127,7 +127,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                                                      creationStatements: [
                                                         "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
                                                      ])
-                try await vaultClient.create(dynamicRole: .postgres(dynamicRole), enginePath: enginePath)
+                try await vaultClient.create(dynamicRole: .postgres(dynamicRole), mountPath: enginePath)
 
                 let sut = try vaultClient.makeResourceReader(
                     scheme: "vault",
@@ -146,7 +146,7 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
                 #expect(outputSecret.username.isEmpty == false)
                 #expect(outputSecret.password.isEmpty == false)
 
-                try await vaultClient.deleteStaticRole(name: dynamicRoleName, enginePath: enginePath)
+                try await vaultClient.deleteStaticRole(name: dynamicRoleName, mountPath: enginePath)
             }
         }
         #endif
@@ -173,10 +173,10 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
                                                                           rotation: .period(.seconds(28 * 24 * 60 * 60))))
 
             // MUT
-            try await vaultClient.create(staticRole: staticRole, enginePath: enginePath)
+            try await vaultClient.create(staticRole: staticRole, mountPath: enginePath)
 
             // MUT
-            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, enginePath: enginePath)
+            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, mountPath: enginePath)
             guard case .period(let period) =  response.rotation else {
                 Issue.record("Response does not correspond to given request")
                 return
@@ -185,7 +185,7 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
             #expect(period == .seconds(2419200))
 
             // MUT
-            try await vaultClient.deleteStaticRole(name: staticRoleName, enginePath: enginePath)
+            try await vaultClient.deleteStaticRole(name: staticRoleName, mountPath: enginePath)
         }
 
         @Test
@@ -198,13 +198,13 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
                                                                                 "+@admin",
                                                                             ]))
             // MUT
-            try await vaultClient.create(dynamicRole: dynamicRole, enginePath: enginePath)
+            try await vaultClient.create(dynamicRole: dynamicRole, mountPath: enginePath)
 
             // MUT
-            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, enginePath: enginePath)
+            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, mountPath: enginePath)
 
             // MUT
-            try await vaultClient.deleteRole(name: dynamicRoleName, enginePath: enginePath)
+            try await vaultClient.deleteRole(name: dynamicRoleName, mountPath: enginePath)
         }
     }
 }

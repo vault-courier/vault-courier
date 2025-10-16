@@ -19,24 +19,24 @@ extension VaultClient {
     /// Creates a vault role for accessing database secrets
     /// - Parameters:
     ///   - staticRole: static role configuration
-    ///   - enginePath: mount path of secret engine
+    ///   - mountPath: mount path of secret engine
     public func create(
         staticRole: DatabaseStaticRoleConfig,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.create(staticRole: staticRole)
         }
     }
 
     /// Creates a postgres dynamic database role
     /// - Parameter dynamicRole: dynamic role configuration
-    /// - Parameter enginePath: mount path of database secret engine, e.g. `database`
+    /// - Parameter mountPath: mount path of database secret engine, e.g. `database`
     public func create(
         dynamicRole: DatabaseDynamicRoleConfig,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.create(dynamicRole: dynamicRole)
         }
     }
@@ -51,9 +51,9 @@ extension VaultClient {
     ///   - enginePath: mount path of secret engine
     public func deleteStaticRole(
         name: String,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.deleteStaticRole(name: name)
         }
     }
@@ -64,9 +64,9 @@ extension VaultClient {
     ///   - enginePath: mount path of secret engine
     public func deleteRole(
         name: String,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.deleteRole(name: name)
         }
     }
