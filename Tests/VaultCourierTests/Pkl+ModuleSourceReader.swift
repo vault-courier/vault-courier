@@ -241,9 +241,9 @@ extension IntegrationTests.Pkl {
                                           clientTransport: mockClient)
             try await vaultClient.login(method: .token("test_token"))
 
-            let schemPrefix = "test"
-            let scheme = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: databaseMount, prefix: schemPrefix)
-            let sut = try vaultClient.makeDatabaseCredentialReader(mountPath: databaseMount, prefix: schemPrefix)
+            let schemePrefix = "test"
+            let scheme = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: databaseMount, prefix: schemePrefix)
+            let sut = try vaultClient.makeDatabaseCredentialReader(mountPath: databaseMount, prefix: schemePrefix)
 
             // MUT
             let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in

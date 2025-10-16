@@ -74,12 +74,14 @@ public final class VaultDatabaseCredentialReader: Sendable {
     /// - Parameters:
     ///   - mountPath: mount path of database secret engine
     ///   - prefix: optional prefix to add in the scheme
-    /// - Returns: <#description#>
+    /// - Returns: encoded scheme
     public static func buildSchemeFor(
         mountPath: String,
         prefix: String? = nil
     ) throws -> String {
-        try mountPath.checkValidVaultMountPath()
+        guard mountPath.isValidVaultMountPath else {
+            throw VaultClientError.invalidVault(mountPath: mountPath)
+        }
 
         let mount = mountPath.replacingOccurrences(of: "_", with: "-")
                              .replacingOccurrences(of: "/", with: ".")
