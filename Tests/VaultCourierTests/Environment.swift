@@ -15,14 +15,20 @@
 //===----------------------------------------------------------------------===//
 
 
-#if canImport(Glibc)
+#if canImport(Darwin)
+import Darwin
+#elseif os(Windows)
+import CRT
+#elseif canImport(Glibc)
 import Glibc
+#elseif canImport(Android)
+import Android
 #elseif canImport(Musl)
 import Musl
-#elseif canImport(Darwin)
-import Darwin.C
+#elseif canImport(WASILibc)
+import WASILibc
 #else
-#error("Unsupported platform")
+#error("Unsupported runtime")
 #endif
 
 #if canImport(FoundationEssentials)
