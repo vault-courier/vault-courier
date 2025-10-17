@@ -19,13 +19,13 @@ extension VaultClient {
     /// Reads database credentials for a static role
     /// - Parameters:
     ///   - staticRole: static role name
-    ///   - enginePath: path to database mount
+    ///   - mountPath: path to database mount
     /// - Returns: Static database credentials
     public func databaseCredentials(
         staticRole: String,
-        enginePath: String
+        mountPath: String
     ) async throws -> StaticRoleCredentialsResponse {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.databaseCredentials(staticRole: staticRole)
         }
     }
@@ -34,13 +34,13 @@ extension VaultClient {
     /// Read current credentials for a dynamic role
     /// - Parameters:
     ///   - dynamicRole: dynamic role name
-    ///   - enginePath: path to database mount
+    ///   - mountPath: path to database mount
     /// - Returns: Dynamic role credentials
     public func databaseCredentials(
         dynamicRole: String,
-        enginePath: String
+        mountPath: String
     ) async throws -> RoleCredentialsResponse {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.databaseCredentials(dynamicRole: dynamicRole)
         }
     }

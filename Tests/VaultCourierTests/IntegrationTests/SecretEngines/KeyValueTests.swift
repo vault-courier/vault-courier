@@ -24,7 +24,7 @@ import struct Foundation.Data
 #endif
 
 extension IntegrationTests.SecretEngine.KeyValue {
-
+    
     static var enginePath: String { "secret" }
 
     @Test
@@ -39,7 +39,7 @@ extension IntegrationTests.SecretEngine.KeyValue {
 
         // MUT
         let response = try await vaultClient.writeKeyValue(
-            enginePath: Self.enginePath,
+            mountPath: Self.enginePath,
             secret: secret,
             key: key
         )
@@ -48,7 +48,7 @@ extension IntegrationTests.SecretEngine.KeyValue {
 
         let readResponse: Secret = try #require(
             try await vaultClient.readKeyValueSecret(
-                enginePath: Self.enginePath,
+                mountPath: Self.enginePath,
                 key: key,
                 version: version
             )
@@ -56,9 +56,9 @@ extension IntegrationTests.SecretEngine.KeyValue {
 
         #expect(readResponse.apiKey == secret.apiKey)
 
-        try await vaultClient.delete(enginePath: Self.enginePath, key: key)
+        try await vaultClient.delete(mountPath: Self.enginePath, key: key)
         await #expect(throws: VaultServerError.self) {
-            let _: Secret? = try await vaultClient.readKeyValueSecret(enginePath: Self.enginePath, key: key)
+            let _: Secret? = try await vaultClient.readKeyValueSecret(mountPath: Self.enginePath, key: key)
         }
     }
 
@@ -71,10 +71,10 @@ extension IntegrationTests.SecretEngine.KeyValue {
         let secret = Secret(apiKey: "abcde")
 
         let vaultClient = VaultClient.current
-        try await vaultClient.writeKeyValue(enginePath: Self.enginePath, secret: secret, key: key)
+        try await vaultClient.writeKeyValue(mountPath: Self.enginePath, secret: secret, key: key)
 
         // MUT
-        try await vaultClient.patchKeyValue(enginePath: Self.enginePath, secret: Secret(apiKey: "abcde12345"), key: key)
+        try await vaultClient.patchKeyValue(mountPath: Self.enginePath, secret: Secret(apiKey: "abcde12345"), key: key)
     }
 
     @Test
@@ -94,17 +94,17 @@ extension IntegrationTests.SecretEngine.KeyValue {
         let secret = Secret(apiKey: "abcde", database: .init(credentials: .init(username: "test_username", password: "test_password")))
 
         let vaultClient = VaultClient.current
-        try await vaultClient.writeKeyValue(enginePath: Self.enginePath, secret: secret, key: key)
+        try await vaultClient.writeKeyValue(mountPath: Self.enginePath, secret: secret, key: key)
 
         // MUT
-        _ = try #require(try await vaultClient.readSecretSubkeys(enginePath: Self.enginePath, key: key))
+        _ = try #require(try await vaultClient.readSecretSubkeys(mountPath: Self.enginePath, key: key))
     }
 
     @Test
     func metadata() async throws {
         let sut = VaultClient.current
         await #expect(throws: VaultServerError.self) {
-            try await sut.readMetadata(enginePath: Self.enginePath, key: "non-existent")
+            try await sut.readMetadata(mountPath: Self.enginePath, key: "non-existent")
         }
 
         struct Secret: Codable {
@@ -112,14 +112,14 @@ extension IntegrationTests.SecretEngine.KeyValue {
         }
         let key = "us-west"
         let secret = Secret(apiKey: "abcde")
-        try await sut.writeKeyValue(enginePath: Self.enginePath, secret: secret, key: key)
+        try await sut.writeKeyValue(mountPath: Self.enginePath, secret: secret, key: key)
 
 
-        _ = try await sut.readMetadata(enginePath: Self.enginePath, key: key)
+        _ = try await sut.readMetadata(mountPath: Self.enginePath, key: key)
         let customMetadata = ["deployment": "stage"]
-        try await sut.writeMetadata(enginePath: Self.enginePath, key: key, customMetadata: customMetadata)
+        try await sut.writeMetadata(mountPath: Self.enginePath, key: key, customMetadata: customMetadata)
 
-        let metadata = try await sut.readMetadata(enginePath: Self.enginePath, key: key)
+        let metadata = try await sut.readMetadata(mountPath: Self.enginePath, key: key)
         #expect(metadata.custom == customMetadata)
     }
 
@@ -127,7 +127,7 @@ extension IntegrationTests.SecretEngine.KeyValue {
     func deleting_all_metadata_deletes_secret_data_and_history() async throws {
         let sut = VaultClient.current
         await #expect(throws: VaultServerError.self) {
-            try await sut.readMetadata(enginePath: Self.enginePath, key: "non-existent")
+            try await sut.readMetadata(mountPath: Self.enginePath, key: "non-existent")
         }
 
         struct Secret: Codable {
@@ -135,18 +135,18 @@ extension IntegrationTests.SecretEngine.KeyValue {
         }
         let key = "eu-central"
         let secret = Secret(apiKey: "abcde")
-        try await sut.writeKeyValue(enginePath: Self.enginePath, secret: secret, key: key)
+        try await sut.writeKeyValue(mountPath: Self.enginePath, secret: secret, key: key)
 
 
-        _ = try await sut.readMetadata(enginePath: Self.enginePath, key: key)
+        _ = try await sut.readMetadata(mountPath: Self.enginePath, key: key)
         let customMetadata = ["deployment": "stage"]
-        try await sut.writeMetadata(enginePath: Self.enginePath, key: key, customMetadata: customMetadata)
+        try await sut.writeMetadata(mountPath: Self.enginePath, key: key, customMetadata: customMetadata)
 
         // MUT
-        try await sut.deleteAllMetadata(enginePath: Self.enginePath, key: key)
+        try await sut.deleteAllMetadata(mountPath: Self.enginePath, key: key)
 
         await #expect(throws: VaultServerError.self) {
-            let _ : KeyValueResponse<Secret> = try await sut.readKeyValueSecret(enginePath: Self.enginePath, key: key)
+            let _ : KeyValueResponse<Secret> = try await sut.readKeyValueSecret(mountPath: Self.enginePath, key: key)
         }
     }
 
@@ -156,22 +156,22 @@ extension IntegrationTests.SecretEngine.KeyValue {
 
         await #expect(throws: VaultClientError.self) {
             // MUT
-            _ = try await vaultClient.writeKeyValue(enginePath: Self.enginePath, secret: "secret", key: "key")
+            _ = try await vaultClient.writeKeyValue(mountPath: Self.enginePath, secret: "secret", key: "key")
         }
 
         await #expect(throws: VaultClientError.self) {
             // MUT
-            _ = try await vaultClient.writeKeyValue(enginePath: Self.enginePath, secret: 42, key: "key")
+            _ = try await vaultClient.writeKeyValue(mountPath: Self.enginePath, secret: 42, key: "key")
         }
 
         await #expect(throws: VaultClientError.self) {
             // MUT
-            _ = try await vaultClient.writeKeyValue(enginePath: Self.enginePath, secret: 3.1416, key: "key")
+            _ = try await vaultClient.writeKeyValue(mountPath: Self.enginePath, secret: 3.1416, key: "key")
         }
 
         await #expect(throws: VaultClientError.self) {
             // MUT
-            _ = try await vaultClient.writeKeyValue(enginePath: Self.enginePath, secret: true, key: "key")
+            _ = try await vaultClient.writeKeyValue(mountPath: Self.enginePath, secret: true, key: "key")
         }
     }
 }

@@ -37,12 +37,12 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - configuration: postgres connection configuration
-    ///   - enginePath: mount path of secret engine
+    ///   - mountPath: mount path of secret engine
     public func createPostgresConnection(
         configuration: PostgresConnectionConfig,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.createPostgresConnection(configuration: configuration)
         }
     }
@@ -55,13 +55,13 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - name: connection name
-    ///   - enginePath: mount path of database secrets
+    ///   - mountPath: mount path of database secrets
     /// - Returns: Connection properties
     public func postgresConnection(
         name: String,
-        enginePath: String
+        mountPath: String
     ) async throws -> PostgresConnectionResponse {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.postgresConnection(name: name)
         }
     }
@@ -76,12 +76,12 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - configuration: valkey connection configuration
-    ///   - enginePath: mount path of secret engine
+    ///   - mountPath: mount path of secret engine
     public func createValkeyConnection(
         configuration: ValkeyConnectionConfig,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.databaseConnection(configuration: configuration)
         }
     }
@@ -94,30 +94,33 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - name: connection name
-    ///   - enginePath: mount path of database secrets
+    ///   - mountPath: mount path of database secrets
     /// - Returns: Connection properties
     public func valkeyConnection(
         name: String,
-        enginePath: String
+        mountPath: String
     ) async throws -> ValkeyConnectionResponse {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.valkeyConnection(name: name)
         }
     }
     #endif
 
     /// Deletes a database connection between Vault and a Postgres Database
-    ///
+    /// 
     /// ## Package traits
-    ///
+    /// 
     /// This method is guarded by the `DatabaseEngineSupport` package trait.
-    ///
+    /// 
     /// - Note: The roles in the database are not deleted
+    /// - Parameters:
+    ///   - connection: connection name
+    ///   - mountPath: mount path of database secrets
     public func deleteDatabaseConnection(
         _ connectionName: String,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.deleteDatabaseConnection(connectionName)
         }
     }
@@ -131,12 +134,12 @@ extension VaultClient {
     /// - Note: After this action only vault knows this user's password
     /// - Parameters:
     ///   - connection: connection name
-    ///   - enginePath: mount path of database secrets
+    ///   - mountPath: mount path of database secrets
     public func rotateRoot(
         connection: String,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.rotateRoot(connection: connection)
         }
     }
@@ -150,12 +153,12 @@ extension VaultClient {
     /// - Note: This method resets the connection, but vault's database password is still the same
     /// - Parameters:
     ///   - connectionName: connection name
-    ///   - enginePath: mount path of database secrets
+    ///   - mountPath: mount path of database secrets
     public func resetDatabaseConnection(
         _ connectionName: String,
-        enginePath: String
+        mountPath: String
     ) async throws {
-        try await withDatabaseClient(mountPath: enginePath) { client in
+        try await withDatabaseClient(mountPath: mountPath) { client in
             try await client.resetDatabaseConnection(connectionName)
         }
     }

@@ -33,7 +33,7 @@ public final class AppRoleAuthClient: Sendable {
 
     init(apiURL: URL,
          clientTransport: any ClientTransport,
-         mountPath: String? = nil,
+         mountPath: String,
          middlewares: [any ClientMiddleware] = [],
          token: String? = nil,
          logger: Logger? = nil) {
@@ -43,7 +43,7 @@ public final class AppRoleAuthClient: Sendable {
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
-        self.mountPath = mountPath?.removeSlash() ?? "approle"
+        self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
         self.logger = logger ?? Self.loggingDisabled
     }

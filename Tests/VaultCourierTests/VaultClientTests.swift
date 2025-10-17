@@ -277,18 +277,18 @@ extension VaultClientTests {
                     credentials: .init(roleID: roleID,secretID: response.secretID)
                 )
             )
-            let secrets: Secrets = try await vaultClient.readKeyValueSecret(enginePath: keyValueMount,
+            let secrets: Secrets = try await vaultClient.readKeyValueSecret(mountPath: keyValueMount,
                                                                             key: secretKeyPath)
             #expect(secrets == expectedSecrets)
 
             #if DatabaseEngineSupport
             let credentials = try await vaultClient.databaseCredentials(staticRole: staticRole,
-                                                                        enginePath: databaseMount)
+                                                                        mountPath: databaseMount)
             #expect(credentials.username == staticRoleDatabaseUsername)
             #expect(credentials.password == staticRoleDatabasePassword)
 
             let dynamicCredentials = try await vaultClient.databaseCredentials(dynamicRole: dynamicRole,
-                                                                               enginePath: databaseMount)
+                                                                               mountPath: databaseMount)
             #expect(dynamicCredentials.username == dynamicRoleDatabaseUsername)
             #expect(dynamicCredentials.password == dynamicRoleDatabasePassword)
             #endif

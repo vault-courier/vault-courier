@@ -87,7 +87,7 @@ extension VaultResourceReader: ResourceReader {
             for parser in keyValueReaderParsers {
                 if let (mount,key, version) = try parser.parse(url) {
                     let buffer = try await client.readKeyValueSecretData(
-                        enginePath: mount.removeSlash(),
+                        mountPath: mount.removeSlash(),
                         key: key,
                         version: version
                     )
@@ -119,11 +119,11 @@ extension VaultResourceReader: ResourceReader {
         let credentials: DatabaseCredentials
         switch role {
             case .static(let name):
-                let response = try await client.databaseCredentials(staticRole: name, enginePath: mount)
+                let response = try await client.databaseCredentials(staticRole: name, mountPath: mount)
                 credentials = DatabaseCredentials(username: response.username, password: response.password)
 
             case .dynamic(let name):
-                let response = try await client.databaseCredentials(dynamicRole: name, enginePath: mount)
+                let response = try await client.databaseCredentials(dynamicRole: name, mountPath: mount)
                 credentials = DatabaseCredentials(username: response.username, password: response.password)
         }
         let data = try JSONEncoder().encode(credentials)

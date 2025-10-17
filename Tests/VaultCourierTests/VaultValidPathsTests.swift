@@ -14,29 +14,30 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+import Testing
+import VaultCourier
 
-#if canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#elseif canImport(Darwin)
-import Darwin.C
-#else
-#error("Unsupported platform")
-#endif
+struct VaultPaths {
+    @Test(arguments: [
+        "path.to.database",
+        "/path/to/database",
+        "path with spaces"
+    ])
+    func invalid_vault_mount_paths(_ mount: String) async throws {
+        #expect(throws: VaultClientError.self) {
+            guard mount.isValidVaultMountPath
+            else { throw VaultClientError.invalidVault(mountPath: mount) }
+        }
+    }
 
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
-
-func env(_ name: String) -> String? {
-    getenv(name).flatMap { String(cString: $0) }
+    @Test(arguments: [
+        "path/to/database/",
+        "path_to_database"
+    ])
+    func valid_vault_mount_paths(_ mount: String) async throws {
+        #expect(throws: Never.self) {
+            guard mount.isValidVaultMountPath
+            else { throw VaultClientError.invalidVault(mountPath: mount) }
+        }
+    }
 }
-
-#if PklSupport
-func setupPklEnv(execPath: String) {
-    setenv("PKL_EXEC", execPath, 1)
-}
-#endif

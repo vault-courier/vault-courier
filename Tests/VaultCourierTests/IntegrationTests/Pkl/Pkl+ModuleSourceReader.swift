@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if PklSupport
+#if PklSupport && MockSupport
 import Testing
 
 import OpenAPIRuntime
@@ -36,7 +36,8 @@ extension IntegrationTests.Pkl {
             "https://github.com/swiftlang/swift-package-manager/issues/8394",
             "swift test is hanging on GitHub Actions, started in Swift 6.0+"
         ),
-        .setupPkl(execPath: env("PKL_EXEC") ?? Self.localExecPath)
+        .serialized,
+        .setupPkl(execPath: env("PKL_EXEC") ?? IntegrationTests.localPklExecPath)
     )
     struct ModuleSourceReader {
 
@@ -63,11 +64,11 @@ extension IntegrationTests.Pkl {
                                           clientTransport: MockVaultClientTransport.successful)
             try await vaultClient.login(method: .token("test_token"))
 
-            let schema = "my_schema"
+            let scheme = "my.schema"
             let kvMountPath = ""
 
             let sut = try vaultClient.makeResourceReader(
-                scheme: schema,
+                scheme: scheme,
                 keyValueReaderParsers: [KeyValueReaderParser(mount: kvMountPath)]
             )
 
@@ -75,7 +76,7 @@ extension IntegrationTests.Pkl {
                 try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
                     try await evaluator.evaluateModule(
                         source: .text("""
-                        appKeys = read("\(schema):/\(kvMountPath)/key?version=2").text
+                        appKeys = read("\(scheme):/\(kvMountPath)/key?version=2").text
                         """),
                         as: String.self
                     )
@@ -130,52 +131,6 @@ extension IntegrationTests.Pkl {
                 try await evaluator.evaluateOutputText(
                     source: .text("""
                     appKeys: String = read("\(schema):/\(kvMountPath)/key?version=2").text
-                    """)
-                )
-            }
-
-            // Note: Pkl adds `\#n"` at the end of the file
-            let expected = #"appKeys = "{\"\#(secret)\":\"\#(value)\"}"\#n"#
-            #expect(output == expected)
-        }
-
-        @Test
-        func vault_key_value_reader() async throws {
-            let secret = "api_key"
-            let value = "abcde12345"
-            let secretPath = "key"
-            let kvMountPath = "path/to/secrets"
-            let clientToken = "test_token"
-            let mockClient = MockVaultClientTransport.dev(
-                clientToken: clientToken,
-                keyValueMount: kvMountPath,
-                secretKeyPath: secretPath,
-                expectedSecrets: [secret: value]
-            )
-
-            let vaultClient = VaultClient(configuration: .defaultHttp(),
-                                          clientTransport: mockClient)
-            try await vaultClient.login(method: .token(clientToken))
-
-            let schema = "vaultKeyValue"
-
-            let reader: ResourceReader = .vaultKeyValue(
-                client: vaultClient,
-                scheme: schema,
-                mount: kvMountPath,
-                key: secretPath,
-                version: 2,
-                backgroundActivityLogger: .init(label: "test")
-            )
-            // MUT
-            let output = try await withEvaluator(options:
-                    .preconfigured.withResourceReader(
-                        reader
-                    )
-            ) { evaluator in
-                try await evaluator.evaluateOutputText(
-                    source: .text("""
-                    appKeys: String = read("\(schema):/\(kvMountPath)/data/\(secretPath)?version=2").text
                     """)
                 )
             }

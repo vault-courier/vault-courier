@@ -45,7 +45,8 @@ public struct EnableSecretMountConfig: Sendable {
                 description: String? = nil,
                 config: [String : String]? = nil,
                 options: [String : String]? = nil,
-                isLocal: Bool? = nil, sealWrap: Bool? = nil,
+                isLocal: Bool? = nil,
+                sealWrap: Bool? = nil,
                 externalEntropyAccess: Bool? = nil) {
         self.mountType = mountType
         self.path = path
