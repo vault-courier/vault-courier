@@ -29,7 +29,7 @@ import Utils
 
 /// A Pkl resource reader for database credentials managed by Vault
 ///
-/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeDatabaseCredentialReader(scheme:mount:role:)``
+/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeDatabaseCredentialReader(mountPath:prefix:))``
 ///
 /// ## Package traits
 ///
@@ -49,16 +49,16 @@ public final class VaultDatabaseCredentialReader: Sendable {
 
     let logger: Logging.Logger
 
-    let mount: String
+    public let mountPath: String
 
     init(client: VaultClient,
          scheme: String,
-         mount: String,
+         mountPath: String,
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
         self.logger = backgroundActivityLogger ?? Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
-        self.mount = mount
+        self.mountPath = mountPath
     }
 
     /// Builds scheme for the ``VaultDatabaseCredentialReader``
@@ -67,13 +67,13 @@ public final class VaultDatabaseCredentialReader: Sendable {
     /// `/` with `.`, and appends it to `vault.`
     /// 
     /// Example:
-    /// Suppose the database mount is `path/to/my_database` is transformed into `path.to.my.database`.
+    /// The database mount is `path/to/my_database` is transformed into `path.to.my-database`.
     /// Then a credential can be read with the scheme
-    /// `vault.path+to+my.database`
+    /// `vault.path.to.my-database`
     ///
     /// - Parameters:
     ///   - mountPath: mount path of database secret engine
-    ///   - prefix: optional prefix to add in the scheme
+    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the (escaped) characters plus ("+"), period ("."), and hyphen ("-") are allowed.
     /// - Returns: encoded scheme
     public static func buildSchemeFor(
         mountPath: String,
@@ -99,11 +99,11 @@ extension VaultDatabaseCredentialReader: ResourceReader {
 
             if relativePath.hasPrefix("static-creds/") {
                 let roleName = relativePath.suffix(from: "static-creds/".endIndex)
-                let response = try await client.databaseCredentials(staticRole: String(roleName), mountPath: mount)
+                let response = try await client.databaseCredentials(staticRole: String(roleName), mountPath: mountPath)
                 credentials = DatabaseCredentials(username: response.username, password: response.password)
             } else if relativePath.hasPrefix("creds/") {
                 let roleName = relativePath.suffix(from: "creds/".endIndex)
-                let response = try await client.databaseCredentials(dynamicRole: String(roleName), mountPath: mount)
+                let response = try await client.databaseCredentials(dynamicRole: String(roleName), mountPath: mountPath)
                 credentials = DatabaseCredentials(username: response.username, password: response.password)
             } else {
                 throw VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
@@ -126,13 +126,13 @@ extension VaultDatabaseCredentialReader: ResourceReader {
 }
 
 extension VaultClient {
-    /// Creates a Database credential reader for Pkl configuration files using this `VaultClient` instance.
-    ///
-    /// Example of resource URI: `vault.database:/database/creds/qa_role`
+    /// Creates a Database credential reader for Pkl configuration files using this `VaultClient` instance and its Logger..
+    /// 
+    /// Example of resource URI: `vault.database:/creds/qa_role`. See ``VaultDatabaseCredentialReader.buildSchemeFor(mountPath:prefix)`` for how the scheme is built.
     ///
     /// - Parameters:
-    ///   - mount: database mount path
-    ///   - role: dynamic or static database role
+    ///   - mountPath: database mount path. This will be part of the scheme.
+    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"--"z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed.
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeDatabaseCredentialReader(
         mountPath: String,
@@ -150,29 +150,33 @@ extension VaultClient {
         return .init(
             client: self,
             scheme: scheme,
-            mount: scheme,
+            mountPath: scheme,
             backgroundActivityLogger: logger
         )
     }
 }
 
-//extension ResourceReader where Self == VaultDatabaseCredentialReader {
-//    /// Reader for Database credentials managed by Vault
-//    public static func vaultDatabase(
-//        client: VaultClient,
-//        scheme: String,
-//        mount: String,
-//        role: DatabaseRole,
-//        backgroundActivityLogger: Logging.Logger? = nil
-//    ) -> VaultDatabaseCredentialReader {
-//        .init(
-//            client: client,
-//            scheme: scheme,
-//            mount: mount,
-//            role: role,
-//            backgroundActivityLogger: backgroundActivityLogger
-//        )
-//    }
-//}
+extension ResourceReader where Self == VaultDatabaseCredentialReader {
+    /// Reader for Database credentials managed by Vault
+    public static func vaultDatabase(
+        client: VaultClient,
+        mountPath: String,
+        prefix: String? = nil,
+        backgroundActivityLogger: Logging.Logger? = nil
+    ) -> VaultDatabaseCredentialReader? {
+        guard let schemeString = try? VaultDatabaseCredentialReader.buildSchemeFor(mountPath: mountPath, prefix: prefix),
+              let uri = URL(string: "\(schemeString):"),
+              let scheme = uri.scheme else {
+            return nil
+        }
+
+        return .init(
+            client: client,
+            scheme: scheme,
+            mountPath: scheme,
+            backgroundActivityLogger: backgroundActivityLogger
+        )
+    }
+}
 
 #endif

@@ -49,22 +49,43 @@ public final class VaultKeyValueReader: Sendable {
 
     let logger: Logging.Logger
 
-    let mount: String
-    let key: String
-    let version: Int?
+    public let mountPath: String
 
     init(client: VaultClient,
          scheme: String,
-         mount: String,
-         key: String,
-         version: Int? = nil,
+         mountPath: String,
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
-        self.logger = backgroundActivityLogger ?? Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
-        self.mount = mount
-        self.key = key
-        self.version = version
+        self.logger = backgroundActivityLogger ?? Logger(label: "vault-kv-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        self.mountPath = mountPath
+    }
+
+    /// Builds scheme for the ``VaultKeyValueReader``
+    ///
+    /// Encodes the mount path to a valid scheme by replacing `_` with `-`,
+    /// `/` with `.`, and appends it to `vault.`
+    ///
+    /// Example:
+    /// The database mount is `path/to/secrets` is transformed into `path.to.secrets`.
+    /// Then a credential can be read with the scheme
+    /// `vault.path.to.secrets`
+    ///
+    /// - Parameters:
+    ///   - mountPath: mount path of database secret engine
+    ///   - prefix: optional prefix to add in the scheme. It must be a RFC1738 conformant scheme string.
+    /// - Returns: encoded scheme
+    public static func buildSchemeFor(
+        mountPath: String,
+        prefix: String? = nil
+    ) throws -> String {
+        guard mountPath.isValidVaultMountPath else {
+            throw VaultClientError.invalidVault(mountPath: mountPath)
+        }
+
+        let mount = mountPath.replacingOccurrences(of: "_", with: "-")
+                             .replacingOccurrences(of: "/", with: ".")
+        return "\(prefix?.appending(".") ?? "")vault.kv.\(mount)"
     }
 }
 
@@ -73,8 +94,25 @@ public final class VaultKeyValueReader: Sendable {
 extension VaultKeyValueReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
         do {
+            let relativePath = url.relativePath.removeSlash()
+            let version: Int?
+            let key: String
+
+            let components = relativePath.split(separator: "?version=", maxSplits: 2).map({String($0)})
+            if components.count == 2 {
+                key = components[0]
+                version = Int(components[1])
+            } else {
+                key = components[0]
+                version = nil
+            }
+
+            guard !key.isEmpty else {
+                throw VaultReaderError.invalidKeyValueURL(relativePath)
+            }
+            
             let buffer = try await client.readKeyValueSecretData(
-                mountPath: mount.removeSlash(),
+                mountPath: mountPath.removeSlash(),
                 key: key,
                 version: version
             )
@@ -94,33 +132,31 @@ extension VaultKeyValueReader: ResourceReader {
 }
 
 extension VaultClient {
-    /// Creates a KeyValue resource reader for Pkl configuration files using this `VaultClient` instance.
+    /// Creates a KeyValue resource reader for Pkl configuration files using this `VaultClient` instance and its Logger.
     /// 
-    /// 
+    ///  
     /// - Parameters:
-    ///   - scheme: The URL scheme this reader handles. Defaults to `vault.kv`.
-    ///   - mount: keyValue mount path
-    ///   - key: key name of the secret
-    ///   - version: version of the secret. `nil` reads the latest.
+    ///   - mountPath: mount path to key/value secret engine
+    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed.
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeKeyValueSecretReader(
-        scheme: String = "vault.kv",
-        mount: String,
-        key: String,
-        version: Int? = nil
+        mountPath: String,
+        prefix: String? = nil
     ) throws -> VaultKeyValueReader {
-        guard !scheme.isEmpty else {
-            throw VaultClientError.invalidArgument("Scheme must not be empty")
+        let schemeString = try VaultKeyValueReader.buildSchemeFor(mountPath: mountPath, prefix: prefix)
+        guard let uri = URL(string: "\(schemeString):") else {
+            throw VaultClientError.invalidVault(mountPath: mountPath)
         }
-        guard !mount.isEmpty else {
-            throw VaultClientError.invalidArgument("Mount path must not be empty")
+
+        guard let scheme = uri.scheme else {
+            throw VaultReaderError.invalidURI(scheme: uri.description)
         }
+
         return .init(
             client: self,
             scheme: scheme,
-            mount: mount,
-            key: key,
-            version: version
+            mountPath: mountPath,
+            backgroundActivityLogger: logger
         )
     }
 }
@@ -129,18 +165,21 @@ extension ResourceReader where Self == VaultKeyValueReader {
     /// Reader for KeyValue secrets in a Vault
     public static func vaultKeyValue(
         client: VaultClient,
-        scheme: String,
-        mount: String,
-        key: String,
-        version: Int? = nil,
+        mountPath: String,
+        prefix: String? = nil,
         backgroundActivityLogger: Logging.Logger? = nil
-    ) -> VaultKeyValueReader {
-        .init(client: client,
-              scheme: scheme,
-              mount: mount,
-              key: key,
-              version: version,
-              backgroundActivityLogger: backgroundActivityLogger
+    ) -> VaultKeyValueReader? {
+        guard let schemeString = try? VaultKeyValueReader.buildSchemeFor(mountPath: mountPath, prefix: prefix),
+              let uri = URL(string: "\(schemeString):"),
+              let scheme = uri.scheme else {
+            return nil
+        }
+
+        return .init(
+            client: client,
+            scheme: scheme,
+            mountPath: mountPath,
+            backgroundActivityLogger: backgroundActivityLogger
         )
     }
 }
