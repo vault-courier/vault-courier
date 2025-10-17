@@ -30,13 +30,8 @@ import struct Foundation.Data
 
 import VaultCourier
 
-extension Tag {
-    @Tag static var integration: Self
-}
-
 @Suite(
-    .tags(.integration),
-    .enabled(if: enableIntegrationTests()),
+//    .enabled(if: enableIntegrationTests()),
     .setupVaultClient()
 )
 enum IntegrationTests {}
@@ -91,13 +86,18 @@ public func enableIntegrationTests() -> Bool {
 
 #if PklSupport
 extension IntegrationTests {
-    @Suite struct Pkl {
-        static let localExecPath = "/opt/homebrew/bin/pkl"
-    }
-}
+    static let localPklExecPath = "/opt/homebrew/bin/pkl"
 
-public func isPklEnabled() -> Bool {
-    guard let rawValue = env("PKL_EXEC") else { return false }
-    return !rawValue.isEmpty
+    @Suite(
+        .setupPkl(execPath: env("PKL_EXEC") ?? Self.localPklExecPath)
+    ) struct Pkl {
+        @Suite
+        struct SecretReaders {}
+
+        @Suite(
+            .disabled("Hangs when run concurrently with other tests."),
+        )
+        struct Payloads {}
+    }
 }
 #endif

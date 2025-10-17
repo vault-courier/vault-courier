@@ -9,6 +9,14 @@
 import Testing
 import VaultCourier
 
+extension VaultClient {
+    @TaskLocal static var postgresConnectionConfig: (mountConfig: EnableSecretMountConfig, connectionConfig: PostgresConnectionConfig) =
+        (
+            mountConfig: EnableSecretMountConfig(mountType: "database", path: "database"),
+            connectionConfig: PostgresPluginTrait.postgresConnectionConfiguration("pg_database")
+        )
+}
+
 struct PostgresPluginTrait: SuiteTrait, TestScoping {
     let connectionName: String
     let enginePath: String
@@ -23,11 +31,11 @@ struct PostgresPluginTrait: SuiteTrait, TestScoping {
         let vaultUsername = env("VAULT_DB_USERNAME") ?? "vault_user"
         let vaultPassword = env("VAULT_DB_PASSWORD") ?? "init_password"
         let config = PostgresConnectionConfig(connection: name,
-                                                     allowedRoles: ["*"],
-                                                     connectionUrl: connectionURL,
-                                                     username: vaultUsername,
-                                                     password: vaultPassword,
-                                                     passwordAuthentication: .scramSHA256)
+                                              allowedRoles: ["*"],
+                                              connectionUrl: connectionURL,
+                                              username: vaultUsername,
+                                              password: vaultPassword,
+                                              passwordAuthentication: .scramSHA256)
         return config
     }
 
@@ -39,7 +47,9 @@ struct PostgresPluginTrait: SuiteTrait, TestScoping {
         try await vaultClient.createPostgresConnection(configuration: config, mountPath: enginePath)
         try await vaultClient.rotateRoot(connection: connectionName, mountPath: enginePath)
 
-        try await function()
+        try await VaultClient.$postgresConnectionConfig.withValue((mountConfig, config)) {
+            try await function()
+        }
 
         try await vaultClient.deleteDatabaseConnection(connectionName, mountPath: enginePath)
     }

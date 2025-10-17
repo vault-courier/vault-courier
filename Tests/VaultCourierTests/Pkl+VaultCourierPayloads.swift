@@ -19,12 +19,7 @@ import Testing
 import PklSwift
 import VaultCourier
 
-extension IntegrationTests.Pkl {
-    @Suite(
-        .disabled("Hangs when run concurrently with other tests. TODO: Investigate."),
-        .setupPkl(execPath: env("PKL_EXEC") ?? IntegrationTests.Pkl.localExecPath)
-    )
-    struct Payloads {
+extension IntegrationTests.Pkl.Payloads {
 #if PostgresPluginSupport
         @Test
         func create_database_static_role_with_pkl_file() async throws {
@@ -58,6 +53,5 @@ extension IntegrationTests.Pkl {
                 _ = try await VaultToken.loadFrom(source: .url(url))
             }
         }
-    }
 }
 #endif

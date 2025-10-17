@@ -35,25 +35,31 @@ import PklSwift
 #if PostgresPluginSupport
 extension IntegrationTests.SecretEngine.Database.Postgres {
     static var connectionName: String { "postgres_db" }
-    static var enginePath: String { "my_databases" }
+    static var enginePath: String {
+        let suffix = "abcdefghijklmnopqrstuvwxyz".randomSample(count: 10).map { String($0) }.joined()
+        let path = "my_databases_\(suffix)"
+        return path
+    }
 
     @Suite(.setupPostgresConnection(name: connectionName, enginePath: enginePath))
     struct Roles {
         @Test
         func create_static_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
+            let (mountConfig, connectionConfig) = VaultClient.postgresConnectionConfig
+            let mountPath = mountConfig.path
             let staticRoleName = "test_static_role"
             let databaseRoleName = env("STATIC_DB_ROLE") ?? "test_static_role_username"
             let staticRole = DatabaseStaticRoleConfig.postgres(.init(vaultRoleName: staticRoleName,
                                                                             databaseUsername: databaseRoleName,
-                                                                            databaseConnectionName: connectionName,
+                                                                            databaseConnectionName: connectionConfig.connection,
                                                                             rotation: .period(.seconds(28 * 24 * 60 * 60))))
 
             // MUT
-            try await vaultClient.create(staticRole: staticRole, mountPath: enginePath)
+            try await vaultClient.create(staticRole: staticRole, mountPath: mountPath)
 
             // MUT
-            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, mountPath: enginePath)
+            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, mountPath: mountPath)
             guard case .period(let period) =  response.rotation else {
                 Issue.record("Response does not correspond to given request")
                 return
@@ -62,94 +68,28 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
             #expect(period == .seconds(2419200))
 
             // MUT
-            try await vaultClient.deleteStaticRole(name: staticRoleName, mountPath: enginePath)
+            try await vaultClient.deleteStaticRole(name: staticRoleName, mountPath: mountPath)
         }
 
         @Test
         func create_dynamic_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
+            let (mountConfig, connectionConfig) = VaultClient.postgresConnectionConfig
+            let mountPath = mountConfig.path
             let dynamicRoleName = "test_dynamic_role"
             let dynamicRole = DatabaseDynamicRoleConfig.postgres(.init(vaultRoleName: dynamicRoleName,
-                                                                              databaseConnectionName: connectionName,
-                                                                              creationStatements: [
-                                                                                "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
-                                                                              ]))
+                                                                       databaseConnectionName: connectionConfig.connection,
+                                                                       creationStatements: [
+                                                                        "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
+                                                                       ]))
             // MUT
-            try await vaultClient.create(dynamicRole: dynamicRole, mountPath: enginePath)
+            try await vaultClient.create(dynamicRole: dynamicRole, mountPath: mountPath)
 
-            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, mountPath: enginePath)
+            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, mountPath: mountPath)
 
             // MUT
-            try await vaultClient.deleteRole(name: dynamicRoleName, mountPath: enginePath)
+            try await vaultClient.deleteRole(name: dynamicRoleName, mountPath: mountPath)
         }
-
-        #if PklSupport
-        @Suite(.setupVaultClient(),
-               .setupPkl(execPath: env("PKL_EXEC") ?? IntegrationTests.Pkl.localExecPath))
-        struct Pkl {
-            @Test
-            func read_static_database_secret_from_module_source() async throws {
-                let vaultClient = VaultClient.current
-                let staticRoleName = "test_static_role"
-                let databaseRoleName = env("STATIC_DB_ROLE") ?? "test_static_role_username"
-                let staticRole = PostgresStaticRoleConfig(vaultRoleName: staticRoleName,
-                                                          databaseUsername: databaseRoleName,
-                                                          databaseConnectionName: connectionName,
-                                                          rotation: .period(.seconds(28 * 24 * 60 * 60)))
-                try await vaultClient.create(staticRole: .postgres(staticRole), mountPath: enginePath)
-
-                let sut = try vaultClient.makeResourceReader(
-                    scheme: "vault",
-                    databaseReaderParsers: [.mount(enginePath)]
-                )
-                // MUT
-                let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
-                    try await AppConfig.loadFrom(
-                        evaluator: evaluator,
-                        source: .url(pklFixtureUrl(for: "Sample1/appConfig2.pkl"))
-                    )
-                }
-
-                let databaseConfig = try #require(output.database)
-                let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))
-
-                #expect(outputSecret.username == databaseRoleName)
-
-                try await vaultClient.deleteStaticRole(name: staticRole.vaultRoleName, mountPath: enginePath)
-            }
-
-            @Test
-            func read_dynamic_database_secret_from_module_source() async throws {
-                let vaultClient = VaultClient.current
-                let dynamicRoleName = "test_dynamic_role"
-                let dynamicRole = PostgresRoleConfig(vaultRoleName: dynamicRoleName,
-                                                     databaseConnectionName: connectionName,
-                                                     creationStatements: [
-                                                        "CREATE ROLE \"{{name}}\" LOGIN PASSWORD '{{password}}';",
-                                                     ])
-                try await vaultClient.create(dynamicRole: .postgres(dynamicRole), mountPath: enginePath)
-
-                let sut = try vaultClient.makeResourceReader(
-                    scheme: "vault",
-                    databaseReaderParsers: [.mount(enginePath)]
-                )
-                // MUT
-                let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
-                    try await AppConfig.loadFrom(
-                        evaluator: evaluator,
-                        source: .url(pklFixtureUrl(for: "Sample1/appConfig3.pkl"))
-                    )
-                }
-
-                let databaseConfig = try #require(output.database)
-                let outputSecret = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(databaseConfig.credentials.utf8))
-                #expect(outputSecret.username.isEmpty == false)
-                #expect(outputSecret.password.isEmpty == false)
-
-                try await vaultClient.deleteStaticRole(name: dynamicRoleName, mountPath: enginePath)
-            }
-        }
-        #endif
     }
 }
 #endif
@@ -158,25 +98,31 @@ extension IntegrationTests.SecretEngine.Database.Postgres {
 #if ValkeyPluginSupport
 extension IntegrationTests.SecretEngine.Database.Valkey {
     static var connectionName: String { "valkey_db" }
-    static var enginePath: String { "caches" }
+    static var enginePath: String {
+        let suffix = "abcdefghijklmnopqrstuvwxyz".randomSample(count: 10).map { String($0) }.joined()
+        let path = "caches_\(suffix)"
+        return path
+    }
 
     @Suite(.setupValkeyConnection(name: connectionName, enginePath: enginePath))
     struct Roles {
         @Test
         func create_static_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
+            let (mountConfig, connectionConfig) = VaultClient.valkeyConnectionConfig
+            let mountPath = mountConfig.path
             let staticRoleName = "test_static_role"
             let databaseRoleName = env("STATIC_DB_ROLE") ?? "test_static_role_username"
             let staticRole = DatabaseStaticRoleConfig.valkey(.init(vaultRoleName: staticRoleName,
-                                                                          databaseUsername: databaseRoleName,
-                                                                          databaseConnectionName: connectionName,
-                                                                          rotation: .period(.seconds(28 * 24 * 60 * 60))))
+                                                                   databaseUsername: databaseRoleName,
+                                                                   databaseConnectionName: connectionConfig.connection,
+                                                                   rotation: .period(.seconds(28 * 24 * 60 * 60))))
 
             // MUT
-            try await vaultClient.create(staticRole: staticRole, mountPath: enginePath)
+            try await vaultClient.create(staticRole: staticRole, mountPath: mountPath)
 
             // MUT
-            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, mountPath: enginePath)
+            let response = try await vaultClient.databaseCredentials(staticRole: staticRoleName, mountPath: mountPath)
             guard case .period(let period) =  response.rotation else {
                 Issue.record("Response does not correspond to given request")
                 return
@@ -185,26 +131,28 @@ extension IntegrationTests.SecretEngine.Database.Valkey {
             #expect(period == .seconds(2419200))
 
             // MUT
-            try await vaultClient.deleteStaticRole(name: staticRoleName, mountPath: enginePath)
+            try await vaultClient.deleteStaticRole(name: staticRoleName, mountPath: mountPath)
         }
 
         @Test
         func create_dynamic_role_and_read_credentials() async throws {
             let vaultClient = VaultClient.current
+            let (mountConfig, connectionConfig) = VaultClient.valkeyConnectionConfig
+            let mountPath = mountConfig.path
             let dynamicRoleName = "test_dynamic_role"
             let dynamicRole = DatabaseDynamicRoleConfig.valkey(.init(vaultRoleName: dynamicRoleName,
-                                                                            databaseConnectionName: connectionName,
-                                                                            creationStatements: [
-                                                                                "+@admin",
-                                                                            ]))
+                                                                     databaseConnectionName: connectionConfig.connection,
+                                                                     creationStatements: [
+                                                                        "+@admin",
+                                                                     ]))
             // MUT
-            try await vaultClient.create(dynamicRole: dynamicRole, mountPath: enginePath)
+            try await vaultClient.create(dynamicRole: dynamicRole, mountPath: mountPath)
 
             // MUT
-            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, mountPath: enginePath)
+            let _ = try await vaultClient.databaseCredentials(dynamicRole: dynamicRoleName, mountPath: mountPath)
 
             // MUT
-            try await vaultClient.deleteRole(name: dynamicRoleName, mountPath: enginePath)
+            try await vaultClient.deleteRole(name: dynamicRoleName, mountPath: mountPath)
         }
     }
 }

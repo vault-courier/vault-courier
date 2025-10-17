@@ -5,5 +5,5 @@ database {
   
   port = 5432
   
-  credentials = read("vault:/my_databases/creds/test_dynamic_role").text
+  credentials = read("vault:/my_database/creds/test_dynamic_role").text
 }

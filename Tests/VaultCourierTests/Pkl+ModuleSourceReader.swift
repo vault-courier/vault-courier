@@ -37,7 +37,7 @@ extension IntegrationTests.Pkl {
             "swift test is hanging on GitHub Actions, started in Swift 6.0+"
         ),
         .serialized,
-        .setupPkl(execPath: env("PKL_EXEC") ?? Self.localExecPath)
+        .setupPkl(execPath: env("PKL_EXEC") ?? IntegrationTests.localPklExecPath)
     )
     struct ModuleSourceReader {
 
@@ -81,25 +81,6 @@ extension IntegrationTests.Pkl {
                         as: String.self
                     )
                 }
-            }
-        }
-
-        @Test
-        func mount_path_in_vault_key_value_reader_cannot_be_empty() async throws {
-            let vaultClient = VaultClient(configuration: .defaultHttp(),
-                                          clientTransport: MockVaultClientTransport.successful)
-            try await vaultClient.login(method: .token("test_token"))
-
-            let scheme = "my.schema"
-            let kvMountPath = ""
-            let key = "secret_key"
-
-            #expect(throws: VaultClientError.self) {
-                try vaultClient.makeKeyValueSecretReader(
-                    scheme: scheme,
-                    mount: kvMountPath,
-                    key: key
-                )
             }
         }
 
@@ -159,107 +140,7 @@ extension IntegrationTests.Pkl {
             #expect(output == expected)
         }
 
-        @Test
-        func vault_key_value_reader() async throws {
-            let secret = "api_key"
-            let value = "abcde12345"
-            let secretPath = "key"
-            let kvMountPath = "path/to/secrets"
-            let clientToken = "test_token"
-            let mockClient = MockVaultClientTransport.dev(
-                clientToken: clientToken,
-                keyValueMount: kvMountPath,
-                secretKeyPath: secretPath,
-                expectedSecrets: [secret: value]
-            )
-
-            let vaultClient = VaultClient(configuration: .defaultHttp(),
-                                          clientTransport: mockClient)
-            try await vaultClient.login(method: .token(clientToken))
-
-            let schema = "vault.kv"
-
-            let reader: ResourceReader = .vaultKeyValue(
-                client: vaultClient,
-                scheme: schema,
-                mount: kvMountPath,
-                key: secretPath,
-                version: 2,
-                backgroundActivityLogger: .init(label: "test")
-            )
-            // MUT
-            let output = try await withEvaluator(options:
-                    .preconfigured.withResourceReader(
-                        reader
-                    )
-            ) { evaluator in
-                try await evaluator.evaluateOutputText(
-                    source: .text("""
-                    appKeys: String = read("\(schema):/\(kvMountPath)/data/\(secretPath)?version=2").text
-                    """)
-                )
-            }
-
-            // Note: Pkl adds `\#n"` at the end of the file
-            let expected = #"appKeys = "{\"\#(secret)\":\"\#(value)\"}"\#n"#
-            #expect(output == expected)
-        }
-
         #if PostgresPluginSupport
-        @Test
-        func vault_database_credential_reader() async throws {
-            struct DatabaseSecret: Codable, Sendable {
-                var databaseCredentials: String
-            }
-
-            let username = "test_static_role_username"
-            let password = "XS-bh8o95yFzdd3N9Gv-"
-
-            let mockClient = MockVaultClientTransport { _, _, _, _ in
-                (.init(status: .ok), .init("""
-                    {
-                      "request_id": "04c78e0d-141e-3a13-5d38-17821fbdb3c1",
-                      "lease_id": "",
-                      "renewable": false,
-                      "lease_duration": 0,
-                      "data": {
-                        "last_vault_rotation": "2025-09-14T15:44:15.5738422Z",
-                        "password": "\(password)",
-                        "rotation_period": 3600,
-                        "ttl": 3555,
-                        "username": "\(username)"
-                      },
-                      "wrap_info": null,
-                      "warnings": null,
-                      "auth": null
-                    }
-                    """))
-            }
-
-            let databaseMount = "path/to/database/secrets"
-            let vaultClient = VaultClient(configuration: .defaultHttp(),
-                                          clientTransport: mockClient)
-            try await vaultClient.login(method: .token("test_token"))
-
-            let schemePrefix = "test"
-            let scheme = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: databaseMount, prefix: schemePrefix)
-            let sut = try vaultClient.makeDatabaseCredentialReader(mountPath: databaseMount, prefix: schemePrefix)
-
-            // MUT
-            let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
-                try await evaluator.evaluateModule(
-                    source: .text("""
-                    databaseCredentials: String = read("\(scheme):/static-creds/qa_role").text
-                    """),
-                    as: DatabaseSecret.self
-                )
-            }
-
-            let secrets = try JSONDecoder().decode(DatabaseCredentials.self, from: Data(output.databaseCredentials.utf8))
-            #expect(secrets.username == username)
-            #expect(secrets.password == password)
-        }
-
         @Test
         func vault_reader_regex_url_for_custom_database_engine_path_and_static_role() async throws {
             struct DatabaseSecret: Codable, Sendable {
