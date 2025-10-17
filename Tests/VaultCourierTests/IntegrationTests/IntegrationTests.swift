@@ -95,7 +95,7 @@ extension IntegrationTests {
         struct SecretReaders {}
 
         @Suite(
-            .disabled("Hangs when run concurrently with other tests."),
+            .disabled("Hangs sometimes when run concurrently with other tests. Investigate"),
         )
         struct Payloads {}
     }
