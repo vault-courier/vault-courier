@@ -31,7 +31,7 @@ import struct Foundation.Data
 import VaultCourier
 
 @Suite(
-//    .enabled(if: enableIntegrationTests()),
+    .enabled(if: enableIntegrationTests()),
     .setupVaultClient()
 )
 enum IntegrationTests {}

@@ -34,6 +34,10 @@ let spiGenerateDocs = ProcessInfo.processInfo.environment["SPI_GENERATE_DOCS"] !
 let previewDocs = ProcessInfo.processInfo.environment["SWIFT_PREVIEW_DOCS"] != nil
 
 let addDoccPlugin = previewDocs || spiGenerateDocs
+// Enable all traits for other CI actions.
+let enableAllTraitsExplicit = ProcessInfo.processInfo.environment["ENABLE_ALL_TRAITS"] != nil
+
+let enableAllTraits = spiGenerateDocs || previewDocs || enableAllTraitsExplicit
 // --------------------------------------------------------------------------------------------
 
 let PklTrait: Trait = .trait(
@@ -68,28 +72,36 @@ let ValkeyDatabasePluginTrait: Trait = .trait(
     enabledTraits: .init(arrayLiteral: DatabaseEngineTrait.name)
 )
 
+var traits: Set<Trait> = [
+    MockTrait,
+    AppRoleTrait,
+    DatabaseEngineTrait,
+    PostgresDatabasePluginTrait,
+    ValkeyDatabasePluginTrait,
+    PklTrait
+]
+
+let defaultTraits: Set<String> = .init([
+    MockTrait,
+    AppRoleTrait,
+    DatabaseEngineTrait,
+    PostgresDatabasePluginTrait,
+    ValkeyDatabasePluginTrait
+].map(\.name))
+
+traits.insert(
+    .default(
+        enabledTraits: enableAllTraits ? Set(traits.map(\.name)) : defaultTraits
+    ),
+)
+
 let package = Package(
     name: "vault-courier",
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "VaultCourier", targets: ["VaultCourier"]),
     ],
-    traits: [
-        PklTrait,
-        MockTrait,
-        AppRoleTrait,
-        DatabaseEngineTrait,
-        PostgresDatabasePluginTrait,
-        ValkeyDatabasePluginTrait,
-        .default(enabledTraits: [
-            MockTrait.name,
-            AppRoleTrait.name,
-            DatabaseEngineTrait.name,
-            PostgresDatabasePluginTrait.name,
-            ValkeyDatabasePluginTrait.name,
-//            PklTrait.name
-        ])
-    ],
+    traits: traits,
     dependencies: [
         .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.7.2"),
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.7.0"),
