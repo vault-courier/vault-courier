@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "E60651AC-1F25-4649-84CE-41332DD87702",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "VaultCourierTests",
+        "name" : "VaultCourierTests"
+      }
+    }
+  ],
+  "version" : 1
+}

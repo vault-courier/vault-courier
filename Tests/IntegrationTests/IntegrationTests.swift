@@ -31,7 +31,6 @@ import struct Foundation.Data
 import VaultCourier
 
 @Suite(
-//    .enabled(if: enableIntegrationTests()),
     .setupVaultClient()
 )
 enum IntegrationTests {}
@@ -75,13 +74,6 @@ extension IntegrationTests.System {
     @Suite struct Auth {}
     @Suite struct Policies {}
     @Suite struct Mounts {}
-}
-
-public func enableIntegrationTests() -> Bool {
-    guard let rawValue = env("ENABLE_INTEGRATION_TESTS") else { return false }
-    if let boolValue = Bool(rawValue) { return boolValue }
-    if let intValue = Int(rawValue) { return intValue == 1 }
-    return rawValue.lowercased() == "yes"
 }
 
 #if PklSupport
