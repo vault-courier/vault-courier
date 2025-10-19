@@ -25,13 +25,13 @@ import class Foundation.JSONDecoder
 import struct Foundation.Data
 #endif
 import Synchronization
+import Utils
 
 /// Vault Secrets Provider with registered actions
 ///
-/// - Note: This is an alternative implementation of ``VaultProvider``.
 public final class VaultSecretProvider: Sendable {
     let client: VaultClient
-    public let providerName: String = "VaultProvider"
+    public let providerName: String = "VaultSecretProvider"
 
     /// In memory configuration values. This cache is updated when a fetch call succeeds.
     let cache: MutableInMemoryProvider
@@ -40,7 +40,7 @@ public final class VaultSecretProvider: Sendable {
 
     let _evaluationMap: Mutex<[AbsoluteConfigKey: ApiOperation]>
 
-    static let keyEncoder: SeparatorKeyEncoder = .dotSeparated
+    public static let keyEncoder: SeparatorKeyEncoder = .dotSeparated
 
     /// Creates a new vault secret provider with the specified configuration values.
     ///
@@ -91,14 +91,14 @@ extension VaultSecretProvider {
 
 extension VaultSecretProvider: CustomStringConvertible {
     public var description: String {
-        "VaultProvider[\(client.apiURL.description)]"
+        "VaultSecretProvider[\(client.apiURL.description)]"
     }
 }
 
 extension VaultSecretProvider: CustomDebugStringConvertible {
     public var debugDescription: String {
         let cacheDescription = cache.debugDescription.trimmingPrefix("MutableInMemoryProvider[").dropLast()
-        return "VaultProvider[\(client.apiURL.description), \(cacheDescription)]"
+        return "VaultSecretProvider[\(client.apiURL.description), \(cacheDescription)]"
     }
 }
 
@@ -115,7 +115,7 @@ extension VaultSecretProvider {
     package static let versionContextKey = "version"
 
     public static func keyValueSecret(mount: String, key: String, version: Int? = nil) async throws -> ApiOperation {
-        { Array(try await $0.readKeyValueSecretData(enginePath: mount, key: key, version: version)) }
+        { Array(try await $0.readKeyValueSecretData(mountPath: mount, key: key, version: version)) }
     }
 }
 
@@ -166,44 +166,44 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
                 content = .string(json)
             case .int:
                 guard let intValue = try? JSONDecoder().decode(Int.self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .int(intValue)
             case .double:
                 guard let doubleValue = try? JSONDecoder().decode(Double.self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .double(doubleValue)
             case .bool:
                 guard let boolValue = try? JSONDecoder().decode(Bool.self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .bool(boolValue)
             case .bytes:
                 content = .bytes(buffer)
             case .stringArray:
                 guard let arrayValue = try? JSONDecoder().decode([String].self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .stringArray(arrayValue)
             case .intArray:
                 guard let intArray = try? JSONDecoder().decode([Int].self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .intArray(intArray)
             case .doubleArray:
                 guard let doubleArray = try? JSONDecoder().decode([Double].self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .doubleArray(doubleArray)
             case .boolArray:
                 guard let boolArray = try? JSONDecoder().decode([Bool].self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .boolArray(boolArray)
             case .byteChunkArray:
                 guard let byteChunkArray = try? JSONDecoder().decode([[UInt8]].self, from: Data(buffer)) else {
-                    throw VaultProviderError.configValueNotConvertible(name: key.description, type: type)
+                    throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
                 }
                 content = .byteChunkArray(byteChunkArray)
         }
@@ -234,15 +234,23 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
 
 #if DatabaseEngineSupport
 extension VaultSecretProvider {
-    static func fetchDatabaseCredential(client: VaultClient, mount: String, role: DatabaseRole) async throws -> Data {
+    static func fetchDatabaseCredential(
+        client: VaultClient,
+        mount: String,
+        role: DatabaseRole
+    ) async throws -> Data {
+        guard mount.isValidVaultMountPath else {
+            throw VaultSecretProviderError.invalidVault(mountPath: mount)
+        }
+
         let credentials: DatabaseCredentials
         switch role {
             case .static(let name):
-                let response = try await client.databaseCredentials(staticRole: name, enginePath: mount)
+                let response = try await client.databaseCredentials(staticRole: name, mountPath: mount)
                 credentials = DatabaseCredentials(username: response.username, password: response.password)
 
             case .dynamic(let name):
-                let response = try await client.databaseCredentials(dynamicRole: name, enginePath: mount)
+                let response = try await client.databaseCredentials(dynamicRole: name, mountPath: mount)
                 credentials = DatabaseCredentials(username: response.username, password: response.password)
         }
         let data = try JSONEncoder().encode(credentials)
@@ -264,10 +272,14 @@ package enum VaultSecretProviderError: Error, CustomStringConvertible, Equatable
     /// A configuration value could not be converted to the expected type.
     case configValueNotConvertible(name: String, type: ConfigType)
 
+    case invalidVault(mountPath: String)
+
     package var description: String {
         switch self {
             case .configValueNotConvertible(let name, let type):
                 "Config value for key '\(name)' failed to convert to type \(type)."
+            case .invalidVault(mountPath: let mountPath):
+                "'\(mountPath)' is not a valid Vault mount path."
         }
     }
 }
