@@ -90,3 +90,9 @@ extension IntegrationTests {
     }
 }
 #endif
+
+#if ConfigProviderSupport
+extension IntegrationTests {
+    @Suite struct VaultConfigProvider {}
+}
+#endif

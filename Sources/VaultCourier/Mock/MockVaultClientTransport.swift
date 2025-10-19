@@ -68,6 +68,8 @@ public struct MockVaultClientTransport: ClientTransport {
 
     public static var successful: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .ok), HTTPBody("bye")) } }
 
+    public static var forbidden: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .forbidden), HTTPBody("error")) } }
+
     /// KeyValue response body
     ///
     /// Encodes the input `data` inside a response body of the form

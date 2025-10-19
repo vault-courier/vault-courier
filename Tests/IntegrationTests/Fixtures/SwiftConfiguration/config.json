@@ -1,0 +1,12 @@
+{
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "credentials": "https://127.0.0.1:8200/v1/database/creds/static_role"
+  },
+  "third_party": {
+      "service": {
+          "api_key": "https://127.0.0.1:8200/v1/secret/local_test"
+      }
+  }
+}

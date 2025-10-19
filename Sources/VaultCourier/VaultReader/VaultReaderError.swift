@@ -14,12 +14,12 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if PklSupport
+#if PklSupport || ConfigProviderSupport
 /// Vault resource reader error
 /// 
 /// ## Package traits
 ///
-/// This type is guarded by the `PklSupport` package trait.
+/// This type is guarded by the `PklSupport` or `ConfigProviderSupport` package trait.
 ///
 public struct VaultReaderError: Error, Sendable {
     public var message: String

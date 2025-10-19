@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if PklSupport
+#if PklSupport || ConfigProviderSupport
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
@@ -23,7 +23,7 @@ import struct Foundation.URL
 
 /// A type that parses an URL into a provided data type
 ///
-/// A ``ResourceReaderStrategy`` allows you to customize how Pkl URI resources are parsed into path components used for calling an specific Vault endpoint
+/// A ``ResourceReaderStrategy`` allows you to customize how URI resources are parsed into path components used for calling an specific Vault endpoint
 ///
 /// ``KeyValueResourceReaderStrategy`` and ``DatabaseResourceReaderStrategy`` are specializations of this protocol for the KeyValue and Database secret engines.
 public protocol ResourceReaderStrategy {

@@ -14,13 +14,14 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if PklSupport
+#if PklSupport || ConfigProviderSupport
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
 import struct Foundation.URL
 #endif
 
+/// Type that parses URL for database resource
 public protocol DatabaseResourceReaderStrategy: ResourceReaderStrategy, Sendable {
     /// Parses URL into the parameters the vault client needs to fetch a database secret.
     /// - Parameter url: URL to parse
@@ -62,10 +63,10 @@ public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
             let databasePath = relativePath.suffix(from: mount.endIndex)
             if databasePath.hasPrefix("/static-creds/") {
                 let roleName = try split(url: url, separator: "/static-creds/")
-                return (mount, .static(name: roleName))
+                return (mount, .static(role: roleName))
             } else if databasePath.hasPrefix("/creds/") {
                 let roleName = try split(url: url, separator: "/creds/")
-                return (mount, .dynamic(name: roleName))
+                return (mount, .dynamic(role: roleName))
             } else {
                 throw VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
             }
@@ -87,7 +88,7 @@ public struct DatabaseReaderParser: DatabaseResourceReaderStrategy {
 }
 
 public enum DatabaseRole: Sendable {
-    case `static`(name: String)
-    case `dynamic`(name: String)
+    case `static`(role: String)
+    case `dynamic`(role: String)
 }
 #endif
