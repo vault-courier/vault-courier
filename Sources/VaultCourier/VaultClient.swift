@@ -248,7 +248,7 @@ extension VaultClient {
     /// - Parameter mountPath: path to approle authentication mount
     /// - Returns: return type of the `execute` closure
     public func withAppRoleClient<ReturnType: Sendable>(
-        mountPath: String? = nil,
+        mountPath: String,
         execute: (AppRoleAuthClient) async throws -> ReturnType
     ) async throws -> ReturnType {
         let sessionToken = try? sessionToken()
@@ -263,4 +263,3 @@ extension VaultClient {
     }
 #endif
 }
-

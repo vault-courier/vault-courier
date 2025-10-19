@@ -1,0 +1,14 @@
+amends "pkl:Project"
+
+package {
+  name = "isc-vault-operations"
+  baseUri = "package://example.com/\(name)" 
+  version = "0.0.1"
+  packageZipUrl = "https://example.com/\(name)/\(name)@\(version).zip"
+}
+
+dependencies {
+  ["pkl.vault"] { 
+    uri = "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0"
+  }
+}

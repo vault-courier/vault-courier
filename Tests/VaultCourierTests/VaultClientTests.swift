@@ -67,12 +67,6 @@ struct VaultClientTests {
             return (.init(status: .ok), .init("""
                 {
                   "request_id": "bb10149f-39dd-8261-a427-d52e64922355",
-                  "lease_id": "",
-                  "renewable": false,
-                  "lease_duration": 0,
-                  "data": null,
-                  "wrap_info": null,
-                  "warnings": null,
                   "auth": {
                     "client_token": "\(clientToken)",
                     "accessor": "",
@@ -91,7 +85,6 @@ struct VaultClientTests {
                     "entity_id": "913160eb-837f-ee8c-e6aa-9ded162b5b75",
                     "token_type": "batch",
                     "orphan": true,
-                    "mfa_requirement": null,
                     "num_uses": 0
                   }
                 }
@@ -105,9 +98,7 @@ struct VaultClientTests {
                                                                         secretID: secretID)))
         #expect(try vaultClient.sessionToken() == clientToken)
     }
-    #endif
 
-    #if AppRoleSupport
     @Test
     func wrap_and_unwrap_approle_secret_id() async throws {
         let mountPath = "path/to/approle"
@@ -119,10 +110,6 @@ struct VaultClientTests {
                     return (.init(status: .ok), .init("""
                         {
                           "request_id": "",
-                          "lease_id": "",
-                          "renewable": false,
-                          "lease_duration": 0,
-                          "data": null,
                           "wrap_info": {
                             "token": "s.miFj0zRahqINOyYOyJK1GlpR",
                             "accessor": "S13eSfZEllbVNMMJNQ1cN7XV",
@@ -130,27 +117,19 @@ struct VaultClientTests {
                             "creation_time": "2025-09-14T18:44:15.318941505Z",
                             "creation_path": "auth/\(mountPath)/role/\(appRoleName)/secret-id",
                             "wrapped_accessor": "54d4834d-aa0e-8f19-3286-7a172370ae7b"
-                          },
-                          "warnings": null,
-                          "auth": null
+                          }
                         }
                         """))
                 case "/sys/wrapping/unwrap":
                     return (.init(status: .ok), .init("""
                         {
                           "request_id": "81ac0ea6-610d-61df-4039-9aab7cc5bf05",
-                          "lease_id": "",
-                          "renewable": false,
-                          "lease_duration": 0,
                           "data": {
                             "secret_id": "\(expectedSecretID)",
                             "secret_id_accessor": "e69a33c6-af8e-0ca1-fbc7-63a35ca50d33",
                             "secret_id_num_uses": 50,
                             "secret_id_ttl": 600
-                          },
-                          "wrap_info": null,
-                          "warnings": null,
-                          "auth": null
+                          }
                         }
                         """))
                 default:
@@ -277,18 +256,18 @@ extension VaultClientTests {
                     credentials: .init(roleID: roleID,secretID: response.secretID)
                 )
             )
-            let secrets: Secrets = try await vaultClient.readKeyValueSecret(enginePath: keyValueMount,
+            let secrets: Secrets = try await vaultClient.readKeyValueSecret(mountPath: keyValueMount,
                                                                             key: secretKeyPath)
             #expect(secrets == expectedSecrets)
 
             #if DatabaseEngineSupport
             let credentials = try await vaultClient.databaseCredentials(staticRole: staticRole,
-                                                                        enginePath: databaseMount)
+                                                                        mountPath: databaseMount)
             #expect(credentials.username == staticRoleDatabaseUsername)
             #expect(credentials.password == staticRoleDatabasePassword)
 
             let dynamicCredentials = try await vaultClient.databaseCredentials(dynamicRole: dynamicRole,
-                                                                               enginePath: databaseMount)
+                                                                               mountPath: databaseMount)
             #expect(dynamicCredentials.username == dynamicRoleDatabaseUsername)
             #expect(dynamicCredentials.password == dynamicRoleDatabasePassword)
             #endif

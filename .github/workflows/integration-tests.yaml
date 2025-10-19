@@ -52,7 +52,6 @@ jobs:
         echo $(which pkl)
     - name: Run integration tests
       env:
-        ENABLE_INTEGRATION_TESTS: 1
         PKL_EXEC: /usr/local/bin/pkl
       run: |
         swift test --filter IntegrationTests

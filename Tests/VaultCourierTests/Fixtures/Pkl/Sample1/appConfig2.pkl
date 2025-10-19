@@ -1,9 +1,0 @@
-amends ".../AppConfig.pkl"
-
-database {
-  hostname = "localhost"
-  
-  port = 5432
-  
-  credentials = read("vault:/my_databases/static-creds/test_static_role").text
-}

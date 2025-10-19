@@ -14,12 +14,30 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import HTTPTypes
+import Testing
+import VaultCourier
 
-struct TestError: Error, Equatable {}
+struct VaultPaths {
+    @Test(arguments: [
+        "path.to.database",
+        "/path/to/database",
+        "path with spaces"
+    ])
+    func invalid_vault_mount_paths(_ mount: String) async throws {
+        #expect(throws: VaultClientError.self) {
+            guard mount.isValidVaultMountPath
+            else { throw VaultClientError.invalidVault(mountPath: mount) }
+        }
+    }
 
-extension HTTPRequest {
-    package var normalizedPath: String? {
-        self.path?.replacingOccurrences(of: "%2F", with: "/")
+    @Test(arguments: [
+        "path/to/database/",
+        "path_to_database"
+    ])
+    func valid_vault_mount_paths(_ mount: String) async throws {
+        #expect(throws: Never.self) {
+            guard mount.isValidVaultMountPath
+            else { throw VaultClientError.invalidVault(mountPath: mount) }
+        }
     }
 }

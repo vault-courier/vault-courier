@@ -1,0 +1,15 @@
+amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0#/Payloads/AuthMethods/AppRole/VaultAppRole.pkl"
+
+role_name = "server_app_us_west"
+
+token_policies {
+  "read_only"
+}
+
+secret_id_ttl = 3600.s
+
+token_ttl = 60.min
+
+token_max_ttl = 24.h
+
+token_type = "batch"

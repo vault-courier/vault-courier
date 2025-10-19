@@ -1,9 +1,0 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.0.4#/Payloads/MountConfiguration.pkl"
-
-`type` = "kv"
-
-path = "path/to/secrets"
-
-options {
-  ["version"] = "2"
-}

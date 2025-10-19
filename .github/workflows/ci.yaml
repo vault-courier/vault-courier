@@ -45,4 +45,4 @@ jobs:
       env:
         ENABLE_INTEGRATION_TESTS: false
       run: |
-        swift test
+        swift test --filter VaultCourierTests

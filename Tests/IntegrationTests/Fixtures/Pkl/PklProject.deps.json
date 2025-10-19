@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "resolvedDependencies": {
+    "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0": {
+      "type": "remote",
+      "uri": "projectpackage://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0",
+      "checksums": {
+        "sha256": "71b8b55ec474e19d769f4ccf54c88b80274c1151373249554d8a1dd08ea1478f"
+      }
+    },
+    "package://pkg.pkl-lang.org/pkl-pantry/pkl.experimental.net@1": {
+      "type": "remote",
+      "uri": "projectpackage://pkg.pkl-lang.org/pkl-pantry/pkl.experimental.net@1.2.1",
+      "checksums": {
+        "sha256": "0b82242e186d9d432ad34b3c60cb6df18a89dabcd1bb37111e47a2f852316e5f"
+      }
+    },
+    "package://pkg.pkl-lang.org/pkl-pantry/org.openapis.v3@2": {
+      "type": "remote",
+      "uri": "projectpackage://pkg.pkl-lang.org/pkl-pantry/org.openapis.v3@2.2.0",
+      "checksums": {
+        "sha256": "fdf552ce26297e50322c464ae514c9196b452b2843b0b1d4ca0da51c519efad5"
+      }
+    }
+  }
+}

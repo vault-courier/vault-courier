@@ -24,23 +24,27 @@
 public struct VaultReaderError: Error, Sendable {
     public var message: String
 
-    static func readingConfigurationFailed() -> VaultClientError {
+    static func readingConfigurationFailed() -> VaultReaderError {
         .init(message: "Reading module failed")
     }
 
-    static func invalidKeyValueURL(_ relativePath: String) -> VaultClientError {
+    static func invalidURI(scheme: String) -> VaultReaderError {
+        .init(message: "Invalid Vault URI scheme '\(scheme)'")
+    }
+
+    static func invalidKeyValueURL(_ relativePath: String) -> VaultReaderError {
         .init(message: "Invalid key-value relative path: \(relativePath).")
     }
 
-    static func invalidDatabaseCredential(path: String) -> VaultClientError {
+    static func invalidDatabaseCredential(path: String) -> VaultReaderError {
         .init(message: "Invalid database credential path: \(path).")
     }
 
-    static func readingUnsupportedEngine(_ relativePath: String) -> VaultClientError {
+    static func readingUnsupportedEngine(_ relativePath: String) -> VaultReaderError {
         .init(message: "Reading unsupported vault engine or path: \(relativePath).")
     }
 
-    static func readingUnsupportedDatabaseEndpoint(_ relativePath: String) -> VaultClientError {
+    static func readingUnsupportedDatabaseEndpoint(_ relativePath: String) -> VaultReaderError {
         .init(message: "Reading unsupported database endpoint: \(relativePath)")
     }
 }

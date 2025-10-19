@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Vault Courier AppRole Authentication API",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "API client for Hashicorp Vault and OpenBao",
     "license": {
       "name": "Apache License 2.0"

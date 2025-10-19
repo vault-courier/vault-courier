@@ -14,12 +14,35 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import HTTPTypes
 
-struct TestError: Error, Equatable {}
+#if canImport(Darwin)
+import Darwin
+#elseif os(Windows)
+import CRT
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Android)
+import Android
+#elseif canImport(Musl)
+import Musl
+#elseif canImport(WASILibc)
+import WASILibc
+#else
+#error("Unsupported runtime")
+#endif
 
-extension HTTPRequest {
-    package var normalizedPath: String? {
-        self.path?.replacingOccurrences(of: "%2F", with: "/")
-    }
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
+
+func env(_ name: String) -> String? {
+    getenv(name).flatMap { String(cString: $0) }
 }
+
+#if PklSupport
+func setupPklEnv(execPath: String) {
+    setenv("PKL_EXEC", execPath, 1)
+}
+#endif
