@@ -10,5 +10,6 @@ DerivedData/
 .vscode
 .docc-build
 .swift-version
-vault-courier.xctestplan
+*.xctestplan
+Package.resolved
 Scripts/valkey/data
