@@ -31,7 +31,7 @@ import struct Foundation.Data
 import VaultCourier
 
 @Suite(
-    .enabled(if: enableIntegrationTests()),
+//    .enabled(if: enableIntegrationTests()),
     .setupVaultClient()
 )
 enum IntegrationTests {}
@@ -94,9 +94,6 @@ extension IntegrationTests {
         @Suite
         struct SecretReaders {}
 
-        @Suite(
-            .disabled("Hangs sometimes when run concurrently with other tests. Investigate"),
-        )
         struct Payloads {}
     }
 }
