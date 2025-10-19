@@ -150,7 +150,7 @@ extension VaultClient {
         return .init(
             client: self,
             scheme: scheme,
-            mountPath: scheme,
+            mountPath: mountPath,
             backgroundActivityLogger: logger
         )
     }
@@ -173,7 +173,7 @@ extension ResourceReader where Self == VaultDatabaseCredentialReader {
         return .init(
             client: client,
             scheme: scheme,
-            mountPath: scheme,
+            mountPath: mountPath,
             backgroundActivityLogger: backgroundActivityLogger
         )
     }

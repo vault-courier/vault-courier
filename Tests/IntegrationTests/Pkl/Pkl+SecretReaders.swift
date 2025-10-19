@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if PklSupport
+#if PklSupport && MockSupport
 import PklSwift
 import VaultCourier
 import Testing

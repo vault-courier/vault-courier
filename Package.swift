@@ -86,7 +86,7 @@ let defaultTraits: Set<String> = .init([
     AppRoleTrait,
     DatabaseEngineTrait,
     PostgresDatabasePluginTrait,
-    ValkeyDatabasePluginTrait
+    ValkeyDatabasePluginTrait,
 ].map(\.name))
 
 traits.insert(
@@ -238,7 +238,7 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "VaultCourierTests",
+            name: "IntegrationTests",
             dependencies: [
                 .target(name: "VaultCourier"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
@@ -246,6 +246,12 @@ let package = Package(
             ],
             exclude: [
                 "Fixtures"
+            ]
+        ),
+        .testTarget(
+            name: "VaultCourierTests",
+            dependencies: [
+                .target(name: "VaultCourier")
             ]
         ),
     ],

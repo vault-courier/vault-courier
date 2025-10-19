@@ -1,7 +1,7 @@
 {
   "configurations" : [
     {
-      "id" : "EE8654F2-B418-4631-9D91-6D356D07C3B3",
+      "id" : "1DC31B4C-9ECA-4ADC-9159-4B7846C9A213",
       "name" : "Configuration 1",
       "options" : {
 
@@ -15,8 +15,8 @@
     {
       "target" : {
         "containerPath" : "container:",
-        "identifier" : "VaultCourierTests",
-        "name" : "VaultCourierTests"
+        "identifier" : "IntegrationTests",
+        "name" : "IntegrationTests"
       }
     }
   ],
