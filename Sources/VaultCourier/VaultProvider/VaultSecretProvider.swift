@@ -27,6 +27,11 @@ import struct Foundation.Data
 import Synchronization
 import Utils
 
+public enum DatabaseRole: Sendable {
+    case `static`(role: String)
+    case `dynamic`(role: String)
+}
+
 /// Vault Secrets Provider with registered actions
 ///
 public final class VaultSecretProvider: Sendable {
@@ -45,7 +50,7 @@ public final class VaultSecretProvider: Sendable {
     /// Creates a new vault secret provider with the specified configuration values.
     ///
     /// This initializer takes a dictionary of absolute configuration keys mapped to
-    /// VaultClient closures that return bytes. Use this when you have already constructed ``AbsoluteConfigKey``
+    /// VaultClient closures that return bytes. Use this when you have already constructed `AbsoluteConfigKey`
     /// instances or when working with keys programmatically.
     ///
     /// ```swift

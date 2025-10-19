@@ -114,7 +114,7 @@ extension VaultClient {
     /// 
     /// - Note: The roles in the database are not deleted
     /// - Parameters:
-    ///   - connection: connection name
+    ///   - connectionName: connection name
     ///   - mountPath: mount path of database secrets
     public func deleteDatabaseConnection(
         _ connectionName: String,
@@ -133,14 +133,14 @@ extension VaultClient {
     ///
     /// - Note: After this action only vault knows this user's password
     /// - Parameters:
-    ///   - connection: connection name
+    ///   - connectionName: connection name
     ///   - mountPath: mount path of database secrets
     public func rotateRoot(
-        connection: String,
+        connectionName: String,
         mountPath: String
     ) async throws {
         try await withDatabaseClient(mountPath: mountPath) { client in
-            try await client.rotateRoot(connection: connection)
+            try await client.rotateRoot(connection: connectionName)
         }
     }
 

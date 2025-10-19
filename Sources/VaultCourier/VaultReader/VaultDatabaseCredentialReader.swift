@@ -29,7 +29,7 @@ import Utils
 
 /// A Pkl resource reader for database credentials managed by Vault
 ///
-/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeDatabaseCredentialReader(mountPath:prefix:))``
+/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeDatabaseCredentialReader(mountPath:prefix:)``
 ///
 /// ## Package traits
 ///
@@ -57,7 +57,7 @@ public final class VaultDatabaseCredentialReader: Sendable {
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
-        self.logger = backgroundActivityLogger ?? Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        self.logger = backgroundActivityLogger ?? Logger(label: "vault-database-credential-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
         self.mountPath = mountPath
     }
 
@@ -128,7 +128,8 @@ extension VaultDatabaseCredentialReader: ResourceReader {
 extension VaultClient {
     /// Creates a Database credential reader for Pkl configuration files using this `VaultClient` instance and its Logger..
     /// 
-    /// Example of resource URI: `vault.database:/creds/qa_role`. See ``VaultDatabaseCredentialReader.buildSchemeFor(mountPath:prefix)`` for how the scheme is built.
+    /// Example of resource URI: `vault.database:/creds/qa_role`.
+    /// See ``VaultCourier/VaultDatabaseCredentialReader/buildSchemeFor(mountPath:prefix:)`` for how the scheme is built.
     ///
     /// - Parameters:
     ///   - mountPath: database mount path. This will be part of the scheme.

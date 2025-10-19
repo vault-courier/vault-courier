@@ -12,15 +12,54 @@ Swift client for interacting with Hashicorp Vault and OpenBao.
 
 ### Features
 
-- Arbitrary storage of Key/Value secrets
-- Generation of static and dynamic credentials; database engine with PostgreSQL support.
+- Arbitrary storage of Key/Value secrets (KV-v2)
+- Manage third-party secrets: generate and revoke on-demand credentials for database systems, like PostgreSQL and Valkey.
 - AppRole Authentication
 - Token Authentication
-- Pkl Resource Reader.
+- Pkl Resource Reader (Enabled with PackageTrait `PklSupport`).
 
 ## Usage
 
-VaultCourier can be used to retrieve the secrets that your application needs. This can be done using the API client itself or by reading a pkl configuration file with a `vault` or custom schema. In addition, Vault administrators can use the VaultCourier to provision and manage access to secrets. The latter includes the rotation of secrets. Check out the essentials section for concrete examples of usage
+VaultCourier can be used to retrieve the secrets that your application needs. This can be done using the API client itself or by reading a pkl configuration file. In addition, Vault administrators can use VaultCourier to provision and manage access to secrets. The latter includes the rotation of secrets.
+
+Here is a simple example of reading and writing your first secret! 
+First run a Vault in dev mode with
+
+```sh
+docker run --rm --detach -p 8200:8200 -e 'VAULT_DEV_ROOT_TOKEN_ID=learn-vault' hashicorp/vault:latest
+```
+
+then authenticate, write and read the secret.
+
+```swift
+import VaultCourier
+import OpenAPIAsyncHTTPClient
+import Foundation
+
+let client = VaultClient(configuration: .defaultHttp(),
+                         clientTransport: AsyncHTTPClientTransport())
+
+// Authenticate
+try await client.login(method: .token("learn-vault"))
+
+// Write a secret
+let keyToSecret = "my-secret-password"
+struct Secret: Codable {
+    let apiKey: String
+}
+try await client.writeKeyValue(mountPath: "secret",
+                               secret: Secret(apiKey: "secret_api_key"),
+                               key: keyToSecret)
+
+print("Secret written successfully")
+
+// Read a Secret
+let secret: Secret = try await client.readKeyValueSecret(mountPath: "secret", key: keyToSecret)
+
+print("Access Granted! API Key: \(secret.apiKey)")
+```
+
+Check out the essentials section for concrete examples of usage.
 
 ## Topics
 

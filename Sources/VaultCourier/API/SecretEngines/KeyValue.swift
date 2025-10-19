@@ -28,7 +28,7 @@ extension VaultClient {
     /// - Parameters:
     ///   - mountPath: path to key/value secret engine mount
     ///   - secret: value of the secret. It must be a codable object or a dictionary.
-    ///   - key: It's the path of the secret to update
+    ///   - key: the path name under which the secret is stored.
     /// - Returns: Metadata about the secret, like its current version and creation time
     @discardableResult
     public func writeKeyValue(
@@ -45,7 +45,7 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - mountPath: path to key/value secret engine mount
-    ///   - key: It's the path to the secret relative to the secret mount `mountPath`
+    ///   - key: the path name under which the secret is stored.
     ///   - version: Specifies the version to return. If not set the latest version is returned.
     /// - Returns: value of the secret
     public func readKeyValueSecret<T: Decodable & Sendable>(
