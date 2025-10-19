@@ -48,7 +48,7 @@ extension VaultClient {
     /// Deletes a vault database static role
     /// - Parameters:
     ///   - name: name of the role
-    ///   - enginePath: mount path of secret engine
+    ///   - mountPath: mount path of secret engine
     public func deleteStaticRole(
         name: String,
         mountPath: String
@@ -61,7 +61,7 @@ extension VaultClient {
     /// Deletes a dynamic database role
     /// - Parameters:
     ///   - name: name of dynamic database role
-    ///   - enginePath: mount path of secret engine
+    ///   - mountPath: mount path of secret engine
     public func deleteRole(
         name: String,
         mountPath: String

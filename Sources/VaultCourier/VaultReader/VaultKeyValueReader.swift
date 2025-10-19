@@ -29,7 +29,7 @@ import Utils
 
 /// A Pkl resource reader for a KeyValue Vault secret
 ///
-/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeKeyValueSecretReader(scheme:mount:key:version:)``
+/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeKeyValueSecretReader(mountPath:prefix:)``
 ///
 /// ## Package traits
 ///
@@ -133,8 +133,9 @@ extension VaultKeyValueReader: ResourceReader {
 
 extension VaultClient {
     /// Creates a KeyValue resource reader for Pkl configuration files using this `VaultClient` instance and its Logger.
-    /// 
-    ///  
+    ///
+    /// See ``VaultCourier/VaultKeyValueReader/buildSchemeFor(mountPath:prefix:)`` for how the scheme is built.
+    ///
     /// - Parameters:
     ///   - mountPath: mount path to key/value secret engine
     ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed.

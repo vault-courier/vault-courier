@@ -49,7 +49,7 @@ struct ValkeyPluginTrait: SuiteTrait, TestScoping {
         let config = Self.valkeyConnectionConfiguration(connectionName)
         try await vaultClient.enableSecretEngine(mountConfig: mountConfig)
         try await vaultClient.createValkeyConnection(configuration: config, mountPath: enginePath)
-        try await vaultClient.rotateRoot(connection: connectionName, mountPath: enginePath)
+        try await vaultClient.rotateRoot(connectionName: connectionName, mountPath: enginePath)
 
         try await VaultClient.$valkeyConnectionConfig.withValue((mountConfig, config)) {
             try await function()

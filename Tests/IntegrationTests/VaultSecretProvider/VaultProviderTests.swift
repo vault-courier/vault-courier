@@ -163,14 +163,14 @@ extension IntegrationTests.VaultConfigProvider {
             ]
         )
 
-        #expect(try await sut.value(forKey: absoluteKey, type: .string).value == nil)
+        #expect(try sut.value(forKey: absoluteKey, type: .string).value == nil)
 
         let value = try #require(
             try await sut.fetchValue(forKey: absoluteKey,type: .string).value
         )
 
         let expected = try #require(
-            try await sut.value(forKey: absoluteKey, type: .string).value
+            try sut.value(forKey: absoluteKey, type: .string).value
         )
 
         #expect(expected == value)
@@ -240,7 +240,7 @@ extension IntegrationTests.VaultConfigProvider {
 
         let sut = ConfigReader(providers: [
             secretProvider,
-            try await JSONProvider(filePath: .init(fixtureUrl(for: "/SwiftConfiguration/config2.json").relativePath)),
+            try await JSONProvider(filePath: .init(fixtureUrl(for: "/SwiftConfiguration/config.json").relativePath)),
         ])
 
         let secret = try await sut.fetchRequiredString(
