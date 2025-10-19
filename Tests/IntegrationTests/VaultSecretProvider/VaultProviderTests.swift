@@ -377,7 +377,7 @@ extension IntegrationTests.VaultConfigProvider {
 #endif
 
 
-// MARK: Compability
+// MARK: Compatibility
 extension IntegrationTests.VaultConfigProvider {
     @Test
     func compatibility_vault_secret_provider() async throws {

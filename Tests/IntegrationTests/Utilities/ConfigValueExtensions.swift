@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if ConfigProviderSupport
 import Configuration
 
 extension [UInt8] {
@@ -116,3 +117,4 @@ extension ConfigValue {
         self.init(.byteChunkArray(value), isSecret: isSecret)
     }
 }
+#endif

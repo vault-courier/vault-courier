@@ -40,21 +40,6 @@ let enableAllTraitsExplicit = ProcessInfo.processInfo.environment["ENABLE_ALL_TR
 let enableAllTraits = spiGenerateDocs || previewDocs || enableAllTraitsExplicit
 // --------------------------------------------------------------------------------------------
 
-let PklTrait: Trait = .trait(
-    name: "PklSupport",
-    description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
-)
-
-let ConfigProviderTrait: Trait = .trait(
-    name: "ConfigProviderSupport",
-    description: "Enable a Vault configuration provider. This trait provides Configuration.ConfigProvider implementation that can fetch Vault secrets"
-)
-
-let MockTrait: Trait = .trait(
-    name: "MockSupport",
-    description: "Provides a mock client transport for unit testing and development, and adds Encodable conformance to certain Vault response types."
-)
-
 let AppRoleTrait: Trait = .trait(
     name: "AppRoleSupport",
     description: "Enable AppRole authentication"
@@ -75,6 +60,21 @@ let ValkeyDatabasePluginTrait: Trait = .trait(
     name: "ValkeyPluginSupport",
     description: "Enable support for Vault's Valkey database plugin HTTP API",
     enabledTraits: .init(arrayLiteral: DatabaseEngineTrait.name)
+)
+
+let MockTrait: Trait = .trait(
+    name: "MockSupport",
+    description: "Provides a mock client transport for unit testing and development, and adds Encodable conformance to certain Vault response types."
+)
+
+let PklTrait: Trait = .trait(
+    name: "PklSupport",
+    description: "Enable Pkl Resource Reader. This trait provides PKLSwift.ResourceReader implementations that can read Vault secrets directly from pkl files."
+)
+
+let ConfigProviderTrait: Trait = .trait(
+    name: "ConfigProviderSupport",
+    description: "Enable a Vault configuration provider. This trait provides Configuration.ConfigProvider implementation that can fetch Vault secrets"
 )
 
 var traits: Set<Trait> = [
