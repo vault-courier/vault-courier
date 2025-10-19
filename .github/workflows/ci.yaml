@@ -42,7 +42,5 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Run unit tests
-      env:
-        ENABLE_INTEGRATION_TESTS: false
       run: |
-        swift test --filter VaultCourierTests
+        swift test --skip IntegrationTests
