@@ -56,4 +56,4 @@ jobs:
       run: |
         swift test --filter IntegrationTests
     - name: Tear down
-      run: docker compose down -f Scripts/docker-compose.yml
+      run: docker compose -f Scripts/docker-compose.yml down --volumes --remove-orphans
