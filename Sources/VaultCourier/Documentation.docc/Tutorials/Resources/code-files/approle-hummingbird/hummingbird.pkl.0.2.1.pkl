@@ -4,5 +4,5 @@ postgresConfig {
   hostname = "localhost"
   port = 5432
   database = "postgres"
-  credentials = read("vault:/database/static-creds/static_server_role").text
+  credentials = read("vault.database:/static-creds/static_server_role").text
 }

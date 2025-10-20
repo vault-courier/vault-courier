@@ -12,21 +12,6 @@ struct VaultAdmin: AsyncParsableCommand {
             AppRoleCredentials.self
         ]
     )
-    static func makeVaultClient() throws -> VaultClient {
-        let vaultURL = URL(string: "http://127.0.0.1:8200/v1")!
-        let config = VaultClient.Configuration(apiURL: vaultURL)
-
-        let client = Client(
-            serverURL: vaultURL,
-            transport: AsyncHTTPClientTransport()
-        )
-
-        return VaultClient(
-            configuration: config,
-            client: client,
-            authentication: .token("education")
-        )
-    }
 }
 
 extension VaultAdmin {
@@ -49,37 +34,48 @@ extension VaultAdmin {
         }
 
         func run() async throws {
-            let vaultClient = try makeVaultClient()
-            try await vaultClient.authenticate()
+            let vaultClient = VaultClient(
+                configuration: .defaultHttp(),
+                clientTransport: AsyncHTTPClientTransport()
+            )
+            try await vaultClient.login(method: .token("education"))
 
-            let vaultConfig = try await VaultAdminConfig.loadFrom(source: .path(config))
+            try await withProjectEvaluator(
+                projectBaseURI: URL(filePath: "Sources/Operations/Pkl", directoryHint: .isDirectory),
+                options: .preconfigured
+            ) { evaluator in
+                let vaultConfig = try await VaultAdminConfig.loadFrom(evaluator: evaluator, source: .path(config))
 
-            try await generateSecretID(app, config: vaultConfig, vaultClient: vaultClient)
+                try await generateSecretID(app, config: vaultConfig, vaultClient: vaultClient)
+            }
         }
 
         func generateSecretID(_ app: App, config: VaultAdminConfig.Module, vaultClient: VaultClient) async throws {
-            guard let appRole = config.authMethod.appRoles[app.rawValue] else {
+            guard let appRole = config.authMethod.appRoles[app.rawValue],
+                  let mountPath = appRole.properties.approle_path else {
                 throw VaultOperationsError.missingApproleConfiguration("Missing '\(app.rawValue)' AppRole Config in pkl file")
             }
             print("Generating Approle credentials for '\(app.rawValue)' app...")
 
-            // Generate SecretID for the given app
-            let tokenResponse = try await vaultClient.generateAppSecretId(
-                capabilities: .init(
-                    appRole.tokenConfig
+            try await vaultClient.withAppRoleClient(mountPath: mountPath) { client in
+                // Generate SecretID for the given app
+                let tokenResponse = try await client.generateAppSecretId(
+                    capabilities: .init(
+                        appRole.tokenConfig
+                    )
                 )
-            )
-            let secretID: String = switch tokenResponse {
-                case .wrapped(let wrappedResponse):
-                    wrappedResponse.token
-                case .secretId(let secretIdResponse):
-                    secretIdResponse.secretID
-            }
-            try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
-            print("SecretID successfully written to \(outputFile)")
+                let secretID: String = switch tokenResponse {
+                    case .wrapped(let wrappedResponse):
+                        wrappedResponse.token
+                    case .secretId(let secretIdResponse):
+                        secretIdResponse.secretID
+                }
+                try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
+                print("SecretID successfully written to \(outputFile)")
 
-            let roleIdResponse = try await vaultClient.appRoleID(name: appRole.properties.role_name)
-            print("'\(app.rawValue)' app roleID: \(roleIdResponse.roleId)")
+                let roleIdResponse = try await client.appRoleID(name: appRole.properties.role_name)
+                print("'\(app.rawValue)' app roleID: \(roleIdResponse.roleID)")
+            }
         }
     }
 
@@ -92,14 +88,22 @@ extension VaultAdmin {
         @Argument var config: String
 
         func run() async throws {
-            let vaultClient = try makeVaultClient()
-            try await vaultClient.authenticate()
+            let vaultClient = VaultClient(
+                configuration: .defaultHttp(),
+                clientTransport: AsyncHTTPClientTransport()
+            )
+            try await vaultClient.login(method: .token("education"))
 
-            let config = try await VaultAdminConfig.loadFrom(source: .path(config))
+            try await withProjectEvaluator(
+                projectBaseURI: URL(filePath: "Sources/Operations/Pkl", directoryHint: .isDirectory),
+                options: .preconfigured
+            ) { evaluator in
+                let config = try await VaultAdminConfig.loadFrom(evaluator: evaluator, source: .path(config))
 
-            try await updatePolicies(config: config, vaultClient: vaultClient)
-            try await provisionDatabase(config: config, vaultClient: vaultClient)
-            try await configureAppRole(config: config, vaultClient: vaultClient)
+                try await updatePolicies(config: config, vaultClient: vaultClient)
+                try await provisionDatabase(config: config, vaultClient: vaultClient)
+                try await configureAppRole(config: config, vaultClient: vaultClient)
+            }
         }
 
         func updatePolicies(config: VaultAdminConfig.Module, vaultClient: VaultClient) async throws {
@@ -114,25 +118,24 @@ extension VaultAdmin {
             try await vaultClient.enableSecretEngine(mountConfig: .init(config.database.mount))
             print("Database secrets engine enabled at '\(config.database.mount.path)'.")
 
-            // Create connection between vault and a postgresql database
-            try await vaultClient.databaseConnection(
-                configuration: .init(config.database.connection),
-                enginePath: config.database.mount.path
-            )
+            try await vaultClient.withDatabaseClient(mountPath: config.database.mount.path) { client in
+                // Create connection between vault and a postgresql database
+                try await client.createPostgresConnection(
+                    configuration: .init(config.database.connection)
+                )
 
-            // Create static role
-            try await vaultClient.create(
-                staticRole: try config.database.staticRole.create,
-                enginePath: config.database.mount.path
-            )
-            print("Static role '\(config.database.staticRole.vault_role_name)' created.")
+                // Create static role
+                try await client.create(
+                    staticRole: try config.database.staticRole.create
+                )
+                print("Static role '\(config.database.staticRole.vault_role_name)' created.")
 
-            // Create dynamic role
-            try await vaultClient.create(
-                dynamicRole: .init(config.database.dynamicRole),
-                enginePath: config.database.mount.path
-            )
-            print("Dynamic role '\(config.database.dynamicRole.name)' created.")
+                // Create dynamic role
+                try await client.create(
+                    dynamicRole: .postgres(.init(config.database.dynamicRole))
+                )
+                print("Dynamic role '\(config.database.dynamicRole.name)' created.")
+            }
         }
 
         func configureAppRole(config: VaultAdminConfig.Module, vaultClient: VaultClient) async throws {
@@ -140,9 +143,11 @@ extension VaultAdmin {
             try await vaultClient.enableAuthMethod(configuration: .init(config.authMethod.config))
             print("AppRole Authentication enabled.")
 
-
             for appRole in config.authMethod.appRoles.values {
-                try await vaultClient.createAppRole(.init(appRole.properties))
+                try await vaultClient.createAppRole(
+                    .init(appRole.properties),
+                    mountPath: appRole.properties.approle_path ?? "approle"
+                )
                 print("AppRole '\(appRole.properties.role_name)' created.")
             }
         }

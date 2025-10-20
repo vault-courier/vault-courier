@@ -12,21 +12,6 @@ struct VaultAdmin: AsyncParsableCommand {
             AppRoleCredentials.self
         ]
     )
-    static func makeVaultClient() throws -> VaultClient {
-        let vaultURL = URL(string: "http://127.0.0.1:8200/v1")!
-        let config = VaultClient.Configuration(apiURL: vaultURL)
-
-        let client = Client(
-            serverURL: vaultURL,
-            transport: AsyncHTTPClientTransport()
-        )
-
-        return VaultClient(
-            configuration: config,
-            client: client,
-            authentication: .token("education")
-        )
-    }
 }
 
 extension VaultAdmin {
@@ -86,13 +71,23 @@ extension VaultAdmin {
         @Argument var config: String
 
         func run() async throws {
-            let vaultClient = try makeVaultClient()
-            try await vaultClient.authenticate()
-
-            let config = try await VaultAdminConfig.loadFrom(source: .path(config))
+            let vaultClient = VaultClient(
+                configuration: .defaultHttp(),
+                clientTransport: AsyncHTTPClientTransport()
+            )
+            try await vaultClient.login(method: .token("education"))
 
             try await updatePolicies(vaultClient: vaultClient)
-            try await provisionDatabase(config: config, vaultClient: vaultClient)
+
+            try await withProjectEvaluator(
+                projectBaseURI: URL(filePath: "Sources/Operations/Pkl", directoryHint: .isDirectory),
+                options: .preconfigured
+            ) { evaluator in
+                let config = try await VaultAdminConfig.loadFrom(evaluator: evaluator, source: .path(config))
+
+                try await provisionDatabase(config: config, vaultClient: vaultClient)
+            }
+            
             try await configureAppRole(vaultClient: vaultClient)
         }
 
@@ -113,25 +108,24 @@ extension VaultAdmin {
             try await vaultClient.enableSecretEngine(mountConfig: .init(config.database.mount))
             print("Database secrets engine enabled at '\(config.database.mount.path)'.")
 
-            // Create connection between vault and a postgresql database
-            try await vaultClient.databaseConnection(
-                configuration: .init(config.database.connection),
-                enginePath: config.database.mount.path
-            )
+            try await vaultClient.withDatabaseClient(mountPath: config.database.mount.path) { client in
+                // Create connection between vault and a postgresql database
+                try await client.createPostgresConnection(
+                    configuration: .init(config.database.connection)
+                )
 
-            // Create static role
-            try await vaultClient.create(
-                staticRole: try config.database.staticRole.create,
-                enginePath: config.database.mount.path
-            )
-            print("Static role '\(config.database.staticRole.vault_role_name)' created.")
+                // Create static role
+                try await client.create(
+                    staticRole: try config.database.staticRole.create
+                )
+                print("Static role '\(config.database.staticRole.vault_role_name)' created.")
 
-            // Create dynamic role
-            try await vaultClient.create(
-                dynamicRole: .init(config.database.dynamicRole),
-                enginePath: config.database.mount.path
-            )
-            print("Dynamic role '\(config.database.dynamicRole.name)' created.")
+                // Create dynamic role
+                try await client.create(
+                    dynamicRole: .postgres(.init(config.database.dynamicRole))
+                )
+                print("Dynamic role '\(config.database.dynamicRole.name)' created.")
+            }
         }
 
         func configureAppRole(vaultClient: VaultClient) async throws {

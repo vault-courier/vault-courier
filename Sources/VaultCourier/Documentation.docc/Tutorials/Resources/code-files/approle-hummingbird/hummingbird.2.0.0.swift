@@ -13,7 +13,7 @@ let package = Package(
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.4.0"),
         .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
-        .package(url: "https://github.com/vault-courier/vault-courier", from: "0.2.0"),
+        .package(url: "https://github.com/vault-courier/vault-courier", .upToNextMinor(from: "0.3.0")),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0")
     ],
     targets: [

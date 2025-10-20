@@ -12,21 +12,6 @@ struct VaultAdmin: AsyncParsableCommand {
             AppRoleCredentials.self
         ]
     )
-    static func makeVaultClient() throws -> VaultClient {
-        let vaultURL = URL(string: "http://127.0.0.1:8200/v1")!
-        let config = VaultClient.Configuration(apiURL: vaultURL)
-
-        let client = Client(
-            serverURL: vaultURL,
-            transport: AsyncHTTPClientTransport()
-        )
-
-        return VaultClient(
-            configuration: config,
-            client: client,
-            authentication: .token("education")
-        )
-    }
 }
 
 extension VaultAdmin {
@@ -46,8 +31,11 @@ extension VaultAdmin {
         }
 
         func run() async throws {
-            let vaultClient = try makeVaultClient()
-            try await vaultClient.authenticate()
+            let vaultClient = VaultClient(
+                configuration: .defaultHttp(),
+                clientTransport: AsyncHTTPClientTransport()
+            )
+            try await vaultClient.login(method: .token("education"))
 
             try await generateSecretID(app, vaultClient: vaultClient)
         }
@@ -83,8 +71,11 @@ extension VaultAdmin {
         )
 
         func run() async throws {
-            let vaultClient = try makeVaultClient()
-            try await vaultClient.authenticate()
+            let vaultClient = VaultClient(
+                configuration: .defaultHttp(),
+                clientTransport: AsyncHTTPClientTransport()
+            )
+            try await vaultClient.login(method: .token("education"))
 
             try await updatePolicies(vaultClient: vaultClient)
             try await provisionDatabase(vaultClient: vaultClient)
@@ -110,49 +101,54 @@ extension VaultAdmin {
             let dynamicRoleName = "dynamic_migrator_role"
 
             // Enable Database secret engine
-            try await vaultClient.enableSecretEngine(mountConfig: .init(mountType: "database", path: databaseMountPath))
-            print("Database secrets engine enabled at '\(databaseMountPath)'.")
+            try await vaultClient.enableSecretEngine(mountConfig: .init(config.database.mount))
+            print("Database secrets engine enabled at '\(config.database.mount.path)'.")
 
-            // Create connection between vault and a postgresql database
-            try await vaultClient.databaseConnection(
-                configuration: .init(
-                    connection: databaseConnection,
-                    allowedRoles: [
-                        staticRoleName,
-                        dynamicRoleName
-                    ],
-                    connectionUrl: "postgresql://{{username}}:{{password}}@127.0.0.1:5432/postgres?sslmode=disable",
-                    username: "vault_root",
-                    password: "root_password"),
-                enginePath: databaseMountPath
-            )
+            try await vaultClient.withDatabaseClient(mountPath: config.database.mount.path) { client in
+                // Create connection between vault and a postgresql database
+                try await client.createPostgresConnection(
+                    configuration: .init(
+                        connection: databaseConnection,
+                        allowedRoles: [
+                            staticRoleName,
+                            dynamicRoleName
+                        ],
+                        connectionUrl: "postgresql://{{username}}:{{password}}@127.0.0.1:5432/postgres?sslmode=disable",
+                        username: "vault_root",
+                        password: "root_password"
+                    )
+                )
 
-            // Create static role
-            try await vaultClient.create(
-                staticRole: .init(
-                    vaultRoleName: staticRoleName,
-                    databaseUsername: "todos_user",
-                    databaseConnectionName: databaseConnection,
-                    rotation: .period(.seconds(3600*60*24*28)),
-                    credentialType: .password),
-                enginePath: databaseMountPath
-            )
-            print("Static role '\(staticRoleName)' created.")
+                // Create static role
+                try await client.create(staticRole: 
+                    .postgres(
+                        .init(
+                            vaultRoleName: staticRoleName,
+                            databaseUsername: "todos_user",
+                            databaseConnectionName: databaseConnection,
+                            rotation: .period(.seconds(3600*60*24*28)),
+                            credentialType: .password
+                        )
+                    )
+                )
+                print("Static role '\(config.database.staticRole.vault_role_name)' created.")
 
-            // Create dynamic role
-            try await vaultClient.create(
-                dynamicRole: .init(
-                    vaultRoleName: dynamicRoleName,
-                    databaseConnectionName: databaseConnection,
-                    defaultTTL: .seconds(120),
-                    creationStatements: [
-                        #"CREATE ROLE "{{name}}" WITH SUPERUSER LOGIN PASSWORD '{{password}}';"#
-                    ],
-                    credentialType: .password
-                ),
-                enginePath: databaseMountPath
-            )
-            print("Dynamic role '\(dynamicRoleName)' created.")
+                // Create dynamic role
+                try await client.create(dynamicRole:
+                    .postgres(
+                        .init(
+                            vaultRoleName: dynamicRoleName,
+                            databaseConnectionName: databaseConnection,
+                            defaultTTL: .seconds(120),
+                            creationStatements: [
+                                #"CREATE ROLE "{{name}}" WITH SUPERUSER LOGIN PASSWORD '{{password}}';"#
+                            ],
+                            credentialType: .password
+                        )
+                    )
+                )
+                print("Dynamic role '\(config.database.dynamicRole.name)' created.")
+            }
         }
 
         func configureAppRole(vaultClient: VaultClient) async throws {

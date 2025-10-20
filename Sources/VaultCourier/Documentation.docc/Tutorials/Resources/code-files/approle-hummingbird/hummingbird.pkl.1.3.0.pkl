@@ -1,4 +1,4 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultAppRole.pkl"
+amends "@pkl.vault/Payloads/AuthMethods/AppRole/VaultAppRole.pkl"
 
 import ".../authRoleConfig.pkl"
 import "appPolicy.pkl"
