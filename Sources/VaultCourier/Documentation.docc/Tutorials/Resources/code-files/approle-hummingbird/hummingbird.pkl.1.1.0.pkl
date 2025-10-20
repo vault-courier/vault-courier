@@ -1,9 +1,9 @@
 module VaultAdminConfig
 
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/MountConfiguration.pkl" as MountConfiguration
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresDatabaseConnection.pkl" as PostgresDatabaseConnection
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresStaticRole.pkl" as PostgresStaticRole
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresRole.pkl" as PostgresRole
+import "@pkl.vault/Payloads/SystemBackend/Mounts/MountConfiguration.pkl"
+import "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresDatabaseConnection.pkl"
+import "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresStaticRole.pkl"
+import "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresRole.pkl"
 
 database: DatabaseConfiguration
 

@@ -1,4 +1,4 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0#/Payloads/PostgresRole.pkl"
+amends "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresRole.pkl"
 
 import ".../pgConnection.pkl"
 

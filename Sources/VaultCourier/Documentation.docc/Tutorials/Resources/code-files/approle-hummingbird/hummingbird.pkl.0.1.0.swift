@@ -4,7 +4,7 @@ import PklSwift
 public enum TodoConfig {}
 
 extension TodoConfig {
-    public struct Module: PklRegisteredType, Decodable, Hashable {
+    public struct Module: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "TodoConfig"
 
         public var postgresConfig: PostgresConfig
@@ -14,7 +14,7 @@ extension TodoConfig {
         }
     }
 
-    public struct PostgresConfig: PklRegisteredType, Decodable, Hashable {
+    public struct PostgresConfig: PklRegisteredType, Decodable, Hashable, Sendable {
         public static let registeredIdentifier: String = "TodoConfig#PostgresConfig"
 
         /// The host url of Server

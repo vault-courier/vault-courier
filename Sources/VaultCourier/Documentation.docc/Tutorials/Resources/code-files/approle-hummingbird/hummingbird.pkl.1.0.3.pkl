@@ -1,7 +1,7 @@
-amends "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0#/Payloads/PostgresDatabaseConnection.pkl"
+amends "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresDatabaseConnection.pkl"
 
 connection = "pg_connection"
-host = "127.0.0.1"
+host = "pg-db"
 port = 5432
 databaseName = "postgres"
 sslMode = "disable"

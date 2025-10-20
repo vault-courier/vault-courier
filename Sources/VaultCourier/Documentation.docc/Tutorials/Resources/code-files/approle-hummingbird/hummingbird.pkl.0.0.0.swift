@@ -13,9 +13,9 @@ let package = Package(
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.4.0"),
         .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
-        .package(url: "https://github.com/vault-courier/vault-courier", from: "0.2.0", traits: ["Pkl"]),
+        .package(url: "https://github.com/vault-courier/vault-courier", .upToNextMinor(from: "0.3.0"), traits: ["PklSupport"]),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
-        .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2")
+        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0"))
     ],
     targets: [
         .executableTarget(
@@ -35,7 +35,7 @@ let package = Package(
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "VaultCourier", package: "vault-courier"),
-                .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client")
+                .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
             ],
             path: "Sources/Operations",
         ),

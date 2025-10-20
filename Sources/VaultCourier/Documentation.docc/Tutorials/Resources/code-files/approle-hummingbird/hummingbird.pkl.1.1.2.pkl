@@ -1,13 +1,13 @@
 module VaultAdminConfig
 
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/MountConfiguration.pkl" as MountConfiguration
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresDatabaseConnection.pkl" as PostgresDatabaseConnection
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresStaticRole.pkl" as PostgresStaticRole
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/PostgresRole.pkl" as PostgresRole
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultPolicy.pkl"
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/AuthMethodConfig.pkl" as AuthMethodConfig
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/VaultAppRole.pkl" as VaultAppRole
-import "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.1.0#/Payloads/AppRoleToken.pkl" as AppRoleToken
+import "@pkl.vault/Payloads/SystemBackend/Mounts/MountConfiguration.pkl"
+import "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresDatabaseConnection.pkl"
+import "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresStaticRole.pkl"
+import "@pkl.vault/Payloads/SecretEngines/Databases/PostgreSQL/PostgresRole.pkl"
+import "@pkl.vault/Payloads/SystemBackend/Policies/VaultPolicy.pkl"
+import "@pkl.vault/Payloads/SystemBackend/Auth/AuthMethodConfig.pkl"
+import "@pkl.vault/Payloads/AuthMethods/AppRole/VaultAppRole.pkl"
+import "@pkl.vault/Payloads/AuthMethods/AppRole/AppRoleToken.pkl"
 
 policies: Listing<VaultPolicy>
 
