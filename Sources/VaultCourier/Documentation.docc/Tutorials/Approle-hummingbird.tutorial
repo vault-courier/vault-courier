@@ -101,14 +101,14 @@
             }
             
             @Step {
-                We will authenticate our Vault client with approle, so we need a RoleID and a SecretID. The RoleID will be injected in the enviroment, while the SecretID will be provided in an external file.
+                We will authenticate our Vault client with approle, so we need a RoleID and a SecretID. The RoleID will be injected in the environment, while the SecretID will be provided in an external file.
                 
                 @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.1.swift, previousFile:  hummingbird.0.1.0.swift)
             }
             
             @Step {
                 Import our chosen client transport `OpenAPIAsyncHTTPClient`, and create a VaultClient with VaultCourier. You may need to trust the Swift OpenAPI Generator plugin in your IDE if you have not done so.
-                Note that we initialize the vault client with the approle authentication credentials. The parameter `isWrapped` is not important at the moment. We will come back later and modify it to add an extra security layer to the authentication process.
+                Note that we authenticate the vault client with the approle credentials.
                 
                 @Code(name: "Sources/App/Vault.swift", file:  hummingbird.0.1.2.swift, previousFile:  hummingbird.0.1.1.swift)
             }
@@ -141,8 +141,7 @@
             }
             
             @Step {
-                Create a new file in `Sources/Operations/VaultAdmin.swift`. We introduce a main argument parser async command, called `vault-admin` with a vault client static function.
-                Note that we use the token authentication method, which is usually reserved to privileged roles.
+                Create a new file in `Sources/Operations/VaultAdmin.swift`. We introduce a main argument parser async command, called `vault-admin`.
                 
                 @Code(name: "Sources/Operations/VaultAdmin.swift", file: hummingbird.1.1.0.swift)
             }
