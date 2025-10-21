@@ -26,7 +26,13 @@ Here is a simple example of reading and writing your first secret!
 First run a Vault in dev mode with
 
 ```sh
-docker run --rm --detach -p 8200:8200 -e 'VAULT_DEV_ROOT_TOKEN_ID=learn-vault' hashicorp/vault:latest
+container_id=$(docker run --rm --detach -p 8200:8200 -e 'VAULT_DEV_ROOT_TOKEN_ID=learn-vault' hashicorp/vault:latest)
+```
+
+or with OpenBao
+
+```sh
+container_id=$(docker run --rm --detach -p 8200:8200 -e 'BAO_DEV_ROOT_TOKEN_ID=education' openbao/openbao:latest)
 ```
 
 then authenticate, write and read the secret.
@@ -57,6 +63,12 @@ print("Secret written successfully")
 let secret: Secret = try await client.readKeyValueSecret(mountPath: "secret", key: keyToSecret)
 
 print("Access Granted! API Key: \(secret.apiKey)")
+```
+
+To stop the Vault server run:
+
+```sh
+docker stop "${container_id}" > /dev/null
 ```
 
 Check out the essentials section for concrete examples of usage.
