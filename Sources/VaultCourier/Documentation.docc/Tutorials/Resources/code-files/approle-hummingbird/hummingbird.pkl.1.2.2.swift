@@ -48,11 +48,12 @@ extension VaultAdmin {
                     "migrator_app_role"
             }
             print("Generating Approle credentials for '\(app.rawValue)' app...")
+
             try await vaultClient.withAppRoleClient(mountPath: "approle") { client in
                 // Generate SecretID for the given app
                 let tokenResponse = try await client.generateAppSecretId(
                     capabilities: .init(
-                        appRoleName
+                        roleName: appRoleName
                     )
                 )
                 let secretID: String = switch tokenResponse {
@@ -100,7 +101,7 @@ extension VaultAdmin {
 
         func updatePolicies(config: VaultAdminConfig.Module, vaultClient: VaultClient) async throws {
             for policy in config.policies {
-                try await vaultClient.createPolicy(name: policy.name, hclPolicy: policy.payload)
+                try await vaultClient.createPolicy(hcl: .init(name: policy.name, policy: policy.payload))
                 print("Policy '\(policy.name)' written.")
             }
         }

@@ -108,7 +108,7 @@ extension VaultAdmin {
 
         func updatePolicies(config: VaultAdminConfig.Module, vaultClient: VaultClient) async throws {
             for policy in config.policies {
-                try await vaultClient.createPolicy(name: policy.name, hclPolicy: policy.payload)
+                try await vaultClient.createPolicy(hcl: .init(name: policy.name, policy: policy.payload))
                 print("Policy '\(policy.name)' written.")
             }
         }

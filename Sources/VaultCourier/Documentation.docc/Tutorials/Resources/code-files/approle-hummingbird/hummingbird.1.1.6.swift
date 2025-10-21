@@ -49,19 +49,25 @@ extension VaultAdmin {
             }
             print("Generating Approle credentials for '\(app.rawValue)' app...")
 
-            // Generate SecretID for the given app
-            let tokenResponse = try await vaultClient.generateAppSecretId(capabilities: .init(roleName: appRoleName))
-            let secretID: String = switch tokenResponse {
-                case .wrapped(let wrappedResponse):
-                    wrappedResponse.token
-                case .secretId(let secretIdResponse):
-                    secretIdResponse.secretID
-            }
-            try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
-            print("SecretID successfully written to \(outputFile)")
+            try await vaultClient.withAppRoleClient(mountPath: "approle") { client in
+                // Generate SecretID for the given app
+                let tokenResponse = try await client.generateAppSecretId(
+                    capabilities: .init(
+                        roleName: appRoleName
+                    )
+                )
+                let secretID: String = switch tokenResponse {
+                    case .wrapped(let wrappedResponse):
+                        wrappedResponse.token
+                    case .secretId(let secretIdResponse):
+                        secretIdResponse.secretID
+                }
+                try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
+                print("SecretID successfully written to \(outputFile)")
 
-            let roleIdResponse = try await vaultClient.appRoleID(name: appRoleName)
-            print("\(app.rawValue) app roleID: \(roleIdResponse.roleId)")
+                let roleIdResponse = try await client.appRoleID(name: appRoleName)
+                print("'\(app.rawValue)' app roleID: \(roleIdResponse.roleID)")
+            }
         }
     }
 
@@ -89,7 +95,7 @@ extension VaultAdmin {
             ]
 
             for (name, policy) in policies {
-                try await vaultClient.createPolicy(name: name, hclPolicy: policy)
+                try await vaultClient.createPolicy(hcl: .init(name: name, policy: policy))
                 print("Policy '\(name)' written.")
             }
         }
