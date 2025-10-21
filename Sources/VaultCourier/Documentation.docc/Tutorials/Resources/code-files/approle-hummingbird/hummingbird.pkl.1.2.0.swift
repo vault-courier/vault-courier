@@ -31,8 +31,11 @@ extension VaultAdmin {
         }
 
         func run() async throws {
-            let vaultClient = try makeVaultClient()
-            try await vaultClient.authenticate()
+            let vaultClient = VaultClient(
+                configuration: .defaultHttp(),
+                clientTransport: AsyncHTTPClientTransport()
+            )
+            try await vaultClient.login(method: .token("education"))
 
             try await generateSecretID(app, vaultClient: vaultClient)
         }
@@ -46,19 +49,25 @@ extension VaultAdmin {
             }
             print("Generating Approle credentials for '\(app.rawValue)' app...")
 
-            // Generate SecretID for the given app
-            let tokenResponse = try await vaultClient.generateAppSecretId(capabilities: .init(roleName: appRoleName))
-            let secretID: String = switch tokenResponse {
-                case .wrapped(let wrappedResponse):
-                    wrappedResponse.token
-                case .secretId(let secretIdResponse):
-                    secretIdResponse.secretID
-            }
-            try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
-            print("SecretID successfully written to \(outputFile)")
+            try await vaultClient.withAppRoleClient(mountPath: "approle") { client in
+                // Generate SecretID for the given app
+                let tokenResponse = try await client.generateAppSecretId(
+                    capabilities: .init(
+                        roleName: appRoleName
+                    )
+                )
+                let secretID: String = switch tokenResponse {
+                    case .wrapped(let wrappedResponse):
+                        wrappedResponse.token
+                    case .secretId(let secretIdResponse):
+                        secretIdResponse.secretID
+                }
+                try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
+                print("SecretID successfully written to \(outputFile)")
 
-            let roleIdResponse = try await vaultClient.appRoleID(name: appRoleName)
-            print("\(app.rawValue) app roleID: \(roleIdResponse.roleId)")
+                let roleIdResponse = try await client.appRoleID(name: appRoleName)
+                print("'\(app.rawValue)' app roleID: \(roleIdResponse.roleID)")
+            }
         }
     }
 
@@ -78,16 +87,13 @@ extension VaultAdmin {
             try await vaultClient.login(method: .token("education"))
 
             try await updatePolicies(vaultClient: vaultClient)
-
             try await withProjectEvaluator(
                 projectBaseURI: URL(filePath: "Sources/Operations/Pkl", directoryHint: .isDirectory),
                 options: .preconfigured
             ) { evaluator in
                 let config = try await VaultAdminConfig.loadFrom(evaluator: evaluator, source: .path(config))
-
                 try await provisionDatabase(config: config, vaultClient: vaultClient)
             }
-            
             try await configureAppRole(vaultClient: vaultClient)
         }
 
@@ -98,7 +104,7 @@ extension VaultAdmin {
             ]
 
             for (name, policy) in policies {
-                try await vaultClient.createPolicy(name: name, hclPolicy: policy)
+                try await vaultClient.createPolicy(hcl: .init(name: name, policy: policy))
                 print("Policy '\(name)' written.")
             }
         }

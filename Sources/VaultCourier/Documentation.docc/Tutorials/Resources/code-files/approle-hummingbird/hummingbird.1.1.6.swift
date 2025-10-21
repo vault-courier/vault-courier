@@ -49,19 +49,25 @@ extension VaultAdmin {
             }
             print("Generating Approle credentials for '\(app.rawValue)' app...")
 
-            // Generate SecretID for the given app
-            let tokenResponse = try await vaultClient.generateAppSecretId(capabilities: .init(roleName: appRoleName))
-            let secretID: String = switch tokenResponse {
-                case .wrapped(let wrappedResponse):
-                    wrappedResponse.token
-                case .secretId(let secretIdResponse):
-                    secretIdResponse.secretID
-            }
-            try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
-            print("SecretID successfully written to \(outputFile)")
+            try await vaultClient.withAppRoleClient(mountPath: "approle") { client in
+                // Generate SecretID for the given app
+                let tokenResponse = try await client.generateAppSecretId(
+                    capabilities: .init(
+                        roleName: appRoleName
+                    )
+                )
+                let secretID: String = switch tokenResponse {
+                    case .wrapped(let wrappedResponse):
+                        wrappedResponse.token
+                    case .secretId(let secretIdResponse):
+                        secretIdResponse.secretID
+                }
+                try secretID.write(to: URL(filePath: self.outputFile), atomically: true, encoding: .utf8)
+                print("SecretID successfully written to \(outputFile)")
 
-            let roleIdResponse = try await vaultClient.appRoleID(name: appRoleName)
-            print("\(app.rawValue) app roleID: \(roleIdResponse.roleId)")
+                let roleIdResponse = try await client.appRoleID(name: appRoleName)
+                print("'\(app.rawValue)' app roleID: \(roleIdResponse.roleID)")
+            }
         }
     }
 
@@ -89,7 +95,7 @@ extension VaultAdmin {
             ]
 
             for (name, policy) in policies {
-                try await vaultClient.createPolicy(name: name, hclPolicy: policy)
+                try await vaultClient.createPolicy(hcl: .init(name: name, policy: policy))
                 print("Policy '\(name)' written.")
             }
         }
@@ -101,10 +107,10 @@ extension VaultAdmin {
             let dynamicRoleName = "dynamic_migrator_role"
 
             // Enable Database secret engine
-            try await vaultClient.enableSecretEngine(mountConfig: .init(config.database.mount))
-            print("Database secrets engine enabled at '\(config.database.mount.path)'.")
+            try await vaultClient.enableSecretEngine(mountConfig: .init(mountType: "database", path: databaseMountPath))
+            print("Database secrets engine enabled at '\(databaseMountPath)'.")
 
-            try await vaultClient.withDatabaseClient(mountPath: config.database.mount.path) { client in
+            try await vaultClient.withDatabaseClient(mountPath: "database") { client in
                 // Create connection between vault and a postgresql database
                 try await client.createPostgresConnection(
                     configuration: .init(
@@ -120,8 +126,8 @@ extension VaultAdmin {
                 )
 
                 // Create static role
-                try await client.create(staticRole: 
-                    .postgres(
+                try await client.create(
+                    staticRole: .postgres(
                         .init(
                             vaultRoleName: staticRoleName,
                             databaseUsername: "todos_user",
@@ -131,15 +137,15 @@ extension VaultAdmin {
                         )
                     )
                 )
-                print("Static role '\(config.database.staticRole.vault_role_name)' created.")
+                print("Static role '\(staticRoleName)' created.")
 
                 // Create dynamic role
-                try await client.create(dynamicRole:
-                    .postgres(
+                try await client.create(
+                    dynamicRole: .postgres(
                         .init(
                             vaultRoleName: dynamicRoleName,
                             databaseConnectionName: databaseConnection,
-                            defaultTTL: .seconds(120),
+                            defaultTimeToLive: .seconds(120),
                             creationStatements: [
                                 #"CREATE ROLE "{{name}}" WITH SUPERUSER LOGIN PASSWORD '{{password}}';"#
                             ],
@@ -147,7 +153,7 @@ extension VaultAdmin {
                         )
                     )
                 )
-                print("Dynamic role '\(config.database.dynamicRole.name)' created.")
+                print("Dynamic role '\(dynamicRoleName)' created.")
             }
         }
 
@@ -158,23 +164,29 @@ extension VaultAdmin {
 
             // Create server approle
             let todoAppRole = "server_app_role"
-            try await vaultClient.createAppRole(.init(
-                name: todoAppRole,
-                secretIdTTL: .seconds(3600),
-                tokenPolicies: ["todos"],
-                tokenTTL: .seconds(3600),
-                tokenType: .service)
+            try await vaultClient.createAppRole(
+                .init(
+                    name: todoAppRole,
+                    secretIdTimeToLive: .seconds(3600),
+                    tokenPolicies: ["todos"],
+                    tokenTimeToLive: .seconds(3600),
+                    tokenType: .service
+                ),
+                mountPath: "approle"
             )
             print("AppRole '\(todoAppRole)' created.")
 
             // Create Migrator approle
             let migratorAppRole = "migrator_app_role"
-            try await vaultClient.createAppRole(.init(
-                name: migratorAppRole,
-                secretIdTTL: .seconds(3600),
-                tokenPolicies: ["migrator"],
-                tokenTTL: .seconds(3600),
-                tokenType: .batch)
+            try await vaultClient.createAppRole(
+                .init(
+                    name: migratorAppRole,
+                    secretIdTimeToLive: .seconds(3600),
+                    tokenPolicies: ["migrator"],
+                    tokenTimeToLive: .seconds(3600),
+                    tokenType: .batch
+                ),
+                mountPath: "approle"
             )
             print("AppRole '\(migratorAppRole)' created.")
         }

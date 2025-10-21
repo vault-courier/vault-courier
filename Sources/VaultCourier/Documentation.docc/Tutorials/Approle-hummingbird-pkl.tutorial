@@ -62,8 +62,9 @@
             
             @Step {
                 In particular, note how we define the credentials property. Pkl can read external resources, such as environment variables or text files.
-                To read a resource, one uses a `read` expression and passes a resource URI scheme. The `Pkl` package trait in VaultCourier adds implementations of the external reader protocol, and we use them here to read a vault secret.
-                We use the default resource URI scheme "vault", but it can be customized in the initializer of the VaultReader.
+                To read a resource, one uses a `read` expression and passes a resource URI scheme. The `PklSupport` package trait in VaultCourier adds custom Pkl resource readers, and we use them here to read a vault secret.
+                
+                The resource URI scheme "vault.database" contains the database mount path. It is formed with ``VaultDatabaseCredentialReader/buildSchemeFor(mountPath:prefix:)``.
                 
                 @Code(name: "todoConfig.stage.pkl", file: hummingbird.pkl.0.2.1.pkl, previousFile:  hummingbird.pkl.0.2.0.pkl)
             }
@@ -140,7 +141,7 @@
                 Those enumerated typealiases will be turned by `pkl-gen-swift` into swift enumerations. Optional properties are expressed in Pkl and Swift the same.
                 
                 
-                @Code(name: "https://github.com/vault-courier/vault-courier-pkl/blob/main/Payloads/MountConfiguration.pkl", file: hummingbird.pkl.1.0.0.pkl)
+                @Code(name: "https://github.com/vault-courier/vault-courier-pkl/blob/main/Payloads/SystemBackend/Mounts/MountConfiguration.pkl", file: hummingbird.pkl.1.0.0.pkl)
             }
             
             @Step {
@@ -287,11 +288,11 @@
     }
     
     @Section(title: "Run Lab") {
-        In this last section we repeat the setup to run the Pkl-modified apps. You need the HashiCorpVault or OpenBao binary installed in your system `PATH`, as well as Docker installed.
+        In this last section we simplify the lab setup and run the Pkl-modified apps.
         
         @Steps {
             @Step {
-                Open a terminal and start a Vault dev server with the literal string `education` as the root token value, and a Postgres database
+                Copy the Scripts found in the [examples-repository](https://github.com/vault-courier/vault-courier-examples/tree/main/approle-hummingbird-pkl-example/Scripts) in the root directory. Open a terminal and run the script as shown in the listing. 
                 
                 You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.
                 

@@ -35,10 +35,6 @@ func connectToVault(
         fatalError("❌ The app could not log in to Vault. Open investigation 🕵️")
     }
 
-    // Authenticate with vault
-    guard try await vaultClient.authenticate()
-    else { fatalError("❌ The app could not log in to Vault. Open investigation 🕵️") }
-
     // Read database credentials
     let response = try await vaultClient.databaseCredentials(staticRole: "static_server_role", mountPath: "database")
     return .init(username: response.username, password: response.password)
