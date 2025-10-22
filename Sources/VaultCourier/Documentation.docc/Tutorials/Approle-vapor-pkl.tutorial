@@ -63,7 +63,7 @@
             @Step {
                 In particular, note how we define the credentials property. Pkl can read external resources, such as environment variables or text files.
                 To read a resource, one uses a `read` expression and passes a resource URI scheme. The `Pkl` package trait in VaultCourier adds implementations of the external reader protocol, and we use them here to read a vault secret.
-                We use the default resource URI scheme "vault", but it can be customized in the initializer of the VaultReader.
+                The database credential reader encodes the engine mount path in the URI scheme. See ``VaultDatabaseCredentialReader`` for more information.
                 
                 @Code(name: "todoConfig.stage.pkl", file: hummingbird.pkl.0.2.1.pkl, previousFile:  hummingbird.pkl.0.2.0.pkl)
             }
@@ -81,15 +81,6 @@
             }
             
             @Step {
-                Mark the Pkl bindings `@preconcurrency` and add the `Sendable` annotations.
-                
-                
-                This step may not be needed in the future, but at the moment of writing this tutorial the Pkl bindings are not Swift 6 ready. 
-                
-                @Code(name: "Sources/App/Gen/TodoConfig.pkl.swift", file:  hummingbird.pkl.0.1.1.swift, previousFile:  hummingbird.pkl.0.1.0.swift)
-            }
-            
-            @Step {
                 We create an object which carries the database configuration of the Todo app, and which decodes the returned bytes from the resource reader; it is also a good practice to separate the `pkl.swift` generated DTOs from the apps objects.
                 
                 @Code(name: "Sources/DatabaseConfig.swift", file:  hummingbird.pkl.0.2.0.swift)
@@ -102,7 +93,7 @@
             }
             
             @Step {
-                Replace the direct call to Vault with the creation of a `VaultReader` with URI scheme `vault`. Call `readConfiguration` and return the database configuration
+                Replace the direct call to Vault with the creation of a ``VaultDatabaseCredentialReader`` with mount path "database". This reader is triggered by the URI scheme `vault.database` and reads database credentials stored in Vault under the "database" path (recall previous steps where we defined the database credentials in the Pkl configuration file). Now call `PklSwift.withEvaluator` with this reader and return the database configuration
                 
                 For simplicity we write directly the filepath to the main configuration file, but this can of course be given in the app arguments or in an environment variable.
                 
@@ -138,19 +129,21 @@
                 @Code(name: "Package.swift", file: vapor.pkl.0.0.1.swift, previousFile:  vapor.pkl.0.0.0.swift)
             }
             
+            @Step {
+                Inside the `Pkl` folder create a file called `PklProject` (without extension) and paste this. Go to this folder and run `pkl project resolve`.
+                
+                @Code(name: "Source/Operations/Pkl/PklProject", file: hummingbird.pkl.0.0.0.pkl)
+            }
+            
             @Step {                
                 All the templates that we need for the cli tool are in the `vault-courier-pkl` repository under the Payloads folder. For instance the `MountConfiguration.pkl` template looks like this.
                 Those enumerated typealiases will be turned by `pkl-gen-swift` into swift enumerations. Optional properties are expressed in Pkl and Swift the same.
                 
-                
-                @Code(name: "https://github.com/vault-courier/vault-courier-pkl/blob/main/Payloads/MountConfiguration.pkl", file: hummingbird.pkl.1.0.0.pkl)
+                @Code(name: "https://github.com/vault-courier/vault-courier-pkl/blob/main/Payloads/SystemBackend/Mounts/MountConfiguration.pkl", file: hummingbird.pkl.1.0.0.pkl)
             }
             
             @Step {
                 Create a folder in `Pkl` for a specific type of deployment environment, say `Stage` and create there a pkl file called `databaseMount.pkl`. This is our first operations config file, which amends the configuration for mounting a database secret engine.
-                
-                Here we are amending a http resource, so that's why the amending path is large. When you work with pkl projects this can be simplified.
-                
                 
                 @Code(name: "Sources/Operations/Pkl/stage/databaseMount.pkl", file: hummingbird.pkl.1.0.1.pkl, reset: true)
             }
@@ -285,30 +278,15 @@
     }
     
     @Section(title: "Run Lab") {
-        In this last section we repeat the setup to run the Pkl-modified apps. You need the HashiCorpVault or OpenBao binary installed in your system `PATH`, as well as Docker installed.
+        In this last section we simplify the lab setup and run the Pkl-modified apps.
         
         @Steps {
             @Step {
-                Open a terminal and start a Vault dev server with the literal string `education` as the root token value.
+                Copy the scripts folder from the [vault-courier-examples-repository](https://github.com/vault-courier/vault-courier-examples/tree/main/scripts) and paste it in the root directory. Open a terminal and run the script as shown in the listing. This docker compose script will create a Vault and PostgreSQL database in the same local network.
                 
                 You can alternative, start a `bao` dev server by replacing `vault` with `bao` in the listing.
                 
-                @Code(name: "Terminal Tab 1", file: start-vault.console.0.txt, reset: true)
-            }
-            
-            @Step {
-                Open a **new terminal** and start a PostgreSQL database with docker with a root user named `vault_root` and password `root_password`.
-                
-                **Note**: In production, it's important to create a _dedicated role_ for Vault, separate from the general admin role. This allows you to rotate the Vault user's password after setup to avoid relying on the initial credentials — but once rotated, only Vault knows the new password.
-                Failing to separate these roles can result in the root admin being locked out of the database.
-                
-                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.0.sh)
-            }
-            
-            @Step {
-                Create a database role for the `Todo` app, and grant access to the database.
-                
-                @Code(name: "Terminal Tab 2", file: hummingbird.console.1.1.sh, previousFile: hummingbird.console.1.0.sh)
+                @Code(name: "Terminal in Script folder", file: start-vault.docker.compose.console.sh, reset: true)
             }
             
             @Step {
@@ -336,7 +314,7 @@
             }
             
             @Step {
-                Run the the Migrator app. Don't forget to add the Env variables. 
+                Run the the Migrator app. Don't forget to add the environment variables. 
                 
                 @Code(name: "Terminal Tab 2", file: vapor.pkl.console.0.6.sh, previousFile: vapor.pkl.console.0.5.sh)
             }
@@ -348,7 +326,7 @@
             }
             
             @Step {
-                Run the the Todo app. Again, don't forget to add the Env variables. We have successfully integrated VaultCourier into the Todo app, and made Pkl the main config format! 🥳
+                Run the the Todo app. Again, don't forget to add the environment variables. We have successfully integrated VaultCourier into the Todo app, and made Pkl the main config format! 🥳
                 
                 @Code(name: "Terminal Tab 2", file: vapor.pkl.console.0.8.sh, previousFile: vapor.pkl.console.0.7.sh)
             }
