@@ -85,10 +85,10 @@ To enable an additional trait on the package, update the package dependency:
 
 Available Package traits:
 - `PostgresPluginSupport` (default): Enable support for Vault-PostgreSQL database plugin HTTP API. Plugin available in Vault and OpenBao. This trait enables `DatabaseEngineSupport`.
-- `DatabaseEngineSupport` (default): Enable support for database engine clients. 
+- `ValkeyPluginSupport` (default): Enable support for OpenBao-Valkey database plugin HTTP API. This plugin is only available in OpenBao. This trait enables `DatabaseEngineSupport`.
+- `DatabaseEngineSupport` (default): Enable basic support for database engine clients. 
 - `AppRoleSupport` (default): Enable AppRole authentication.
 - `MockSupport` (default). Provides a mock client transport for unit testing and development, and adds Encodable conformance to certain Vault response types. 
-- `ValkeyPluginSupport` (Opt-in): Enable support for OpenBao-Valkey database plugin HTTP API. This plugin is only available in OpenBao.
 - `PklSupport` (experimental): Enable [Pkl](https://pkl-lang.org) Resource reader implementations that can read Vault secrets directly from pkl files.
 - `ConfigProviderSupport` (experimental): Enable a Vault configuration provider. This trait provides a `swift-configuration` [ConfigProvider](https://swiftpackageindex.com/apple/swift-configuration/main/documentation/configuration/configprovider) implementation that can fetch Vault secrets.
 
