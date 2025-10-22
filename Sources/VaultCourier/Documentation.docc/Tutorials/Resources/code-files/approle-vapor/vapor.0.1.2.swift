@@ -14,24 +14,10 @@ func connectToVault(
     // Read the secretID provided by the broker
     let secretID = try String(contentsOf: URL(filePath: secretIdFilePath), encoding: .utf8)
 
-        // Create vault client.
-    let vaultConfiguration = VaultClient.Configuration(
-        apiURL: try URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1"),
-        backgroundActivityLogger: logger
-    )
-
-    let client = Client(
-        serverURL: vaultConfiguration.apiURL,
-        transport: AsyncHTTPClientTransport()
-    )
-
+    // Create vault client.
     let vaultClient = VaultClient(
-        configuration: vaultConfiguration,
-        client: client,
-        authentication: .appRole(
-            credentials: .init(roleID: roleID, secretID: secretID),
-            isWrapped: false
-        )
+        configuration: .defaultHttp(backgroundActivityLogger: logger),
+        clientTransport: AsyncHTTPClientTransport()
     )
 
     return .init(username: "todos", password: "todos")

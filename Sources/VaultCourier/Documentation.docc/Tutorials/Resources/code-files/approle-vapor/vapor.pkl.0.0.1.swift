@@ -19,7 +19,7 @@ let package = Package(
         // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
         // 🔐 Client for interacting with Hashicorp Vault and OpenBao
-        .package(url: "https://github.com/vault-courier/vault-courier", from: "0.2.0", traits: ["Pkl"]),
+        .package(url: "https://github.com/vault-courier/vault-courier", .upToNextMinor(from: "0.3.0"), traits: ["PklSupport"]),
         // 🚀 Transport type for VaultCourier
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
         // Straightforward, type-safe argument parsing
@@ -27,7 +27,7 @@ let package = Package(
         // Postgres client
         .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
         // 🥒 Swift bindings for Pkl
-        .package(url: "https://github.com/apple/pkl-swift", from: "0.4.2")
+        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0"))
     ],
     targets: [
         .executableTarget(

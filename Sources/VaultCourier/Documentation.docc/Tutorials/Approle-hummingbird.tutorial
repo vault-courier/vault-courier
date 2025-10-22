@@ -305,7 +305,7 @@
 
         Instead, we can generate a one-time-use token that wraps the AppRole credentials. This wrapped token can only be used once within a limited time window to retrieve the actual `SECRET_ID`. If someone tries to reuse the wrapped token, Vault will reject it as already unwrapped.
 
-        The unwrapped `SECRET_ID` can still be reused according to its configured limits. VaultCourier handles the response wrapping process automatically during authentication—we just need to indicate that the credentials are wrapped.
+        The unwrapped `SECRET_ID` can still be reused according to its configured limits. VaultCourier needs to first unwrap the response to obtain the secretID.
 
         Let's add this to the Todo app configuration.
         
@@ -317,7 +317,7 @@
             }
             
             @Step {
-                Update `Vault.swift` to tell VaultCourier that the credential is wrapped. That's it—now regenerate the credentials using Operations credentials todo and run the app. On a second run, authentication will fail.
+                Update `Vault.swift` with an unwrap call. That's it! now regenerate the credentials using `Operations credentials todo` and run the app. On a second run, authentication will fail.
 
                 This mechanism enables malfeasance detection by ensuring only one party can unwrap the token. If a client receives a token that can't be unwrapped, it can trigger an immediate security alert. 
                 
