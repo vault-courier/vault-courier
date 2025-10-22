@@ -19,7 +19,7 @@ let package = Package(
         // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
         // 🔐 Client for interacting with Hashicorp Vault and OpenBao
-        .package(url: "https://github.com/vault-courier/vault-courier", from: "0.2.0"),
+        .package(url: "https://github.com/vault-courier/vault-courier", .upToNextMinor(from: "0.3.0")),
         // 🚀 Transport type for VaultCourier
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
     ],

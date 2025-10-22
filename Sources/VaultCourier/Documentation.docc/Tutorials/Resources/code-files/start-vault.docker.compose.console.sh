@@ -1,1 +1,1 @@
-% ./run-services.sh vault
+scripts % ./run-services.sh vault

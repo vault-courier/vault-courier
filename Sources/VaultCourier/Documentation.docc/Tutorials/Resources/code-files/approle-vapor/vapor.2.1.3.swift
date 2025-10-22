@@ -13,30 +13,25 @@ let secretID = try String(contentsOf: URL(filePath: secretIdFilePath), encoding:
 let logger = Logger(label: "migrator")
 
 // 2. Create a vault client.
-let vaultURL = try URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")
-let vaultConfiguration = VaultClient.Configuration(
-    apiURL: vaultURL,
-    databaseMountPath: "database",
-    backgroundActivityLogger: logger
+let vaultClient = VaultClient(
+    configuration: .defaultHttp(backgroundActivityLogger: logger),
+    clientTransport: AsyncHTTPClientTransport()
 )
 
-let vaultClient = VaultClient(
-    configuration: vaultConfiguration,
-    client: Client(
-        serverURL: vaultConfiguration.apiURL,
-        transport: AsyncHTTPClientTransport()
-    ),
-    authentication: .appRole(
-        credentials: .init(roleID: roleID, secretID: secretID),
-        isWrapped: false
-    )
-)
 // 3. Authenticate with vault
-guard try await vaultClient.authenticate()
-else { fatalError("❌ The app could not log in to Vault. Open investigation 🕵️") }
+do {
+    try await vaultClient.login(
+        method: .appRole(
+            path: "approle",
+            credentials: .init(roleID: roleID, secretID: secretID)
+        )
+    )
+} catch {
+    fatalError("❌ The app could not log in to Vault. Open investigation 🕵️")
+}
 
 // 4. Get dynamic credentials
-let credentials = try await vaultClient.databaseCredentials(dynamicRole: "dynamic_migrator_role")
+let credentials = try await vaultClient.databaseCredentials(dynamicRole: "dynamic_migrator_role", mountPath: "database")
 
 // 5. Create PG client
 let pgClient = PostgresClient(
@@ -77,4 +72,4 @@ try await withThrowingTaskGroup(of: Void.self) { taskGroup in
     taskGroup.cancelAll()
 }
 
-print("Migration successfull! 'todos' table created.")
+print("Migration successful! 'todos' table created.")
