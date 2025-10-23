@@ -18,6 +18,7 @@ import Testing
 import VaultCourier
 #if canImport(FoundationEssentials)
 import FoundationEssentials
+import FoundationInternationalization
 #else
 import struct Foundation.Duration
 #endif
