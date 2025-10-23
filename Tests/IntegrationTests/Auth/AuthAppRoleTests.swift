@@ -24,6 +24,7 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 
+import Algorithms
 import VaultCourier
 
 extension IntegrationTests.Auth.AppRole {
@@ -153,7 +154,7 @@ extension IntegrationTests.Auth.AppRole {
 
             case .secretId(let response):
                 let sut = VaultClient(
-                    configuration: .init(apiURL: try! URL(validatingOpenAPIServerURL: "http://127.0.0.1:8200/v1")),
+                    configuration: .defaultHttp(),
                     clientTransport: AsyncHTTPClientTransport()
                 )
 

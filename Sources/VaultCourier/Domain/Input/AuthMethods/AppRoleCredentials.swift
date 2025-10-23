@@ -14,31 +14,15 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import Testing
-import VaultCourier
-import Utils
+#if AppRoleSupport
+public struct AppRoleCredentials: Sendable {
+    public let roleID: String
+    public let secretID: String
 
-struct VaultPaths {
-    @Test(arguments: [
-        "path.to.database",
-        "/path/to/database",
-        "path with spaces"
-    ])
-    func invalid_vault_mount_paths(_ mount: String) async throws {
-        #expect(throws: VaultClientError.self) {
-            guard mount.isValidVaultMountPath
-            else { throw VaultClientError.invalidVault(mountPath: mount) }
-        }
-    }
-
-    @Test(arguments: [
-        "path/to/database/",
-        "path_to_database"
-    ])
-    func valid_vault_mount_paths(_ mount: String) async throws {
-        #expect(throws: Never.self) {
-            guard mount.isValidVaultMountPath
-            else { throw VaultClientError.invalidVault(mountPath: mount) }
-        }
+    public init(roleID: String,
+                secretID: String) {
+        self.roleID = roleID
+        self.secretID = secretID
     }
 }
+#endif

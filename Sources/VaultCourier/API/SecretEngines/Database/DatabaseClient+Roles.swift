@@ -26,6 +26,7 @@ import struct Foundation.Data
 #endif
 import Logging
 import DatabaseEngine
+import Utils
 
 #if PostgresPluginSupport || ValkeyPluginSupport
 // MARK: Create Database Roles
@@ -295,7 +296,6 @@ extension DatabaseEngineClient {
                 throw vaultError
         }
     }
-
 
     /// Read current credentials for a dynamic role
     ///

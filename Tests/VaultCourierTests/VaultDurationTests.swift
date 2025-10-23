@@ -16,6 +16,12 @@
 
 import Testing
 import VaultCourier
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.Duration
+#endif
+import Utils
 
 @Suite
 struct VaultDuration {

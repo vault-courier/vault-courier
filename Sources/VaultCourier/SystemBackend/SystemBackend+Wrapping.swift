@@ -22,6 +22,9 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import OpenAPIRuntime
+import SystemWrapping
+import Logging
+import Utils
 
 extension SystemBackend {
     /// Unwraps a vault wrapped response

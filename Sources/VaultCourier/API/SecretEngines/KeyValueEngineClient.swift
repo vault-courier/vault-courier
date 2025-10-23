@@ -27,6 +27,7 @@ import struct Foundation.Date
 import Synchronization
 import Logging
 import KeyValue
+import Utils
 
 /// Client for Key/Value secret engine
 ///

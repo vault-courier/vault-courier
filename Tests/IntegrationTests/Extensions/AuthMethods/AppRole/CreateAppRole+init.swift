@@ -16,6 +16,7 @@
 
 #if PklSupport
 import VaultCourier
+import PklSwift
 
 extension AppRoleCreationConfig {
   init(_ module: VaultAppRole.Module) {

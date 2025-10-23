@@ -15,6 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 import OpenAPIRuntime
+import SystemAuth
+import Logging
 
 extension SystemBackend {
     /// Enables authentication mount. Example AppRole, Token...

@@ -43,7 +43,7 @@ package final class AppRoleAuth: Sendable {
                  clientTransport: any ClientTransport,
                  middlewares: [any ClientMiddleware] = [],
                  token: String? = nil,
-                 credentials: AppRoleCredentials? = nil) {
+                 credentials: _AppRoleCredentials? = nil) {
         self.client = Client(
             serverURL: configuration.apiURL,
             configuration: .init(dateTranscoder: .fallbackISO8601),
@@ -72,8 +72,8 @@ package final class AppRoleAuth: Sendable {
         }
     }
 
-    package let _credentials: Mutex<AppRoleCredentials?>
-    package var credentials: AppRoleCredentials? {
+    package let _credentials: Mutex<_AppRoleCredentials?>
+    package var credentials: _AppRoleCredentials? {
         get {
             _credentials.withLock { $0 }
         }

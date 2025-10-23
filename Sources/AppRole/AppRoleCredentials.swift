@@ -14,12 +14,11 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
+package struct _AppRoleCredentials: Sendable {
+    package let roleID: String
+    package let secretID: String
 
-public struct AppRoleCredentials: Sendable {
-    public let roleID: String
-    public let secretID: String
-
-    public init(roleID: String,
+    package init(roleID: String,
                 secretID: String) {
         self.roleID = roleID
         self.secretID = secretID

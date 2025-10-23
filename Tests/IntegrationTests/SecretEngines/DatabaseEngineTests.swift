@@ -26,6 +26,7 @@ import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
+import Algorithms
 
 #if PklSupport
 import PklSwift

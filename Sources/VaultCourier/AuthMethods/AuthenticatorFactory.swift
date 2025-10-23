@@ -36,7 +36,7 @@ public enum AuthMethod {
 
 package func makeAuthenticator(_ method: AuthMethod,
                                apiURL: URL,
-                               clientTransport: ClientTransport) -> VaultAuthMethod {
+                               clientTransport: any ClientTransport) -> any VaultAuthMethod {
     switch method {
         case .token(let token):
             return TokenAuth(
@@ -52,7 +52,7 @@ package func makeAuthenticator(_ method: AuthMethod,
                     mountPath: path
                 ),
                 clientTransport: clientTransport,
-                credentials: credentials
+                credentials: .init(roleID: credentials.roleID, secretID: credentials.secretID)
             )
         #endif
     }

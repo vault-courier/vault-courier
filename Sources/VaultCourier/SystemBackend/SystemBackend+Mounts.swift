@@ -15,6 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 import OpenAPIRuntime
+import SystemMounts
+import Logging
 
 extension SystemBackend {
     

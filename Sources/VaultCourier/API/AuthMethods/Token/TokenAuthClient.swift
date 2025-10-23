@@ -25,6 +25,7 @@ import typealias Foundation.TimeInterval
 import Synchronization
 import Logging
 import TokenAuth
+import Utils
 
 /// Client for Token Authentication
 ///

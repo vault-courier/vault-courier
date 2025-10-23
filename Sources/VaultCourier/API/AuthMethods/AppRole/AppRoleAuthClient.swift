@@ -24,6 +24,7 @@ import struct Foundation.URL
 import Synchronization
 import Logging
 import AppRoleAuth
+import Utils
 
 /// Client for AppRole Authentication
 ///
