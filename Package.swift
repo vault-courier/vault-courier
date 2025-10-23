@@ -109,12 +109,12 @@ let package = Package(
     ],
     traits: traits,
     dependencies: [
-        .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.7.2"),
-        .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.7.0"),
+        .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.10.3"),
+        .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.8.3"),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.25.0"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.29.0"),
         .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0")),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.4"),
         .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1"))
     ],
     targets: [
@@ -267,6 +267,24 @@ let package = Package(
     ],
     swiftLanguageModes: [.v6]
 )
+
+for target in package.targets {
+    var settings = target.swiftSettings ?? []
+
+    // https://github.com/apple/swift-evolution/blob/main/proposals/0335-existential-any.md
+    // Require `any` for existential types.
+    settings.append(.enableUpcomingFeature("ExistentialAny"))
+
+    // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0444-member-import-visibility.md
+    settings.append(.enableUpcomingFeature("MemberImportVisibility"))
+
+    // ---- Not possible until swift-openapi supports it -----------------------------------------------
+    // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0409-access-level-on-imports.md
+//    settings.append(.enableUpcomingFeature("InternalImportsByDefault"))
+    // -------------------------------------------------------------------------------------------------
+
+    target.swiftSettings = settings
+}
 
 if addDoccPlugin {
     package.dependencies.append(
