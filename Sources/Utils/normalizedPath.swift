@@ -15,16 +15,33 @@
 //===----------------------------------------------------------------------===//
 
 import HTTPTypes
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
-
-struct TestError: Error, Equatable {}
 
 extension HTTPRequest {
     package var normalizedPath: String? {
-        self.path?.replacingOccurrences(of: "%2F", with: "/")
+        guard let path = self.path else {
+            return nil
+        }
+        var result = ""
+        var i = path.startIndex
+
+        while i < path.endIndex {
+            // Check if we have at least 3 characters remaining for "%2F"
+            let remaining = path.distance(from: i, to: path.endIndex)
+
+            if remaining >= 3 {
+                let nextThree = path[i..<path.index(i, offsetBy: 3)]
+
+                if nextThree == "%2F" {
+                    result.append("/")
+                    i = path.index(i, offsetBy: 3)
+                    continue
+                }
+            }
+
+            result.append(path[i])
+            i = path.index(after: i)
+        }
+
+        return result
     }
 }
