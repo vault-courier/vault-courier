@@ -14,13 +14,10 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-package struct _AppRoleCredentials: Sendable {
-    package let roleID: String
-    package let secretID: String
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
-    package init(roleID: String,
-                secretID: String) {
-        self.roleID = roleID
-        self.secretID = secretID
-    }
-}
+struct TestError: Error, Equatable {}

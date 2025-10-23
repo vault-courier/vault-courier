@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if PklSupport
+import PklSwift
 import VaultCourier
 #if canImport(FoundationEssentials)
 import FoundationEssentials

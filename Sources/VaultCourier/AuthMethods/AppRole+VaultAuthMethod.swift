@@ -16,6 +16,12 @@
 
 #if AppRoleSupport
 import AppRoleAuth
+import Utils
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.URL
+#endif
 
 extension AppRoleAuth: VaultAuthMethod {
     /// Authenticate with Vault

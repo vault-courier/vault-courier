@@ -28,6 +28,7 @@ import struct Foundation.Data
 import Synchronization
 import Logging
 import DatabaseEngine
+import Utils
 
 /// Client for Database secret engine
 ///

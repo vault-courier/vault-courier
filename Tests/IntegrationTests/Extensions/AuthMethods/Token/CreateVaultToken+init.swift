@@ -16,6 +16,7 @@
 
 #if PklSupport
 import VaultCourier
+import PklSwift
 
 extension TokenCreationConfig {
     init(_ module: VaultToken.Module) {

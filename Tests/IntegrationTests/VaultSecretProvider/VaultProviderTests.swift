@@ -27,6 +27,7 @@ import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
+import SystemPackage
 
 extension IntegrationTests.VaultConfigProvider {
     struct ServiceSecret: Decodable, ExpressibleByConfigString {
@@ -177,7 +178,7 @@ extension IntegrationTests.VaultConfigProvider {
     }
 
     @Test
-    func receive_unauthorized_response() async throws {
+    func vault_server_errors_return_nil() async throws {
         let vaultClient = VaultClient(configuration: .defaultHttp(),
                                       clientTransport: MockVaultClientTransport.forbidden)
         try await vaultClient.login(method: .token("client_token"))
@@ -190,7 +191,42 @@ extension IntegrationTests.VaultConfigProvider {
             ]
         )
 
-        await #expect(throws: VaultServerError.self) {
+        await #expect(throws: Never.self) {
+            let response = try await sut.fetchValue(
+                forKey: absKey,
+                type: .string
+            )
+            #expect(response.value == nil)
+        }
+
+        // If fetch response is server error return nil, and continue in the hierarchy
+        await #expect(throws: Never.self) {
+            let reader = ConfigReader(providers: [
+                sut,
+                EnvironmentVariablesProvider(environmentVariables: [
+                    "DATABASE_POSTGRES_CREDENTIALS": "some-password"
+                ])
+            ])
+
+            let response = try await reader.fetchString(forKey: .init(absKey.components))
+            #expect(response == "some-password")
+        }
+    }
+
+    @Test
+    func rethrow_client_error() async throws {
+        let vaultClient = VaultClient(configuration: .defaultHttp(),
+                                      clientTransport: MockVaultClientTransport.forbidden)
+
+        let absKey = AbsoluteConfigKey(["database", "postgres", "credentials"])
+        let sut = VaultSecretProvider(
+            vaultClient: vaultClient,
+            evaluationMap: [
+                absKey: { _ in throw VaultClientError.invalidVault(mountPath: "/invalid:mount") }
+            ]
+        )
+
+        await #expect(throws: VaultClientError.self) {
             try await sut.fetchValue(
                 forKey: absKey,
                 type: .string

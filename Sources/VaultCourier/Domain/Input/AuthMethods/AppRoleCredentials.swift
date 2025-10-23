@@ -14,12 +14,15 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import HTTPTypes
+#if AppRoleSupport
+public struct AppRoleCredentials: Sendable {
+    public let roleID: String
+    public let secretID: String
 
-struct TestError: Error, Equatable {}
-
-extension HTTPRequest {
-    package var normalizedPath: String? {
-        self.path?.replacingOccurrences(of: "%2F", with: "/")
+    public init(roleID: String,
+                secretID: String) {
+        self.roleID = roleID
+        self.secretID = secretID
     }
 }
+#endif

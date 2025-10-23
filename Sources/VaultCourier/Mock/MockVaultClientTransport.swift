@@ -267,10 +267,4 @@ extension HTTPBody {
 }
 
 public struct MockClientTransportError: Error, Equatable {}
-
-extension HTTPRequest {
-    var normalizedPath: String? {
-        self.path?.replacingOccurrences(of: "%2F", with: "/")
-    }
-}
 #endif

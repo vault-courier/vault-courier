@@ -26,6 +26,9 @@ import struct Foundation.Data
 #endif
 
 import VaultCourier
+import HTTPTypes
+import OpenAPIRuntime
+import Utils
 
 @Suite
 struct VaultClientTests {

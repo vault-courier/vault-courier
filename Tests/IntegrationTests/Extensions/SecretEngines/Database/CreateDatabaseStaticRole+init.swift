@@ -16,6 +16,8 @@
 
 #if PklSupport
 import VaultCourier
+import PklSwift
+
 #if PostgresPluginSupport
 extension PostgresStaticRoleConfig {
     init?(_ module: PostgresStaticRole.Module) {

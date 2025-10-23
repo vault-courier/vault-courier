@@ -22,6 +22,7 @@ import FoundationEssentials
 #else
 import struct Foundation.URL
 #endif
+import Algorithms
 
 import VaultCourier
 

@@ -17,6 +17,7 @@
 import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
+import FoundationInternationalization
 #else
 import struct Foundation.URL
 import struct Foundation.Date
@@ -25,6 +26,7 @@ import typealias Foundation.TimeInterval
 import Synchronization
 import Logging
 import TokenAuth
+import Utils
 
 /// Client for Token Authentication
 ///

@@ -18,12 +18,14 @@
 import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
+import FoundationInternationalization
 #else
 import struct Foundation.URL
 #endif
 import Synchronization
 import Logging
 import AppRoleAuth
+import Utils
 
 /// Client for AppRole Authentication
 ///

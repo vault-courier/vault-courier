@@ -27,8 +27,10 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import PklSwift
+import HTTPTypes
 
 import VaultCourier
+import Utils
 
 extension IntegrationTests.Pkl {
     @Suite(
