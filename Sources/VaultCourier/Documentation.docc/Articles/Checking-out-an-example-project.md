@@ -6,7 +6,7 @@ Check out a working example to learn how applications can start using a VaultCou
 
 The following examples show how to use and integrate a VaultCourier into different types of applications. When appropiate we will differentiate from an app and operations developer perspective.
 
-Since this project is an API client of Hashicorp Vault and OpenBao, you need to have installed one of these tools for working with the examples. If you don't have any of these software, please visit [Hashicorp Vault installation](https://developer.hashicorp.com/vault/docs/install) or [OpenBao installation guides](https://openbao.org/docs/install/) for instructions.
+Since this project is an API client of Hashicorp Vault and OpenBao, you want to have installed one of these tools for working with the examples. If you don't have any of these software, please visit [Hashicorp Vault installation](https://developer.hashicorp.com/vault/docs/install) or [OpenBao installation guides](https://openbao.org/docs/install/) for instructions.
 
 > Important: These example are deliberately simplified and are intended for illustrative purposes only. In particular, never use a Vault instance in dev-mode in a production environment.
 

@@ -28,7 +28,7 @@ container_id=$(docker run --rm --detach -p 8200:8200 -e 'VAULT_DEV_ROOT_TOKEN_ID
 or with OpenBao
 
 ```sh
-container_id=$(docker run --rm --detach -p 8200:8200 -e 'BAO_DEV_ROOT_TOKEN_ID=education' openbao/openbao:latest)
+container_id=$(docker run --rm --detach -p 8200:8200 -e 'BAO_DEV_ROOT_TOKEN_ID=learn-vault' openbao/openbao:latest)
 ```
 
 then authenticate, write and read the secret.

@@ -15,9 +15,17 @@
 //===----------------------------------------------------------------------===//
 
 import HTTPTypes
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import Foundation
+#endif
 
 extension HTTPRequest {
+    // Only used in mocks and tests.
     package var normalizedPath: String? {
+#if canImport(FoundationEssentials)
+        // this will be improved with span or hopefully with FoundationEssentials itself
         guard let path = self.path else {
             return nil
         }
@@ -43,5 +51,9 @@ extension HTTPRequest {
         }
 
         return result
+#else
+        self.path?.replacingOccurrences(of: "%2F", with: "/")
+#endif
+
     }
 }
