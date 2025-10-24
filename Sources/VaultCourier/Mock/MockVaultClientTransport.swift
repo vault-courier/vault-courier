@@ -266,5 +266,7 @@ extension HTTPBody {
     }
 }
 
-public struct MockClientTransportError: Error, Equatable {}
+public struct MockClientTransportError: Error, Equatable {
+    public init() {}
+}
 #endif
