@@ -93,6 +93,7 @@ let defaultTraits: Set<String> = .init([
     DatabaseEngineTrait,
     PostgresDatabasePluginTrait,
     ValkeyDatabasePluginTrait,
+    ConfigProviderTrait
 ].map(\.name))
 
 traits.insert(
@@ -115,7 +116,7 @@ let package = Package(
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.29.0"),
         .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.6.4"),
-        .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1"))
+        .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "1.0.0-alpha.1"))
     ],
     targets: [
         .target(
