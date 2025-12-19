@@ -22,7 +22,9 @@ import FoundationEssentials
 #else
 import struct Foundation.URL
 #endif
+#if AppRoleSupport
 import AppRoleAuth
+#endif
 import TokenAuth
 import SystemWrapping
 
