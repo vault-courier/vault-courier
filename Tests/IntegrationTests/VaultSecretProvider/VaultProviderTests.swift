@@ -138,7 +138,7 @@ extension IntegrationTests.VaultConfigProvider {
 
         let sut = ConfigReader(provider: provider)
 
-        let readerValue = try await sut.fetchRequiredString(forKey: "third_party.service.api_key", context: context)
+        let readerValue = try await sut.fetchRequiredString(forKey: .init(absoluteKey.components, context: context))
         #expect(readerValue == #"{"api_key":"secret_api_key"}"#)
     }
 
@@ -276,12 +276,11 @@ extension IntegrationTests.VaultConfigProvider {
 
         let sut = ConfigReader(providers: [
             secretProvider,
-            try await JSONProvider(filePath: .init(fixtureUrl(for: "/SwiftConfiguration/config.json").relativePath)),
+            try await FileProvider<JSONSnapshot>(filePath: .init(fixtureUrl(for: "/SwiftConfiguration/config.json").relativePath)),
         ])
 
         let secret = try await sut.fetchRequiredString(
-            forKey: "third_party.service.api_key",
-            context: ["version": 2],
+            forKey: .init(absoluteKey1.components, context: ["version": 2]),
             as: ServiceSecret.self
         )
         #expect(secret.apiKey == "secret_api_key")
@@ -295,7 +294,7 @@ extension IntegrationTests.VaultConfigProvider {
 
         // This ConfigKey has not been registered in VaultSecretProvider
         let absoluteKey4 = AbsoluteConfigKey(["job", "database", "credentials"])
-        let databaseKey: String = absoluteKey4.components.joined(separator: ".")
+        let databaseKey = ConfigKey(absoluteKey4.components.joined(separator: "."))
         var credentials = try await sut.fetchRequiredString(forKey: databaseKey, as: DatabaseCredentials.self)
         #expect(credentials.username == "username_dev_local")
         #expect(credentials.password == "password_local_dev")
@@ -404,7 +403,7 @@ extension IntegrationTests.VaultConfigProvider {
 
         let sut = ConfigReader(provider: provider)
         let credentials = try await sut.fetchRequiredString(
-            forKey: VaultSecretProvider.keyEncoder.encode(absKey),
+            forKey: .init(absKey.components),
             as: DatabaseCredentials.self
         )
         #expect(credentials.password == Self.dynamicRoleDatabasePassword)
@@ -472,7 +471,7 @@ extension IntegrationTests.VaultConfigProvider {
             provider: provider,
             configuration: .init()
         )
-        try await test.run()
+        try await test.runTest()
     }
 }
 

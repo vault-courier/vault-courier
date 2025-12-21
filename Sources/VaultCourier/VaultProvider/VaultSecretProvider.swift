@@ -45,8 +45,6 @@ public final class VaultSecretProvider: Sendable {
 
     let _evaluationMap: Mutex<[AbsoluteConfigKey: ApiOperation]>
 
-    public static let keyEncoder: SeparatorKeyEncoder = .dotSeparated
-
     /// Creates a new vault secret provider with the specified configuration values.
     ///
     /// This initializer takes a dictionary of absolute configuration keys mapped to
@@ -124,7 +122,8 @@ extension VaultSecretProvider {
     }
 }
 
-extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
+extension VaultSecretProvider: ConfigProvider, ConfigSnapshot {
+    
     /// Reads secret value from memory cache if it was previously fetched from the Vault
     ///
     /// - Note: the secret value might be outdated. For retrieving latest secret see ``fetchValue(forKey:type:)``
@@ -154,7 +153,7 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
         forKey key: AbsoluteConfigKey,
         type: ConfigType
     ) async throws -> LookupResult {
-        let encodedKey = Self.keyEncoder.encode(key)
+        let encodedKey =  key.components.joined(separator: ".")
 
         do {
             guard let execute = getEvaluation(for: key),
@@ -214,7 +213,7 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
             }
 
             let value = ConfigValue(content, isSecret: true)
-            self.cache.setValue(value, forKey: encodedKey, context: key.context)
+            self.cache.setValue(value, forKey: key)
             return .init(encodedKey: encodedKey, value: value)
         } catch _ as VaultServerError {
             return .init(encodedKey: encodedKey, value: nil)
@@ -226,18 +225,18 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
     public func watchValue<Return>(
         forKey key: AbsoluteConfigKey,
         type: ConfigType,
-        updatesHandler: (ConfigUpdatesAsyncSequence<Result<LookupResult, any Error>, Never>) async throws -> Return
-    ) async throws -> Return {
+        updatesHandler: nonisolated(nonsending) (ConfigUpdatesAsyncSequence<Result<LookupResult, any Error>, Never>) async throws -> Return
+    ) async throws -> Return where Return : ~Copyable {
         try await watchValueFromValue(forKey: key, type: type, updatesHandler: updatesHandler)
     }
 
-    public func snapshot() -> any ConfigSnapshotProtocol {
+    public func snapshot() -> any ConfigSnapshot {
         self
     }
 
     public func watchSnapshot<Return>(
-        updatesHandler: (ConfigUpdatesAsyncSequence<any ConfigSnapshotProtocol, Never>) async throws -> Return
-    ) async throws -> Return {
+        updatesHandler: nonisolated(nonsending) (ConfigUpdatesAsyncSequence<any ConfigSnapshot, Never>) async throws -> Return
+    ) async throws -> Return where Return : ~Copyable {
         try await watchSnapshotFromSnapshot(updatesHandler: updatesHandler)
     }
 }

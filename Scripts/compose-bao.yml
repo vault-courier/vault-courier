@@ -16,7 +16,7 @@
 
 services:
   openbao:
-    image: 'openbao/openbao:latest'
+    image: 'openbao/openbao:2.4.4'
     container_name: openbao
     command: server -dev -dev-root-token-id="integration_token"
     ports:
@@ -33,7 +33,7 @@ services:
           }],
           "default_lease_ttl": "168h",
           "max_lease_ttl": "720h",
-          "ui": false
+          "ui": true
         }
     cap_add:
       - IPC_LOCK
