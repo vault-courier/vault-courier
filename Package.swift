@@ -109,12 +109,12 @@ let package = Package(
     ],
     traits: traits,
     dependencies: [
-        .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.10.3"),
-        .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.8.3"),
-        .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.29.0"),
+        .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.10.4"),
+        .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.9.0"),
+        .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.3.0"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.30.3"),
         .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0")),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.6.4"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.9.0"),
         .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1"))
     ],
     targets: [
