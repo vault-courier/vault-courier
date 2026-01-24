@@ -15,7 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 public struct VaultAuthResponse: Sendable {
-    public let requestID: String?
+    /// The unique ID that Vault generated for this request
+    public let requestID: String
 
     /// The token value
     public let clientToken: String

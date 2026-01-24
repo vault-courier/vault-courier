@@ -28,7 +28,7 @@ import struct Foundation.Data
 /// Error types returned by the Vault server
 /// 
 /// https://developer.hashicorp.com/vault/api-docs#http-status-codes
-public enum VaultServerError: Error {
+public enum VaultServerError: Error, Equatable {
     /// Invalid request, missing or invalid data.
     case invalidRequest(errors: String?)
 
