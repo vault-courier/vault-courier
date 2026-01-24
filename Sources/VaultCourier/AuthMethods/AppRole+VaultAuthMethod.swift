@@ -16,6 +16,7 @@
 
 #if AppRoleSupport
 import AppRoleAuth
+import Tracing
 import Utils
 #if canImport(FoundationEssentials)
 import FoundationEssentials
@@ -27,24 +28,36 @@ extension AppRoleAuth: VaultAuthMethod {
     /// Authenticate with Vault
     /// - Returns: session token
     public func authenticate() async throws -> String {
-        let appRolePath = basePath.relativePath.removeSlash()
+        return try await withSpan(Operations.AuthApproleLogin.id, ofKind: .client) { span in
+            let appRolePath = basePath.relativePath.removeSlash()
 
-        guard let credentials else {
-            throw VaultClientError(message: "AppRole credentials have not been set")
-        }
+            guard let credentials else {
+                let clientError = VaultClientError(message: "AppRole credentials have not been set")
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
 
-        let response = try await client.authApproleLogin(
-            path: .init(enginePath: appRolePath),
-            body: .json(.init(roleId: credentials.roleID, secretId: credentials.secretID))
-        )
+            let response = try await client.authApproleLogin(
+                path: .init(enginePath: appRolePath),
+                body: .json(.init(roleId: credentials.roleID, secretId: credentials.secretID))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return json.auth.clientToken
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    span.attributes[TracingSupport.AttributeKeys.vaultRequestID] = vaultRequestID
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 200
+                    let eventName = "login"
+                    span.addEvent(.init(name: eventName, attributes: [TracingSupport.AttributeKeys.vaultAuthMethod: .string("approle")] ))
+
+                    return json.auth.clientToken
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }

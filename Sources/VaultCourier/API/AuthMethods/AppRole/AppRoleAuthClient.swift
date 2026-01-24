@@ -23,6 +23,7 @@ import FoundationInternationalization
 import struct Foundation.URL
 #endif
 import Synchronization
+import Tracing
 import Logging
 import AppRoleAuth
 import Utils
@@ -348,37 +349,48 @@ extension AppRoleAuthClient {
         roleID: String,
         secretID: String
     ) async throws -> VaultAuthResponse {
-        let mountPath = self.mountPath
+        return try await withSpan(Operations.AuthApproleLogin.id, ofKind: .client) { span in
+            let mountPath = self.mountPath
 
-        let response = try await auth.client.authApproleLogin(
-            path: .init(enginePath: mountPath),
-            body: .json(.init(roleId: roleID, secretId: secretID))
-        )
+            let response = try await auth.client.authApproleLogin(
+                path: .init(enginePath: mountPath),
+                body: .json(.init(roleId: roleID, secretId: secretID))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
-                }
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
+                    }
 
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.auth.clientToken,
-                    accessor: json.auth.accessor,
-                    tokenPolicies: json.auth.tokenPolicies,
-                    metadata: json.auth.metadata?.additionalProperties ?? [:],
-                    leaseDuration: .seconds(json.auth.leaseDuration),
-                    isRenewable: json.auth.renewable,
-                    entityID: json.auth.entityId,
-                    tokenType: tokenType,
-                    isOrphan: json.auth.orphan,
-                    numberOfUses: json.auth.numUses
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    span.attributes[TracingSupport.AttributeKeys.vaultRequestID] = vaultRequestID
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 200
+                    let eventName = "login"
+                    span.addEvent(.init(name: eventName, attributes: [TracingSupport.AttributeKeys.vaultAuthMethod: .string("approle")] ))
+
+                    return .init(
+                        requestID: json.requestId,
+                        clientToken: json.auth.clientToken,
+                        accessor: json.auth.accessor,
+                        tokenPolicies: json.auth.tokenPolicies,
+                        metadata: json.auth.metadata?.additionalProperties ?? [:],
+                        leaseDuration: .seconds(json.auth.leaseDuration),
+                        isRenewable: json.auth.renewable,
+                        entityID: json.auth.entityId,
+                        tokenType: tokenType,
+                        isOrphan: json.auth.orphan,
+                        numberOfUses: json.auth.numUses
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
