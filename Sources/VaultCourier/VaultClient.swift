@@ -17,6 +17,8 @@
 import Synchronization
 import OpenAPIRuntime
 import Logging
+import Tracing
+import Utils
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else
@@ -114,8 +116,8 @@ public final class VaultClient: Sendable {
                 middlewares: [any ClientMiddleware] = []) {
         self.apiURL = configuration.apiURL
         self.clientTransport = clientTransport
-        self.middlewares = middlewares
         self.logger = configuration.backgroundActivityLogger
+        self.middlewares = middlewares
         self._token = .init(nil)
     }
 
@@ -133,14 +135,23 @@ public final class VaultClient: Sendable {
     /// Remove current session token
     public func resetSession() {
         self.token = nil
+        self.logger.debug("Session token deleted")
     }
 }
 
 extension VaultClient {
     public func login(method: AuthMethod) async throws {
-        let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
-        self.token = try await authenticator.authenticate()
-        logger.info("login authorized")
+        try await withSpan("login") { span in
+            let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
+            let startEvent = "Starting login"
+            self.logger.trace(.init(stringLiteral: startEvent), metadata: ["auth-method": .stringConvertible(method)])
+
+            self.token = try await authenticator.authenticate()
+
+            let endEvent = "login authorized"
+            self.logger.trace(.init(stringLiteral: endEvent), metadata: ["auth-method": .stringConvertible(method)])
+            span.addEvent(.init(name: endEvent, attributes: [TracingSupport.AttributeKeys.vaultAuthMethod: .stringConvertible(method)]))
+        }
     }
 
 }
@@ -155,7 +166,8 @@ extension VaultClient {
             apiURL: apiURL,
             clientTransport: clientTransport,
             middlewares: middlewares,
-            token: sessionToken
+            token: sessionToken,
+            logger: logger
         )
         return try await execute(client)
     }
@@ -180,7 +192,8 @@ extension VaultClient {
             clientTransport: clientTransport,
             mountPath: mountPath,
             middlewares: middlewares,
-            token: sessionToken
+            token: sessionToken,
+            logger: logger
         )
         return try await execute(client)
     }
@@ -209,7 +222,8 @@ extension VaultClient {
             clientTransport: clientTransport,
             mountPath: mountPath,
             middlewares: middlewares,
-            token: sessionToken
+            token: sessionToken,
+            logger: logger
         )
         return try await execute(client)
     }
@@ -232,7 +246,8 @@ extension VaultClient {
             apiURL: apiURL,
             clientTransport: clientTransport,
             middlewares: middlewares,
-            token: sessionToken
+            token: sessionToken,
+            logger: logger
         )
         return try await execute(client)
     }
@@ -259,7 +274,8 @@ extension VaultClient {
             clientTransport: clientTransport,
             mountPath: mountPath,
             middlewares: middlewares,
-            token: sessionToken
+            token: sessionToken,
+            logger: logger
         )
         return try await execute(client)
     }
