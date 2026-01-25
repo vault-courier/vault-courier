@@ -56,7 +56,9 @@ public final class DatabaseEngineClient: Sendable {
         self.apiURL = apiURL
         self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
-        self.logger = logger ?? Self.loggingDisabled
+        var logger =  logger ?? Self.loggingDisabled
+        logger[metadataKey: "engine"] = "database"
+        self.logger = logger
     }
 
     /// Vault's base URL
@@ -307,7 +309,7 @@ extension DatabaseEngineClient {
                         .init(stringLiteral: "read connection configuration"),
                         metadata: [
                             TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
-                            "database": "valkey"
+                            TracingSupport.AttributeKeys.databasePlugin: "valkey"
                     ])
 
                     return .init(

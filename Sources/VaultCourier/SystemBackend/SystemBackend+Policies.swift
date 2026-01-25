@@ -22,6 +22,8 @@ import struct Foundation.URL
 import OpenAPIRuntime
 import SystemPolicies
 import Logging
+import Tracing
+import Utils
 
 extension SystemBackend {
     /// Add a new or update an existing ACL policy.
@@ -31,21 +33,27 @@ extension SystemBackend {
     public func createPolicy(
         _ policy: ACLPolicyHCL
     ) async throws {
-        let sessionToken = policies.token
+        return try await withSpan(Operations.PoliciesWriteAclPolicy.id, ofKind: .client) { span in
+            let sessionToken = policies.token
 
-        let response = try await policies.client.policiesWriteAclPolicy(.init(
-            path: .init(name: policy.name),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(policy: policy.policy)))
-        )
+            let response = try await policies.client.policiesWriteAclPolicy(.init(
+                path: .init(name: policy.name),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(policy: policy.policy)))
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Policy '\(policy.name)' written successfully!")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    let eventName = "policy written"
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName, attributes: ["name": .string(policy.name)]))
+                    logger.trace(.init(stringLiteral: eventName), metadata: ["name": .string(policy.name)])
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -63,41 +71,57 @@ extension SystemBackend {
     }
 
     public func readPolicy(name: String) async throws -> ACLPolicyHCL {
-        let sessionToken = policies.token
+        return try await withSpan(Operations.PoliciesReadAclPolicy.id, ofKind: .client) { span in
+            let sessionToken = policies.token
 
-        let response = try await policies.client.policiesReadAclPolicy(.init(
-            path: .init(name: name),
-            headers: .init(xVaultToken: sessionToken))
-        )
+            let response = try await policies.client.policiesReadAclPolicy(.init(
+                path: .init(name: name),
+                headers: .init(xVaultToken: sessionToken))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(name: json.data.name, policy: json.data.policy)
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read policy"),
+                        metadata: [
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
+                    ])
+                    return .init(name: json.data.name, policy: json.data.policy)
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
     
     /// Deletes an ACL policy
     /// - Parameter name: name of ACL policy
     public func deletePolicy(name: String) async throws {
-        let sessionToken = policies.token
+        return try await withSpan(Operations.PoliciesDeleteAclPolicy.id, ofKind: .client) { span in
+            let sessionToken = policies.token
 
-        let response = try await policies.client.policiesDeleteAclPolicy(.init(
-            path: .init(name: name),
-            headers: .init(xVaultToken: sessionToken))
-        )
+            let response = try await policies.client.policiesDeleteAclPolicy(.init(
+                path: .init(name: name),
+                headers: .init(xVaultToken: sessionToken))
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Policy '\(name)' deleted")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    let eventName = "policy deleted"
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName, attributes: ["name": .string(name)]))
+                    logger.trace(.init(stringLiteral: eventName), metadata: ["name": .string(name)])
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }

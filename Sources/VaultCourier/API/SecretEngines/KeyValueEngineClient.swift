@@ -51,7 +51,7 @@ public final class KeyValueEngineClient: Sendable {
         self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
         var logger = logger ?? Self.loggingDisabled
-        logger[metadataKey: "engine"] = "key-value"
+        logger[metadataKey: "engine"] = "kv"
         self.logger = logger
     }
 
