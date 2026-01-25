@@ -25,6 +25,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import Logging
+import Tracing
 import Utils
 
 /// A Pkl resource reader for a KeyValue Vault secret
@@ -57,7 +58,10 @@ public final class VaultKeyValueReader: Sendable {
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
-        self.logger = backgroundActivityLogger ?? Logger(label: "vault-kv-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        var logger = backgroundActivityLogger ?? Logger(label: "vault-kv-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        logger[metadataKey: "pkl-resouce-reader"] = "kv"
+        logger[metadataKey: "scheme"] = .string(scheme)
+        self.logger = logger
         self.mountPath = mountPath
     }
 
@@ -93,36 +97,49 @@ public final class VaultKeyValueReader: Sendable {
 
 extension VaultKeyValueReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
-        do {
-            let relativePath = url.relativePath.removeSlash()
-            let version: Int?
-            let key: String
-
-            let components = relativePath.split(separator: "?version=", maxSplits: 2).map({String($0)})
-            if components.count == 2 {
-                key = components[0]
-                version = Int(components[1])
-            } else {
-                key = components[0]
-                version = nil
+        try await withSpan("read-external-resource") { span in
+            do {
+                let relativePath = url.relativePath.removeSlash()
+                let version: Int?
+                let key: String
+                
+                let components = relativePath.split(separator: "?version=", maxSplits: 2).map({String($0)})
+                if components.count == 2 {
+                    key = components[0]
+                    version = Int(components[1])
+                } else {
+                    key = components[0]
+                    version = nil
+                }
+                
+                guard !key.isEmpty else {
+                    let error = VaultReaderError.invalidKeyValueURL(relativePath)
+                    TracingSupport.handleResponse(error: error, span)
+                    throw error
+                }
+                
+                let buffer = try await client.readKeyValueSecretData(
+                    mountPath: mountPath.removeSlash(),
+                    key: key,
+                    version: version
+                )
+                logger.trace("read kv secret",
+                             metadata: [
+                                "key": .string(key),
+                                "version": .stringConvertible(version ?? "last"),
+                                "path": .string(mountPath)
+                             ])
+                return Array(buffer)
+            } catch let error as VaultServerError {
+                logger.debug(.init(stringLiteral: String(reflecting: error)))
+                TracingSupport.handleResponse(error: error, span)
+                throw error
+            } catch {
+                logger.trace(.init(stringLiteral: String(reflecting: error)))
+                let error = VaultReaderError.readingConfigurationFailed()
+                TracingSupport.handleResponse(error: error, span)
+                throw error
             }
-
-            guard !key.isEmpty else {
-                throw VaultReaderError.invalidKeyValueURL(relativePath)
-            }
-            
-            let buffer = try await client.readKeyValueSecretData(
-                mountPath: mountPath.removeSlash(),
-                key: key,
-                version: version
-            )
-            return Array(buffer)
-        } catch let error as VaultServerError {
-            logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw error
-        } catch {
-            logger.error(.init(stringLiteral: String(reflecting: error)))
-            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 

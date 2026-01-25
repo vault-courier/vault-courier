@@ -25,6 +25,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import Logging
+import Tracing
 import Utils
 
 /// A Pkl resource reader for Vault
@@ -59,7 +60,10 @@ public final class VaultResourceReader: Sendable {
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
-        self.logger = backgroundActivityLogger ?? Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        var logger = backgroundActivityLogger ?? Logger(label: "vault-resource-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        logger[metadataKey: "pkl-resouce-reader"] = "custom"
+        logger[metadataKey: "scheme"] = .string(scheme)
+        self.logger = logger
         self.execute =  execute
     }
 }
@@ -68,11 +72,15 @@ public final class VaultResourceReader: Sendable {
 
 extension VaultResourceReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
-        do {
-            return try await execute(client, url)
-        } catch {
-            logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw VaultReaderError.readingConfigurationFailed()
+        try await withSpan("read-external-resource") { span in
+            do {
+                let bytes = try await execute(client, url)
+                logger.trace("read secret", metadata: ["url": .stringConvertible(url)])
+                return bytes
+            } catch {
+                logger.debug(.init(stringLiteral: String(reflecting: error)))
+                throw VaultReaderError.readingConfigurationFailed()
+            }
         }
     }
 
