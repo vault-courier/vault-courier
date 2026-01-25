@@ -149,7 +149,9 @@ extension AppRoleAuthClient {
                 case .ok(let content):
                     let json = try content.body.json
                     guard let tokenType = TokenType(rawValue: json.data.tokenType?.rawValue ?? "") else {
-                        throw VaultClientError.receivedUnexpectedResponse("Unexpected token type: \(String(describing: json.data.tokenType))")
+                        let clientError = VaultClientError.receivedUnexpectedResponse("Unexpected token type: \(String(describing: json.data.tokenType))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
                     }
 
                     let vaultRequestID = json.requestId

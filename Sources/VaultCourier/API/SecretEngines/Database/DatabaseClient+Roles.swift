@@ -26,6 +26,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import Logging
+import Tracing
 import DatabaseEngine
 import Utils
 
@@ -44,74 +45,80 @@ extension DatabaseEngineClient {
     public func create(
         staticRole: DatabaseStaticRoleConfig,
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        return try await withSpan(Operations.DatabaseCreateStaticRole.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let rotationPeriod: String?
-        let rotationSchedule: String?
-        let rotationWindow: String?
-        let response:  Operations.DatabaseCreateStaticRole.Output
+            let rotationPeriod: String?
+            let rotationSchedule: String?
+            let rotationWindow: String?
+            let response:  Operations.DatabaseCreateStaticRole.Output
 
-        switch staticRole {
-            case .postgres(let postgresStaticRole):
-                switch postgresStaticRole.rotation {
-                    case .period(let period):
-                        rotationPeriod = period.formatted(.vaultSeconds)
-                        rotationSchedule = nil
-                        rotationWindow = nil
-                    case .scheduled(let scheduled):
-                        rotationPeriod = nil
-                        rotationSchedule = scheduled.schedule
-                        rotationWindow = scheduled.window?.formatted(.vaultSeconds)
-                }
+            switch staticRole {
+                case .postgres(let postgresStaticRole):
+                    switch postgresStaticRole.rotation {
+                        case .period(let period):
+                            rotationPeriod = period.formatted(.vaultSeconds)
+                            rotationSchedule = nil
+                            rotationWindow = nil
+                        case .scheduled(let scheduled):
+                            rotationPeriod = nil
+                            rotationSchedule = scheduled.schedule
+                            rotationWindow = scheduled.window?.formatted(.vaultSeconds)
+                    }
 
-                response = try await engine.client.databaseCreateStaticRole(
-                    .init(
-                        path: .init(enginePath: enginePath, roleName: postgresStaticRole.vaultRoleName),
-                        headers: .init(xVaultToken: sessionToken),
-                        body: .json(.init(username: postgresStaticRole.databaseUsername,
-                                          dbName: postgresStaticRole.databaseConnectionName,
-                                          rotationPeriod: rotationPeriod,
-                                          rotationSchedule: rotationSchedule,
-                                          rotationWindow: rotationWindow,
-                                          rotationStatements: postgresStaticRole.rotationStatements,
-                                          credentialType: postgresStaticRole.credentialType?.rawValue,
-                                          credentialConfig: .init(unvalidatedValue: postgresStaticRole.credentialConfig ?? [:]))))
-                )
-            case .valkey(let valkeyStaticRole):
-                switch valkeyStaticRole.rotation {
-                    case .period(let period):
-                        rotationPeriod = period.formatted(.vaultSeconds)
-                        rotationSchedule = nil
-                        rotationWindow = nil
-                    case .scheduled(let scheduled):
-                        rotationPeriod = nil
-                        rotationSchedule = scheduled.schedule
-                        rotationWindow = scheduled.window?.formatted(.vaultSeconds)
-                }
+                    response = try await engine.client.databaseCreateStaticRole(
+                        .init(
+                            path: .init(enginePath: enginePath, roleName: postgresStaticRole.vaultRoleName),
+                            headers: .init(xVaultToken: sessionToken),
+                            body: .json(.init(username: postgresStaticRole.databaseUsername,
+                                              dbName: postgresStaticRole.databaseConnectionName,
+                                              rotationPeriod: rotationPeriod,
+                                              rotationSchedule: rotationSchedule,
+                                              rotationWindow: rotationWindow,
+                                              rotationStatements: postgresStaticRole.rotationStatements,
+                                              credentialType: postgresStaticRole.credentialType?.rawValue,
+                                              credentialConfig: .init(unvalidatedValue: postgresStaticRole.credentialConfig ?? [:]))))
+                    )
+                case .valkey(let valkeyStaticRole):
+                    switch valkeyStaticRole.rotation {
+                        case .period(let period):
+                            rotationPeriod = period.formatted(.vaultSeconds)
+                            rotationSchedule = nil
+                            rotationWindow = nil
+                        case .scheduled(let scheduled):
+                            rotationPeriod = nil
+                            rotationSchedule = scheduled.schedule
+                            rotationWindow = scheduled.window?.formatted(.vaultSeconds)
+                    }
 
-                response = try await engine.client.databaseCreateStaticRole(
-                    .init(
-                        path: .init(enginePath: enginePath, roleName: valkeyStaticRole.vaultRoleName),
-                        headers: .init(xVaultToken: sessionToken),
-                        body: .json(.init(username: valkeyStaticRole.databaseUsername,
-                                          dbName: valkeyStaticRole.databaseConnectionName,
-                                          rotationPeriod: rotationPeriod,
-                                          rotationSchedule: rotationSchedule,
-                                          rotationWindow: rotationWindow,
-                                          rotationStatements: valkeyStaticRole.rotationStatements,
-                                          credentialConfig: .init(unvalidatedValue: [:]))))
-                )
-        }
+                    response = try await engine.client.databaseCreateStaticRole(
+                        .init(
+                            path: .init(enginePath: enginePath, roleName: valkeyStaticRole.vaultRoleName),
+                            headers: .init(xVaultToken: sessionToken),
+                            body: .json(.init(username: valkeyStaticRole.databaseUsername,
+                                              dbName: valkeyStaticRole.databaseConnectionName,
+                                              rotationPeriod: rotationPeriod,
+                                              rotationSchedule: rotationSchedule,
+                                              rotationWindow: rotationWindow,
+                                              rotationStatements: valkeyStaticRole.rotationStatements,
+                                              credentialConfig: .init(unvalidatedValue: [:]))))
+                    )
+            }
 
-        switch response {
-            case .ok , .noContent:
-                logger.info("Database static role written")
-                return
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok , .noContent:
+                    let eventName = "database static role written"
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                    return
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -120,63 +127,69 @@ extension DatabaseEngineClient {
     public func create(
         dynamicRole: DatabaseDynamicRoleConfig
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        return try await withSpan(Operations.DatabaseCreateRole.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response:  Operations.DatabaseCreateRole.Output
-        let data: Data
-        switch dynamicRole {
-            case .postgres(let config):
-                data = try JSONEncoder().encode(config.creationStatements)
-                guard let statements = String(data: data, encoding: .utf8) else {
-                    throw VaultClientError.invalidRole(statements: config.creationStatements)
-                }
+            let response:  Operations.DatabaseCreateRole.Output
+            let data: Data
+            switch dynamicRole {
+                case .postgres(let config):
+                    data = try JSONEncoder().encode(config.creationStatements)
+                    guard let statements = String(data: data, encoding: .utf8) else {
+                        throw VaultClientError.invalidRole(statements: config.creationStatements)
+                    }
 
-                response = try await engine.client.databaseCreateRole(
-                    .init(
-                        path: .init(enginePath: enginePath, roleName: config.vaultRoleName),
-                        headers: .init(xVaultToken: sessionToken),
-                        body: .json(.WritePostgresRoleRequest(.init(
-                            dbName: config.databaseConnectionName,
-                            defaultTtl: config.defaultTimeToLive?.formatted(.vaultSeconds),
-                            maxTtl: config.maxTimeToLive?.formatted(.vaultSeconds),
-                            creationStatements: [statements],
-                            revocationStatements: config.revocationStatements,
-                            rollbackStatements: config.rollbackStatements,
-                            renewStatements: config.renewStatements,
-                            rotationStatements: config.rotationStatements,
-                            credentialType: config.credentialType?.rawValue,
-                            credentialConfig: .init(unvalidatedValue: config.credentialConfig ?? [:]))))
+                    response = try await engine.client.databaseCreateRole(
+                        .init(
+                            path: .init(enginePath: enginePath, roleName: config.vaultRoleName),
+                            headers: .init(xVaultToken: sessionToken),
+                            body: .json(.WritePostgresRoleRequest(.init(
+                                dbName: config.databaseConnectionName,
+                                defaultTtl: config.defaultTimeToLive?.formatted(.vaultSeconds),
+                                maxTtl: config.maxTimeToLive?.formatted(.vaultSeconds),
+                                creationStatements: [statements],
+                                revocationStatements: config.revocationStatements,
+                                rollbackStatements: config.rollbackStatements,
+                                renewStatements: config.renewStatements,
+                                rotationStatements: config.rotationStatements,
+                                credentialType: config.credentialType?.rawValue,
+                                credentialConfig: .init(unvalidatedValue: config.credentialConfig ?? [:]))))
+                        )
                     )
-                )
-            case .valkey(let config):
-                data = try JSONEncoder().encode(config.creationStatements)
-                guard let statements = String(data: data, encoding: .utf8) else {
-                    throw VaultClientError.invalidRole(statements: config.creationStatements)
-                }
+                case .valkey(let config):
+                    data = try JSONEncoder().encode(config.creationStatements)
+                    guard let statements = String(data: data, encoding: .utf8) else {
+                        throw VaultClientError.invalidRole(statements: config.creationStatements)
+                    }
 
-                response = try await engine.client.databaseCreateRole(
-                    .init(
-                        path: .init(enginePath: enginePath, roleName: config.vaultRoleName),
-                        headers: .init(xVaultToken: sessionToken),
-                        body: .json(.WriteValkeyRoleRequest(.init(
-                            dbName: config.databaseConnectionName,
-                            defaultTtl: config.defaultTimeToLive?.formatted(.vaultSeconds),
-                            maxTtl: config.maxTimeToLive?.formatted(.vaultSeconds),
-                            creationStatements: [statements]) // Filed a bug for this which can simplify the api: https://github.com/openbao/openbao/issues/1813
-                        ))
+                    response = try await engine.client.databaseCreateRole(
+                        .init(
+                            path: .init(enginePath: enginePath, roleName: config.vaultRoleName),
+                            headers: .init(xVaultToken: sessionToken),
+                            body: .json(.WriteValkeyRoleRequest(.init(
+                                dbName: config.databaseConnectionName,
+                                defaultTtl: config.defaultTimeToLive?.formatted(.vaultSeconds),
+                                maxTtl: config.maxTimeToLive?.formatted(.vaultSeconds),
+                                creationStatements: [statements]) // Filed a bug for this which can simplify the api: https://github.com/openbao/openbao/issues/1813
+                            ))
+                        )
                     )
-                )
-        }
+            }
 
-        switch response {
-            case .noContent:
-                logger.info("Database dynamic role written")
-                return
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    let eventName = "database dynamic role written"
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                    return
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }
@@ -194,22 +207,28 @@ extension DatabaseEngineClient {
     public func deleteStaticRole(
         name: String
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        return try await withSpan(Operations.DatabaseDeleteStaticRole.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.databaseDeleteStaticRole(
-            path: .init(enginePath: enginePath, roleName: name),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.databaseDeleteStaticRole(
+                path: .init(enginePath: enginePath, roleName: name),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Database static role \(name) deleted")
-                return
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    let eventName = "database static role \(name) deleted"
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName, attributes: ["role": .string(name)]))
+                    logger.trace(.init(stringLiteral: eventName), metadata: ["role": .string(name)])
+                    return
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -224,22 +243,28 @@ extension DatabaseEngineClient {
     public func deleteRole(
         name: String
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        return try await withSpan(Operations.DatabaseDeleteRole.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.databaseDeleteRole(
-            path: .init(enginePath: enginePath, roleName: name),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.databaseDeleteRole(
+                path: .init(enginePath: enginePath, roleName: name),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Database static role \(name) deleted")
-                return
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    let eventName = "database dynamic role deleted"
+                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName, attributes: ["role": .string(name)]))
+                    logger.trace(.init(stringLiteral: eventName), metadata: ["role": .string(name)])
+                    return
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }
@@ -258,43 +283,54 @@ extension DatabaseEngineClient {
     public func databaseCredentials(
         staticRole: String
     ) async throws -> StaticRoleCredentialsResponse {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
-
-        let response = try await engine.client.databaseReadStaticRoleCredentials(
-            path: .init(enginePath: enginePath, roleName: staticRole),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-
-                let rotation: RotationStrategy? = if let rotationPeriod = json.data.rotationPeriod {
-                    .period(.seconds(rotationPeriod))
-                } else if let schedule = json.data.rotationSchedule {
-                    if let window = json.data.rotationWindow {
-                        .scheduled(.init(schedule: schedule,
-                                         window: .seconds(window)))
+        return try await withSpan(Operations.DatabaseReadStaticRoleCredentials.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+            
+            let response = try await engine.client.databaseReadStaticRoleCredentials(
+                path: .init(enginePath: enginePath, roleName: staticRole),
+                headers: .init(xVaultToken: sessionToken)
+            )
+            
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    
+                    let rotation: RotationStrategy? = if let rotationPeriod = json.data.rotationPeriod {
+                        .period(.seconds(rotationPeriod))
+                    } else if let schedule = json.data.rotationSchedule {
+                        if let window = json.data.rotationWindow {
+                            .scheduled(.init(schedule: schedule,
+                                             window: .seconds(window)))
+                        } else {
+                            .scheduled(.init(schedule: schedule, window: nil))
+                        }
                     } else {
-                        .scheduled(.init(schedule: schedule, window: nil))
+                        nil
                     }
-                } else {
-                    nil
-                }
 
-                return .init(
-                    requestID: json.requestId,
-                    username: json.data.username,
-                    password: json.data.password,
-                    timeToLive: .seconds(json.data.ttl),
-                    updatedAt: json.data.lastVaultRotation,
-                    rotation: rotation
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read database credentials"),
+                        metadata: [
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID)
+                    ])
+
+                    return .init(
+                        requestID: json.requestId,
+                        username: json.data.username,
+                        password: json.data.password,
+                        timeToLive: .seconds(json.data.ttl),
+                        updatedAt: json.data.lastVaultRotation,
+                        rotation: rotation
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -310,26 +346,38 @@ extension DatabaseEngineClient {
     public func databaseCredentials(
         dynamicRole: String
     ) async throws -> RoleCredentialsResponse {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
-
-        let response = try await engine.client.databaseReadRoleCredentials(
-            path: .init(enginePath: enginePath, roleName: dynamicRole),
-            headers: .init(xVaultToken: sessionToken)
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(
-                    requestID: json.requestId,
-                    username: json.data.username,
-                    password: json.data.password,
-                    timeToLive: json.data.ttl.flatMap({ .seconds($0)}))
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+        return try await withSpan(Operations.DatabaseReadRoleCredentials.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+            
+            let response = try await engine.client.databaseReadRoleCredentials(
+                path: .init(enginePath: enginePath, roleName: dynamicRole),
+                headers: .init(xVaultToken: sessionToken)
+            )
+            
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read database credentials"),
+                        metadata: [
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID)
+                        ])
+                    
+                    return .init(
+                        requestID: json.requestId,
+                        username: json.data.username,
+                        password: json.data.password,
+                        timeToLive: json.data.ttl.flatMap({ .seconds($0)}))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }

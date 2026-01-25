@@ -115,7 +115,8 @@ let package = Package(
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.30.3"),
         .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.9.0"),
-        .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1"))
+        .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.3.1"),
+        .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1")),
     ],
     targets: [
         .target(
@@ -125,6 +126,7 @@ let package = Package(
                 .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
                 .product(name: "Configuration", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
                 .product(name: "Logging", package: "swift-log"),
+                .product(name: "Tracing", package: "swift-distributed-tracing"),
                 .target(name: "Utils"),
                 // Vault System backend
                 .target(name: "SystemWrapping"),
@@ -238,6 +240,7 @@ let package = Package(
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Logging", package: "swift-log"),
+                .product(name: "Tracing", package: "swift-distributed-tracing"),
                 .target(name: "Utils")
             ],
             path: "Sources/DatabaseEngine",
@@ -252,7 +255,7 @@ let package = Package(
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "Configuration", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
-                .product(name: "ConfigurationTesting", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
+                .product(name: "ConfigurationTesting", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name]))
             ],
             exclude: [
                 "Fixtures"
@@ -261,7 +264,9 @@ let package = Package(
         .testTarget(
             name: "VaultCourierTests",
             dependencies: [
-                .target(name: "VaultCourier")
+                .target(name: "VaultCourier"),
+                .product(name: "Tracing", package: "swift-distributed-tracing"),
+                .product(name: "InMemoryTracing", package: "swift-distributed-tracing"),
             ]
         ),
     ],

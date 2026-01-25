@@ -31,6 +31,8 @@ package struct TracingSupport {
         package static let responseStatusCode: String = "http.status_code"
         package static let vaultRequestID: String = "vault.request.id"
         package static let vaultAuthMethod: String = "vault.auth.method"
+        package static let databasePlugin: String = "vault.database"
+
 
         package init() {}
     }
