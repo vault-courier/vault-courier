@@ -26,12 +26,21 @@ import TokenAuth
 import AppRoleAuth
 #endif
 
-public enum AuthMethod {
+public enum AuthMethod: Sendable, CustomStringConvertible {
     case token(String)
 
     #if AppRoleSupport
     case appRole(path: String, credentials: AppRoleCredentials)
     #endif
+
+    public var description: String {
+        switch self {
+            case .token: "Token"
+            #if AppRoleSupport
+            case .appRole: "AppRole"
+            #endif
+        }
+    }
 }
 
 package func makeAuthenticator(_ method: AuthMethod,

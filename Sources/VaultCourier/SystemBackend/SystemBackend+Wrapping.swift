@@ -25,6 +25,7 @@ import struct Foundation.Data
 import OpenAPIRuntime
 import SystemWrapping
 import Logging
+import Tracing
 import Utils
 
 extension SystemBackend {
@@ -38,33 +39,46 @@ extension SystemBackend {
     >(
         token: String?
     ) async throws -> VaultResponse<VaultData, AuthResponse> {
-        let sessionToken = wrapping.token
-        guard sessionToken != token else {
-            throw VaultClientError.invalidArgument("Wrapping parameter token and client token cannot be the same")
-        }
+        return try await withSpan(Operations.Unwrap.id, ofKind: .client) { span in
+            let sessionToken = wrapping.token
+            guard sessionToken != token else {
+                let clientError = VaultClientError.invalidArgument("Wrapping parameter token and client token cannot be the same")
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
 
-        let response = try await wrapping.client.unwrap(
-            .init(headers: .init(xVaultToken: sessionToken),
-                  body: .json(.init(token: token)))
-        )
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                var vaultData: VaultData? = nil
-                var auth: AuthResponse? = nil
-                if VaultData.self != Never.self {
-                    let data = try JSONEncoder().encode(json.data)
-                    vaultData = try JSONDecoder().decode(VaultData.self, from: data)
-                }
-                if AuthResponse.self != Never.self {
-                    let authData = try JSONEncoder().encode(json.auth)
-                    auth = try JSONDecoder().decode(AuthResponse.self, from: authData)
-                }
-                return VaultResponse(requestID: json.requestId, data: vaultData, auth: auth)
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            let response = try await wrapping.client.unwrap(
+                .init(headers: .init(xVaultToken: sessionToken),
+                      body: .json(.init(token: token)))
+            )
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    var vaultData: VaultData? = nil
+                    var auth: AuthResponse? = nil
+                    if VaultData.self != Never.self {
+                        let data = try JSONEncoder().encode(json.data)
+                        vaultData = try JSONDecoder().decode(VaultData.self, from: data)
+                    }
+                    if AuthResponse.self != Never.self {
+                        let authData = try JSONEncoder().encode(json.auth)
+                        auth = try JSONDecoder().decode(AuthResponse.self, from: authData)
+                    }
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "response unwrapped"),
+                        metadata: [
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
+                    ])
+                    return VaultResponse(requestID: vaultRequestID, data: vaultData, auth: auth)
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -77,36 +91,48 @@ extension SystemBackend {
         secrets: [String: String],
         wrapTimeToLive: Duration
     ) async throws -> WrappedTokenResponse {
-        guard let sessionToken = wrapping.token else {
-            throw VaultClientError.clientIsNotLoggedIn()
-        }
+        return try await withSpan(Operations.Wrap.id, ofKind: .client) { span in
+            guard let sessionToken = wrapping.token else {
+                let clientError = VaultClientError.clientIsNotLoggedIn()
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
 
-        let response = try await wrapping.client.wrap(
-            .init(
-                headers: .init(
-                    xVaultToken: .init(sessionToken),
-                    xVaultWrapTTL: .init(wrapTimeToLive.formatted(.vaultSeconds))
-                ),
-                body: .json(.init(unvalidatedValue: secrets))
-            )
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(
-                    requestID: json.requestId,
-                    token: json.wrapInfo.token,
-                    accessor: json.wrapInfo.accessor,
-                    timeToLive: json.wrapInfo.ttl,
-                    createdAt: json.wrapInfo.creationTime,
-                    creationPath: json.wrapInfo.creationPath,
-                    wrappedAccessor: json.wrapInfo.wrappedAccessor
+            let response = try await wrapping.client.wrap(
+                .init(
+                    headers: .init(
+                        xVaultToken: .init(sessionToken),
+                        xVaultWrapTTL: .init(wrapTimeToLive.formatted(.vaultSeconds))
+                    ),
+                    body: .json(.init(unvalidatedValue: secrets))
                 )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "secrets wrapped"),
+                        metadata: [
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
+                    ])
+                    return .init(
+                        requestID: vaultRequestID,
+                        token: json.wrapInfo.token,
+                        accessor: json.wrapInfo.accessor,
+                        timeToLive: json.wrapInfo.ttl,
+                        createdAt: json.wrapInfo.creationTime,
+                        creationPath: json.wrapInfo.creationPath,
+                        wrappedAccessor: json.wrapInfo.wrappedAccessor
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
     
@@ -120,35 +146,48 @@ extension SystemBackend {
     public func rewrap(
         token: String
     ) async throws -> WrappedTokenResponse {
-        guard let sessionToken = wrapping.token else {
-            throw VaultClientError.clientIsNotLoggedIn()
-        }
+        return try await withSpan(Operations.Rewrap.id, ofKind: .client) { span in
+            guard let sessionToken = wrapping.token else {
+                let clientError = VaultClientError.clientIsNotLoggedIn()
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
 
-        let response = try await wrapping.client.rewrap(
-            .init(
-                headers: .init(
-                    xVaultToken: .init(sessionToken)
-                ),
-                body: .json(.init(token: token))
-            )
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(
-                    requestID: json.requestId,
-                    token: json.wrapInfo.token,
-                    accessor: json.wrapInfo.accessor,
-                    timeToLive: json.wrapInfo.ttl,
-                    createdAt: json.wrapInfo.creationTime,
-                    creationPath: json.wrapInfo.creationPath,
-                    wrappedAccessor: json.wrapInfo.wrappedAccessor
+            let response = try await wrapping.client.rewrap(
+                .init(
+                    headers: .init(
+                        xVaultToken: .init(sessionToken)
+                    ),
+                    body: .json(.init(token: token))
                 )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "rewrap token"),
+                        metadata: [
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
+                    ])
+                    return .init(
+                        requestID: vaultRequestID,
+                        token: json.wrapInfo.token,
+                        accessor: json.wrapInfo.accessor,
+                        timeToLive: json.wrapInfo.ttl,
+                        createdAt: json.wrapInfo.creationTime,
+                        creationPath: json.wrapInfo.creationPath,
+                        wrappedAccessor: json.wrapInfo.wrappedAccessor
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -157,30 +196,44 @@ extension SystemBackend {
     /// - Parameter token: wrapping token ID
     /// - Returns: properties of wrapping token
     public func lookupWrapping(token: String) async throws -> WrappedTokenInfo {
-        guard let sessionToken = wrapping.token else {
-            throw VaultClientError.clientIsNotLoggedIn()
-        }
+        return try await withSpan(Operations.Lookup.id, ofKind: .client) { span in
+            guard let sessionToken = wrapping.token else {
+                let clientError = VaultClientError.clientIsNotLoggedIn()
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
 
-        let response = try await wrapping.client.lookup(
-            headers: .init(
-                xVaultToken: .init(sessionToken)
-            ),
-            body: .json(.init(token: token))
-        )
+            let response = try await wrapping.client.lookup(
+                headers: .init(
+                    xVaultToken: .init(sessionToken)
+                ),
+                body: .json(.init(token: token))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(
-                    requestID: json.requestId,
-                    timeToLive: json.data.creationTtl,
-                    createdAt: json.data.creationTime,
-                    creationPath: json.data.creationPath
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "lookup wrapped token info"),
+                        metadata: [
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
+                    ])
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        timeToLive: json.data.creationTtl,
+                        createdAt: json.data.creationTime,
+                        creationPath: json.data.creationPath
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }
@@ -190,15 +243,19 @@ extension SystemBackend {
     public func unwrapAppRoleSecretID(
         token: String
     ) async throws -> GenerateAppSecretIdResponse {
-        let response: VaultResponse<AppRoleSecretID, Never> = try await unwrapResponse(token: token)
-        guard let data = response.data else {
-            throw VaultClientError.receivedUnexpectedResponse("Unwrap response did not contain any data")
+        return try await withSpan("unwrap-approle-secret-id", ofKind: .client) { span in
+            let response: VaultResponse<AppRoleSecretID, Never> = try await unwrapResponse(token: token)
+            guard let data = response.data else {
+                let clientError = VaultClientError.receivedUnexpectedResponse("Unwrap response did not contain any data")
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
+            return .init(requestID: response.requestID,
+                         secretID: data.secretID,
+                         secretIDAccessor: data.secretIDAccessor,
+                         secretIDTimeToLive: .seconds(data.secretIDTimeToLive),
+                         secretIDNumberOfUses: data.secretIDNumberOfUses)
         }
-        return .init(requestID: response.requestID,
-                     secretID: data.secretID,
-                     secretIDAccessor: data.secretIDAccessor,
-                     secretIDTimeToLive: .seconds(data.secretIDTimeToLive),
-                     secretIDNumberOfUses: data.secretIDNumberOfUses)
     }
 }
 #endif

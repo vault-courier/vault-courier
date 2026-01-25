@@ -26,6 +26,7 @@ import struct Foundation.Date
 #endif
 import Synchronization
 import Logging
+import Tracing
 import KeyValue
 import Utils
 
@@ -49,7 +50,9 @@ public final class KeyValueEngineClient: Sendable {
         self.apiURL = apiURL
         self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
-        self.logger = logger ?? Self.loggingDisabled
+        var logger = logger ?? Self.loggingDisabled
+        logger[metadataKey: "engine"] = "kv"
+        self.logger = logger
     }
 
     /// Vault's base URL
@@ -76,6 +79,8 @@ public final class KeyValueEngineClient: Sendable {
     }
 
     let logger: Logging.Logger
+
+    typealias TracingAttributes = TracingSupport.AttributeKeys
 }
 
 extension KeyValueEngineClient {
@@ -91,46 +96,63 @@ extension KeyValueEngineClient {
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        return try await withSpan(Operations.WriteKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let data = try JSONEncoder().encode(secret)
-        let json: OpenAPIObjectContainer
-        do {
-            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
-        } catch {
-            throw VaultClientError.invalidSecretType()
-        }
+            let data = try JSONEncoder().encode(secret)
+            let json: OpenAPIObjectContainer
+            do {
+                json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
+            } catch {
+                let clientError = VaultClientError.invalidSecretType()
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
 
-        let response = try await engine.client.writeKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
-                options: .init(cas: nil),
-                data: json)
-            )
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let deletedAt: Date? = if case let .case1(date) = json.data.deletionTime {
-                    date
-                } else {
-                    nil
-                }
-                return .init(
-                    requestID: json.requestId,
-                    createdAt: json.data.createdTime,
-                    custom: json.data.customMetadata?.additionalProperties,
-                    deletedAt: deletedAt,
-                    isDestroyed: json.data.destroyed,
-                    version: json.data.version
+            let response = try await engine.client.writeKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    options: .init(cas: nil),
+                    data: json)
                 )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let deletedAt: Date? = if case let .case1(date) = json.data.deletionTime {
+                        date
+                    } else {
+                        nil
+                    }
+
+                    let vaultRequestID = json.requestId
+                    span.attributes[TracingAttributes.vaultRequestID] = vaultRequestID
+                    span.attributes[TracingAttributes.responseStatusCode] = 200
+                    let eventName = "secret written"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                        TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                    ])
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        createdAt: json.data.createdTime,
+                        custom: json.data.customMetadata?.additionalProperties,
+                        deletedAt: deletedAt,
+                        isDestroyed: json.data.destroyed,
+                        version: json.data.version
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -144,24 +166,34 @@ extension KeyValueEngineClient {
         key: String,
         version: Int? = nil
     ) async throws -> T {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.ReadKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.readKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.readKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                query: .init(version: version),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let data = try JSONEncoder().encode(json.data.data)
-                return try JSONDecoder().decode(T.self, from: data)
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let data = try JSONEncoder().encode(json.data.data)
+
+                    logger.trace(
+                        .init(stringLiteral: "read kv secret"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(json.requestId)
+                    ])
+                    TracingSupport.handleVaultResponse(requestID: json.requestId, span, 200)
+                    return try JSONDecoder().decode(T.self, from: data)
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -175,28 +207,40 @@ extension KeyValueEngineClient {
         key: String,
         version: Int? = nil
     ) async throws -> KeyValueResponse<T> {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.ReadKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.readKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.readKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                query: .init(version: version),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let data = try JSONEncoder().encode(json.data.data)
-                let secret = try JSONDecoder().decode(T.self, from: data)
-                return .init(
-                    requestID: json.requestId,
-                    data: secret
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let vaultRequestID = json.requestId
+
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read kv secret"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                    ])
+
+                    let data = try JSONEncoder().encode(json.data.data)
+                    let secret = try JSONDecoder().decode(T.self, from: data)
+                    return .init(
+                        requestID: vaultRequestID,
+                        data: secret
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -212,24 +256,33 @@ extension KeyValueEngineClient {
         version: Int? = nil,
         subkeysDepth: Int? = nil
     ) async throws -> Data {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.ReadKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.readKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.readKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                query: .init(version: version),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let data = try JSONEncoder().encode(json.data.data)
-                return data
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let data = try JSONEncoder().encode(json.data.data)
+                    TracingSupport.handleVaultResponse(requestID: json.requestId, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read kv secret"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(json.requestId)
+                    ])
+                    return data
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -245,24 +298,34 @@ extension KeyValueEngineClient {
         version: Int? = nil,
         depth: Int? = nil
     ) async throws -> Data {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.SubkeysKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.subkeysKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            query: .init(version: version, depth: depth),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.subkeysKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                query: .init(version: version, depth: depth),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let data = try JSONEncoder().encode(json.data.subkeys)
-                return data
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let data = try JSONEncoder().encode(json.data.subkeys)
+
+                    TracingSupport.handleVaultResponse(requestID: json.requestId, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read kv secret subkeys"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(json.requestId)
+                    ])
+                    return data
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -278,45 +341,58 @@ extension KeyValueEngineClient {
         secret: some Codable,
         key: String
     ) async throws -> KeyValueMetadata {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.PatchKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let data = try JSONEncoder().encode(secret)
-        let json: OpenAPIObjectContainer
-        do {
-            json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
-        } catch {
-            throw VaultClientError.invalidSecretType()
-        }
+            let data = try JSONEncoder().encode(secret)
+            let json: OpenAPIObjectContainer
+            do {
+                json = try JSONDecoder().decode(OpenAPIObjectContainer.self, from: data)
+            } catch {
+                let clientError = VaultClientError.invalidSecretType()
+                TracingSupport.handleResponse(error: clientError, span)
+                throw clientError
+            }
 
-        let response = try await engine.client.patchKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .applicationMergePatchJson(.init(
-                options: .init(cas: nil),
-                data: json))
+            let response = try await engine.client.patchKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                headers: .init(xVaultToken: sessionToken),
+                body: .applicationMergePatchJson(.init(
+                    options: .init(cas: nil),
+                    data: json))
             )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let deletedAt: Date? = if case let .case1(date) = json.data.deletionTime {
-                    date
-                } else {
-                    nil
-                }
-                return .init(
-                    requestID: json.requestId,
-                    createdAt: json.data.createdTime,
-                    custom: json.data.customMetadata?.additionalProperties,
-                    deletedAt: deletedAt,
-                    isDestroyed: json.data.destroyed,
-                    version: json.data.version
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let deletedAt: Date? = if case let .case1(date) = json.data.deletionTime {
+                        date
+                    } else {
+                        nil
+                    }
+                    TracingSupport.handleVaultResponse(requestID: json.requestId, span, 200)
+                    let eventName = "secret patched"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(json.requestId)
+                    ])
+                    return .init(
+                        requestID: json.requestId,
+                        createdAt: json.data.createdTime,
+                        custom: json.data.customMetadata?.additionalProperties,
+                        deletedAt: deletedAt,
+                        isDestroyed: json.data.destroyed,
+                        version: json.data.version
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -331,37 +407,47 @@ extension KeyValueEngineClient {
         key: String,
         versions: [String] = []
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.DeleteKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        if versions.isEmpty {
-            let response = try await engine.client.deleteLatestKvSecrets(
-                path: .init(kvPath: enginePath, secretKey: key),
-                headers: .init(xVaultToken: sessionToken)
-            )
+            if versions.isEmpty {
+                let response = try await engine.client.deleteLatestKvSecrets(
+                    path: .init(kvPath: enginePath, secretKey: key),
+                    headers: .init(xVaultToken: sessionToken)
+                )
 
-            switch response {
-                case .noContent:
-                    logger.info("secret deleted successfully")
-                case let .undocumented(statusCode, payload):
-                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                    throw vaultError
-            }
-        } else {
-            let response = try await engine.client.deleteKvSecrets(
-                path: .init(kvPath: enginePath, secretKey: key),
-                headers: .init(xVaultToken: sessionToken),
-                body: .json(.init(versions: versions))
-            )
+                switch response {
+                    case .noContent:
+                        span.attributes[TracingAttributes.responseStatusCode] = 204
+                        let eventName = "secret deleted"
+                        span.addEvent(.init(name: eventName))
+                        logger.trace(.init(stringLiteral: eventName))
+                    case let .undocumented(statusCode, payload):
+                        let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                        logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                        TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                        throw vaultError
+                }
+            } else {
+                let response = try await engine.client.deleteKvSecrets(
+                    path: .init(kvPath: enginePath, secretKey: key),
+                    headers: .init(xVaultToken: sessionToken),
+                    body: .json(.init(versions: versions))
+                )
 
-            switch response {
-                case .noContent:
-                    logger.info("secret deleted successfully")
-                case let .undocumented(statusCode, payload):
-                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                    throw vaultError
+                switch response {
+                    case .noContent:
+                        span.attributes[TracingAttributes.responseStatusCode] = 204
+                        let eventName = "secret(s) deleted"
+                        span.addEvent(.init(name: eventName, attributes: ["versions": .stringArray(versions)]))
+                        logger.trace(.init(stringLiteral: eventName), metadata: ["versions": .stringConvertible(versions)])
+                    case let .undocumented(statusCode, payload):
+                        let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                        logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                        TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                        throw vaultError
+                }
             }
         }
     }
@@ -377,23 +463,29 @@ extension KeyValueEngineClient {
         key: String,
         versions: [String]
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.UndeleteKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.undeleteKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(versions: versions))
-        )
+            let response = try await engine.client.undeleteKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(versions: versions))
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("secret undeleted successfully")
-                return
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    let eventName = "secret undeleted"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                    return
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -412,27 +504,33 @@ extension KeyValueEngineClient {
         deleteVersionAfter: String? = nil,
         versionLimit: Int = 10
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.UpdateMetadataKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.updateMetadataKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
-                casRequired: isCasRequired,
-                customMetadata: .init(additionalProperties: customMetadata),
-                deleteVersionAfter: deleteVersionAfter ?? "",
-                maxVersions: versionLimit)
+            let response = try await engine.client.updateMetadataKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    casRequired: isCasRequired,
+                    customMetadata: .init(additionalProperties: customMetadata),
+                    deleteVersionAfter: deleteVersionAfter ?? "",
+                    maxVersions: versionLimit)
+                )
             )
-        )
 
-        switch response {
-            case .noContent:
-                logger.info("Secret metadata updated.")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    let eventName = "secret metadata updated"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -442,45 +540,55 @@ extension KeyValueEngineClient {
     public func readMetadata(
         key: String
     ) async throws -> KeyValueStoreMetadata {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.ReadMetadataKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.readMetadataKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.readMetadataKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                let versionTuples = try json.data.versions.additionalProperties.map { key, value -> (Int, KeyValueStoreMetadata.KeyValueLifetime) in
-                    guard let index = Int(key) else {
-                        throw VaultClientError.decodingFailed()
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let versionTuples = try json.data.versions.additionalProperties.map { key, value -> (Int, KeyValueStoreMetadata.KeyValueLifetime) in
+                        guard let index = Int(key) else {
+                            throw VaultClientError.decodingFailed()
+                        }
+                        let deletedAt: Date? = if case let .case1(date) = value.deletionTime {
+                            date
+                        } else {
+                            nil
+                        }
+                        return (index, KeyValueStoreMetadata.KeyValueLifetime(createdAt: value.createdTime, deletedAt: deletedAt, isDestroyed: value.destroyed))
                     }
-                    let deletedAt: Date? = if case let .case1(date) = value.deletionTime {
-                        date
-                    } else {
-                        nil
-                    }
-                    return (index, KeyValueStoreMetadata.KeyValueLifetime(createdAt: value.createdTime, deletedAt: deletedAt, isDestroyed: value.destroyed))
-                }
-                let versions = Dictionary(uniqueKeysWithValues: versionTuples)
-                return .init(
-                    requestID: json.requestId,
-                    isCasRequired: json.data.casRequired,
-                    createdAt: json.data.createdTime,
-                    currentVersion: json.data.currentVersion,
-                    custom: json.data.customMetadata?.additionalProperties,
-                    deletedVersionAfter: json.data.deleteVersionAfter,
-                    versionsLimit: json.data.maxVersions,
-                    oldestVersion: json.data.oldestVersion,
-                    updatedAt: json.data.updatedTime,
-                    versions: versions
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let versions = Dictionary(uniqueKeysWithValues: versionTuples)
+
+                    TracingSupport.handleVaultResponse(requestID: json.requestId, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read kv secret metadata"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(json.requestId)
+                    ])
+                    return .init(
+                        requestID: json.requestId,
+                        isCasRequired: json.data.casRequired,
+                        createdAt: json.data.createdTime,
+                        currentVersion: json.data.currentVersion,
+                        custom: json.data.customMetadata?.additionalProperties,
+                        deletedVersionAfter: json.data.deleteVersionAfter,
+                        versionsLimit: json.data.maxVersions,
+                        oldestVersion: json.data.oldestVersion,
+                        updatedAt: json.data.updatedTime,
+                        versions: versions
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -491,21 +599,27 @@ extension KeyValueEngineClient {
     public func deleteAllMetadata(
         key: String
     ) async throws {
-        let sessionToken = self.engine.token
-        let enginePath = self.engine.mountPath
+        try await withSpan(Operations.DeleteMetadataKvSecrets.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
 
-        let response = try await engine.client.deleteMetadataKvSecrets(
-            path: .init(kvPath: enginePath, secretKey: key),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await engine.client.deleteMetadataKvSecrets(
+                path: .init(kvPath: enginePath, secretKey: key),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Metadata deleted successfully.")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    let eventName = "secret metadata deleted"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }

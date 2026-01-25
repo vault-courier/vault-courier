@@ -25,6 +25,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import Logging
+import Tracing
 import Utils
 
 /// A Pkl resource reader for database credentials managed by Vault
@@ -57,7 +58,10 @@ public final class VaultDatabaseCredentialReader: Sendable {
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
-        self.logger = backgroundActivityLogger ?? Logger(label: "vault-database-credential-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        var logger = backgroundActivityLogger ?? Logger(label: "vault-database-credential-reader-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
+        logger[metadataKey: "pkl-resouce-reader"] = "database"
+        logger[metadataKey: "scheme"] = .string(scheme)
+        self.logger = logger
         self.mountPath = mountPath
     }
 
@@ -93,30 +97,47 @@ public final class VaultDatabaseCredentialReader: Sendable {
 
 extension VaultDatabaseCredentialReader: ResourceReader {
     public func read(url: URL) async throws -> [UInt8] {
-        do {
-            let credentials: DatabaseCredentials
-            let relativePath = url.relativePath.removeSlash()
+        try await withSpan("read-external-resource") { span in
+            do {
+                let credentials: DatabaseCredentials
+                let relativePath = url.relativePath.removeSlash()
 
-            if relativePath.hasPrefix("static-creds/") {
-                let roleName = relativePath.suffix(from: "static-creds/".endIndex)
-                let response = try await client.databaseCredentials(staticRole: String(roleName), mountPath: mountPath)
-                credentials = DatabaseCredentials(username: response.username, password: response.password)
-            } else if relativePath.hasPrefix("creds/") {
-                let roleName = relativePath.suffix(from: "creds/".endIndex)
-                let response = try await client.databaseCredentials(dynamicRole: String(roleName), mountPath: mountPath)
-                credentials = DatabaseCredentials(username: response.username, password: response.password)
-            } else {
-                throw VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
+                if relativePath.hasPrefix("static-creds/") {
+                    let roleName = relativePath.suffix(from: "static-creds/".endIndex)
+                    let response = try await client.databaseCredentials(staticRole: String(roleName), mountPath: mountPath)
+                    credentials = DatabaseCredentials(username: response.username, password: response.password)
+                    logger.trace("read static database credentials",
+                                 metadata: [
+                                    "role": .stringConvertible(roleName),
+                                    "path": .string(mountPath)
+                                 ])
+                } else if relativePath.hasPrefix("creds/") {
+                    let roleName = relativePath.suffix(from: "creds/".endIndex)
+                    let response = try await client.databaseCredentials(dynamicRole: String(roleName), mountPath: mountPath)
+                    credentials = DatabaseCredentials(username: response.username, password: response.password)
+                    logger.trace("read dynamic database credentials",
+                                 metadata: [
+                                    "role": .stringConvertible(roleName),
+                                    "path": .string(mountPath)
+                                 ])
+                } else {
+                    let error = VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
+                    TracingSupport.handleResponse(error: error, span)
+                    throw error
+                }
+
+                let data = try JSONEncoder().encode(credentials)
+                return Array(data)
+            } catch let error as VaultServerError {
+                logger.debug(.init(stringLiteral: String(reflecting: error)))
+                TracingSupport.handleResponse(error: error, span)
+                throw error
+            } catch {
+                logger.trace(.init(stringLiteral: String(reflecting: error)))
+                let error = VaultReaderError.readingConfigurationFailed()
+                TracingSupport.handleResponse(error: error, span)
+                throw error
             }
-
-            let data = try JSONEncoder().encode(credentials)
-            return Array(data)
-        } catch let error as VaultServerError {
-            logger.debug(.init(stringLiteral: String(reflecting: error)))
-            throw error
-        } catch {
-            logger.error(.init(stringLiteral: String(reflecting: error)))
-            throw VaultReaderError.readingConfigurationFailed()
         }
     }
 

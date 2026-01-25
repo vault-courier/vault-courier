@@ -25,6 +25,7 @@ import class Foundation.JSONDecoder
 import struct Foundation.Data
 #endif
 import Synchronization
+import Tracing
 import Utils
 
 public enum DatabaseRole: Sendable {
@@ -154,72 +155,76 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
         forKey key: AbsoluteConfigKey,
         type: ConfigType
     ) async throws -> LookupResult {
-        let encodedKey = Self.keyEncoder.encode(key)
+        return try await withSpan("fetch-secret-value") { span in
+            let encodedKey = Self.keyEncoder.encode(key)
 
-        do {
-            guard let execute = getEvaluation(for: key),
-                  let buffer = try await execute(client) else {
+            do {
+                guard let execute = getEvaluation(for: key),
+                      let buffer = try await execute(client) else {
+                    return .init(encodedKey: encodedKey, value: nil)
+                }
+
+                let content: ConfigContent
+                switch type {
+                    case .string:
+                        guard let json = String(data: Data(buffer), encoding: .utf8) else {
+                            throw VaultClientError.receivedUnexpectedResponse()
+                        }
+                        content = .string(json)
+                    case .int:
+                        guard let intValue = try? JSONDecoder().decode(Int.self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .int(intValue)
+                    case .double:
+                        guard let doubleValue = try? JSONDecoder().decode(Double.self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .double(doubleValue)
+                    case .bool:
+                        guard let boolValue = try? JSONDecoder().decode(Bool.self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .bool(boolValue)
+                    case .bytes:
+                        content = .bytes(buffer)
+                    case .stringArray:
+                        guard let arrayValue = try? JSONDecoder().decode([String].self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .stringArray(arrayValue)
+                    case .intArray:
+                        guard let intArray = try? JSONDecoder().decode([Int].self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .intArray(intArray)
+                    case .doubleArray:
+                        guard let doubleArray = try? JSONDecoder().decode([Double].self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .doubleArray(doubleArray)
+                    case .boolArray:
+                        guard let boolArray = try? JSONDecoder().decode([Bool].self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .boolArray(boolArray)
+                    case .byteChunkArray:
+                        guard let byteChunkArray = try? JSONDecoder().decode([[UInt8]].self, from: Data(buffer)) else {
+                            throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
+                        }
+                        content = .byteChunkArray(byteChunkArray)
+                }
+
+                let value = ConfigValue(content, isSecret: true)
+                self.cache.setValue(value, forKey: encodedKey, context: key.context)
+                return .init(encodedKey: encodedKey, value: value)
+            } catch let error as VaultServerError {
+                TracingSupport.handleResponse(error: error, span)
                 return .init(encodedKey: encodedKey, value: nil)
+            } catch {
+                TracingSupport.handleResponse(error: error, span)
+                throw error
             }
-
-            let content: ConfigContent
-            switch type {
-                case .string:
-                    guard let json = String(data: Data(buffer), encoding: .utf8) else {
-                        throw VaultClientError.receivedUnexpectedResponse()
-                    }
-                    content = .string(json)
-                case .int:
-                    guard let intValue = try? JSONDecoder().decode(Int.self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .int(intValue)
-                case .double:
-                    guard let doubleValue = try? JSONDecoder().decode(Double.self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .double(doubleValue)
-                case .bool:
-                    guard let boolValue = try? JSONDecoder().decode(Bool.self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .bool(boolValue)
-                case .bytes:
-                    content = .bytes(buffer)
-                case .stringArray:
-                    guard let arrayValue = try? JSONDecoder().decode([String].self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .stringArray(arrayValue)
-                case .intArray:
-                    guard let intArray = try? JSONDecoder().decode([Int].self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .intArray(intArray)
-                case .doubleArray:
-                    guard let doubleArray = try? JSONDecoder().decode([Double].self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .doubleArray(doubleArray)
-                case .boolArray:
-                    guard let boolArray = try? JSONDecoder().decode([Bool].self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .boolArray(boolArray)
-                case .byteChunkArray:
-                    guard let byteChunkArray = try? JSONDecoder().decode([[UInt8]].self, from: Data(buffer)) else {
-                        throw VaultSecretProviderError.configValueNotConvertible(name: key.description, type: type)
-                    }
-                    content = .byteChunkArray(byteChunkArray)
-            }
-
-            let value = ConfigValue(content, isSecret: true)
-            self.cache.setValue(value, forKey: encodedKey, context: key.context)
-            return .init(encodedKey: encodedKey, value: value)
-        } catch _ as VaultServerError {
-            return .init(encodedKey: encodedKey, value: nil)
-        } catch {
-            throw error
         }
     }
 
@@ -249,22 +254,26 @@ extension VaultSecretProvider {
         mount: String,
         role: DatabaseRole
     ) async throws -> Data {
-        guard mount.isValidVaultMountPath else {
-            throw VaultSecretProviderError.invalidVault(mountPath: mount)
-        }
+        return try await withSpan("fetch-database-credential") { span in
+            guard mount.isValidVaultMountPath else {
+                let error = VaultSecretProviderError.invalidVault(mountPath: mount)
+                TracingSupport.handleResponse(error: error, span)
+                throw error
+            }
 
-        let credentials: DatabaseCredentials
-        switch role {
-            case .static(let name):
-                let response = try await client.databaseCredentials(staticRole: name, mountPath: mount)
-                credentials = DatabaseCredentials(username: response.username, password: response.password)
+            let credentials: DatabaseCredentials
+            switch role {
+                case .static(let name):
+                    let response = try await client.databaseCredentials(staticRole: name, mountPath: mount)
+                    credentials = DatabaseCredentials(username: response.username, password: response.password)
 
-            case .dynamic(let name):
-                let response = try await client.databaseCredentials(dynamicRole: name, mountPath: mount)
-                credentials = DatabaseCredentials(username: response.username, password: response.password)
+                case .dynamic(let name):
+                    let response = try await client.databaseCredentials(dynamicRole: name, mountPath: mount)
+                    credentials = DatabaseCredentials(username: response.username, password: response.password)
+            }
+            let data = try JSONEncoder().encode(credentials)
+            return data
         }
-        let data = try JSONEncoder().encode(credentials)
-        return data
     }
 
     public static func databaseCredentials(mount: String, role: DatabaseRole) async throws -> ApiOperation {

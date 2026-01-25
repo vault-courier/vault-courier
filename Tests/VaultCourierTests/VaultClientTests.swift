@@ -29,9 +29,16 @@ import VaultCourier
 import HTTPTypes
 import OpenAPIRuntime
 import Utils
+import Logging
 
 @Suite
 struct VaultClientTests {
+    static var logger: Logger {
+        var logger = Logger(label: "TestClient")
+        logger.logLevel = .trace
+        return logger
+    }
+
     @Test
     func wrapping_parameter_token_and_client_token_cannot_be_the_same() async throws {
         let clientToken = "test_token"
@@ -94,7 +101,7 @@ struct VaultClientTests {
                 """))
         }
 
-        let vaultClient = VaultClient(configuration: .defaultHttp(),
+        let vaultClient = VaultClient(configuration: .defaultHttp(backgroundActivityLogger: Self.logger),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .appRole(path: approleMount,
                                                      credentials: .init(roleID: roleID,

@@ -54,7 +54,7 @@ extension VaultAuthResponse: Encodable {
 }
 
 extension VaultAuthResponse {
-    public init(requestID: String,
+    public init(requestID: String?,
                 clientToken: String,
                 accessor: String,
                 tokenPolicies: [String],
@@ -65,7 +65,7 @@ extension VaultAuthResponse {
                 tokenType: TokenType,
                 isOrphan: Bool,
                 numberOfUses: Int) {
-        self.requestID = requestID
+        self.requestID = requestID ?? ""
         self.clientToken = clientToken
         self.accessor = accessor
         self.tokenPolicies = tokenPolicies

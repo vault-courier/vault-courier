@@ -27,6 +27,7 @@ import Synchronization
 import Logging
 import TokenAuth
 import Utils
+import Tracing
 
 /// Client for Token Authentication
 ///
@@ -70,6 +71,8 @@ public final class TokenAuthClient: Sendable {
     }
 
     let logger: Logging.Logger
+
+    typealias TracingAttributes = TracingSupport.AttributeKeys
 }
 
 extension TokenAuthClient {
@@ -84,51 +87,69 @@ extension TokenAuthClient {
         _ capabilities: TokenCreationConfig,
         wrapTimeToLive: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        let sessionToken = auth.token
+        try await withSpan(Operations.TokenCreate.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.tokenCreate(
-            headers: .init(xVaultToken: sessionToken, xVaultWrapTTL: wrapTimeToLive?.formatted(.vaultSeconds)),
-            body: .json(.init(
-                displayName: capabilities.displayName,
-                entityAlias: capabilities.entityAlias,
-                explicitMaxTtl: capabilities.tokenMaxTimeToLive?.formatted(.vaultSeconds),
-                id: capabilities.id,
-                meta: .init(unvalidatedValue: capabilities.meta ?? [:]),
-                noDefaultPolicy: !capabilities.hasDefaultPolicy,
-                noParent: !capabilities.hasParent,
-                numUses: capabilities.tokenNumberOfUses,
-                period: capabilities.tokenPeriod?.formatted(.vaultSeconds),
-                policies: capabilities.policies,
-                renewable: capabilities.isRenewable,
-                ttl: capabilities.timeToLive?.formatted(.vaultSeconds),
-                _type: .init(rawValue: capabilities.type?.rawValue ?? ""))
-            )
-        )
-
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
-                }
-
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.auth.clientToken,
-                    accessor: json.auth.accessor,
-                    tokenPolicies: json.auth.tokenPolicies,
-                    metadata: json.auth.metadata?.additionalProperties ?? [:],
-                    leaseDuration: .seconds(json.auth.leaseDuration),
-                    isRenewable: json.auth.renewable,
-                    entityID: json.auth.entityId,
-                    tokenType: tokenType,
-                    isOrphan: json.auth.orphan,
-                    numberOfUses: json.auth.numUses
+            let response = try await auth.client.tokenCreate(
+                headers: .init(xVaultToken: sessionToken, xVaultWrapTTL: wrapTimeToLive?.formatted(.vaultSeconds)),
+                body: .json(.init(
+                    displayName: capabilities.displayName,
+                    entityAlias: capabilities.entityAlias,
+                    explicitMaxTtl: capabilities.tokenMaxTimeToLive?.formatted(.vaultSeconds),
+                    id: capabilities.id,
+                    meta: .init(unvalidatedValue: capabilities.meta ?? [:]),
+                    noDefaultPolicy: !capabilities.hasDefaultPolicy,
+                    noParent: !capabilities.hasParent,
+                    numUses: capabilities.tokenNumberOfUses,
+                    period: capabilities.tokenPeriod?.formatted(.vaultSeconds),
+                    policies: capabilities.policies,
+                    renewable: capabilities.isRenewable,
+                    ttl: capabilities.timeToLive?.formatted(.vaultSeconds),
+                    _type: .init(rawValue: capabilities.type?.rawValue ?? ""))
                 )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
+                    }
+
+                    let vaultRequestID = json.requestId
+                    let metadata = json.auth.metadata?.additionalProperties ?? [:]
+                    let authResponse = VaultAuthResponse(
+                        requestID: vaultRequestID,
+                        clientToken: json.auth.clientToken,
+                        accessor: json.auth.accessor,
+                        tokenPolicies: json.auth.tokenPolicies,
+                        metadata: json.auth.metadata?.additionalProperties ?? [:],
+                        leaseDuration: .seconds(json.auth.leaseDuration),
+                        isRenewable: json.auth.renewable,
+                        entityID: json.auth.entityId,
+                        tokenType: tokenType,
+                        isOrphan: json.auth.orphan,
+                        numberOfUses: json.auth.numUses
+                    )
+
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "token created"
+                    span.addEvent(.init(name: eventName, attributes: .init(metadata.mapValues(SpanAttribute.string))))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                        TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                    ])
+
+                    return authResponse
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -138,83 +159,106 @@ extension TokenAuthClient {
     /// - Parameter token: token ID
     /// - Returns: Token properties
     public func lookup(token: String) async throws -> LookupTokenResponse {
-        let sessionToken = auth.token
+        try await withSpan(Operations.LookupToken.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.lookupToken(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(token: token))
-        )
+            let response = try await auth.client.lookupToken(
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(token: token))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
-                }
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
+                    }
 
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.data.id,
-                    accessor: json.data.accessor,
-                    createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
-                    creationTimeToLive: .seconds(json.data.creationTtl),
-                    displayName: json.data.displayName,
-                    expiresAt: json.data.expireTime,
-                    explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
-                    timeToLive: .seconds(json.data.ttl),
-                    policies: json.data.policies,
-                    metadata: json.data.meta?.additionalProperties ?? [:],
-                    isRenewable: json.data.renewable,
-                    tokenType: tokenType,
-                    isOrphan: json.data.orphan,
-                    numberOfUses: json.data.numUses,
-                    path: json.data.path
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "lookup token"),
+                        metadata: [
+                        TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                    ])
+                    return .init(
+                        requestID: json.requestId,
+                        clientToken: json.data.id,
+                        accessor: json.data.accessor,
+                        createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
+                        creationTimeToLive: .seconds(json.data.creationTtl),
+                        displayName: json.data.displayName,
+                        expiresAt: json.data.expireTime,
+                        explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
+                        timeToLive: .seconds(json.data.ttl),
+                        policies: json.data.policies,
+                        metadata: json.data.meta?.additionalProperties ?? [:],
+                        isRenewable: json.data.renewable,
+                        tokenType: tokenType,
+                        isOrphan: json.data.orphan,
+                        numberOfUses: json.data.numUses,
+                        path: json.data.path
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
     
     /// Get client's token information
     /// - Returns: Returns information about the client token.
     public func lookupCurrentToken() async throws -> LookupTokenResponse {
-        let sessionToken = auth.token
+        try await withSpan(Operations.LookupTokenSelf.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.lookupTokenSelf(
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await auth.client.lookupTokenSelf(
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
-                }
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
+                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
+                    }
 
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.data.id,
-                    accessor: json.data.accessor,
-                    createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
-                    creationTimeToLive: .seconds(json.data.creationTtl),
-                    displayName: json.data.displayName,
-                    expiresAt: json.data.expireTime,
-                    explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
-                    timeToLive: .seconds(json.data.ttl),
-                    policies: json.data.policies,
-                    metadata: json.data.meta?.additionalProperties ?? [:],
-                    isRenewable: json.data.renewable,
-                    tokenType: tokenType,
-                    isOrphan: json.data.orphan,
-                    numberOfUses: json.data.numUses,
-                    path: json.data.path
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "lookup current token"),
+                        metadata: [
+                        TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                    ])
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        clientToken: json.data.id,
+                        accessor: json.data.accessor,
+                        createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
+                        creationTimeToLive: .seconds(json.data.creationTtl),
+                        displayName: json.data.displayName,
+                        expiresAt: json.data.expireTime,
+                        explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
+                        timeToLive: .seconds(json.data.ttl),
+                        policies: json.data.policies,
+                        metadata: json.data.meta?.additionalProperties ?? [:],
+                        isRenewable: json.data.renewable,
+                        tokenType: tokenType,
+                        isOrphan: json.data.orphan,
+                        numberOfUses: json.data.numUses,
+                        path: json.data.path
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
     
@@ -222,42 +266,53 @@ extension TokenAuthClient {
     /// - Parameter accessor: accessor ID
     /// - Returns: Returns information about the reference token which is referenced by the accessor.
     public func lookupToken(accessor: String) async throws -> LookupTokenResponse {
-        let sessionToken = auth.token
+        try await withSpan(Operations.LookupTokenAccessor.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.lookupTokenAccessor(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(accessor: accessor))
-        )
+            let response = try await auth.client.lookupTokenAccessor(
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(accessor: accessor))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
-                }
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
+                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
+                    }
 
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.data.id,
-                    accessor: json.data.accessor,
-                    createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
-                    creationTimeToLive: .seconds(json.data.creationTtl),
-                    displayName: json.data.displayName,
-                    expiresAt: json.data.expireTime,
-                    explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
-                    timeToLive: .seconds(json.data.ttl),
-                    policies: json.data.policies,
-                    metadata: json.data.meta?.additionalProperties ?? [:],
-                    isRenewable: json.data.renewable,
-                    tokenType: tokenType,
-                    isOrphan: json.data.orphan,
-                    numberOfUses: json.data.numUses,
-                    path: json.data.displayName
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "lookup token via accessor"),
+                        metadata: [
+                        TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                    ])
+
+                    return .init(
+                        requestID: json.requestId,
+                        clientToken: json.data.id,
+                        accessor: json.data.accessor,
+                        createdAt: Date(timeIntervalSince1970: TimeInterval(json.data.creationTime)),
+                        creationTimeToLive: .seconds(json.data.creationTtl),
+                        displayName: json.data.displayName,
+                        expiresAt: json.data.expireTime,
+                        explicitMaxTimeToLive: .seconds(json.data.explicitMaxTtl ?? 0),
+                        timeToLive: .seconds(json.data.ttl),
+                        policies: json.data.policies,
+                        metadata: json.data.meta?.additionalProperties ?? [:],
+                        isRenewable: json.data.renewable,
+                        tokenType: tokenType,
+                        isOrphan: json.data.orphan,
+                        numberOfUses: json.data.numUses,
+                        path: json.data.displayName
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -274,37 +329,52 @@ extension TokenAuthClient {
         _ token: String,
         by increment: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        let sessionToken = auth.token
+        try await withSpan(Operations.TokenRenew.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.tokenRenew(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(token: token, increment: increment?.formatted(.vaultSeconds)))
-        )
+            let response = try await auth.client.tokenRenew(
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(token: token, increment: increment?.formatted(.vaultSeconds)))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
-                }
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
+                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                    }
 
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.auth.clientToken,
-                    accessor: json.auth.accessor,
-                    tokenPolicies: json.auth.tokenPolicies,
-                    metadata: json.auth.metadata?.additionalProperties ?? [:],
-                    leaseDuration: .seconds(json.auth.leaseDuration),
-                    isRenewable: json.auth.renewable,
-                    entityID: json.auth.entityId,
-                    tokenType: tokenType,
-                    isOrphan: json.auth.orphan,
-                    numberOfUses: json.auth.numUses
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    let ttl = increment?.description ?? "default"
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "token renewed"
+                    span.addEvent(.init(name: eventName, attributes: ["ttl": .string(ttl)]))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "ttl": .string(ttl)
+                    ])
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        clientToken: json.auth.clientToken,
+                        accessor: json.auth.accessor,
+                        tokenPolicies: json.auth.tokenPolicies,
+                        metadata: json.auth.metadata?.additionalProperties ?? [:],
+                        leaseDuration: .seconds(json.auth.leaseDuration),
+                        isRenewable: json.auth.renewable,
+                        entityID: json.auth.entityId,
+                        tokenType: tokenType,
+                        isOrphan: json.auth.orphan,
+                        numberOfUses: json.auth.numUses
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -317,37 +387,52 @@ extension TokenAuthClient {
     public func renewToken(
         by increment: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        let sessionToken = auth.token
+        try await withSpan(Operations.TokenRenewSelf.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.tokenRenewSelf(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(increment: increment?.formatted(.vaultSeconds)))
-        )
+            let response = try await auth.client.tokenRenewSelf(
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(increment: increment?.formatted(.vaultSeconds)))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
-                }
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
+                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                    }
 
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.auth.clientToken,
-                    accessor: json.auth.accessor,
-                    tokenPolicies: json.auth.tokenPolicies,
-                    metadata: json.auth.metadata?.additionalProperties ?? [:],
-                    leaseDuration: .seconds(json.auth.leaseDuration),
-                    isRenewable: json.auth.renewable,
-                    entityID: json.auth.entityId,
-                    tokenType: tokenType,
-                    isOrphan: json.auth.orphan,
-                    numberOfUses: json.auth.numUses
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    let ttl = increment?.description ?? "default"
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "client's own token renewed"
+                    span.addEvent(.init(name: eventName, attributes: ["ttl": .string(ttl)]))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "ttl": .string(ttl)
+                    ])
+
+                    return .init(
+                        requestID: json.requestId,
+                        clientToken: json.auth.clientToken,
+                        accessor: json.auth.accessor,
+                        tokenPolicies: json.auth.tokenPolicies,
+                        metadata: json.auth.metadata?.additionalProperties ?? [:],
+                        leaseDuration: .seconds(json.auth.leaseDuration),
+                        isRenewable: json.auth.renewable,
+                        entityID: json.auth.entityId,
+                        tokenType: tokenType,
+                        isOrphan: json.auth.orphan,
+                        numberOfUses: json.auth.numUses
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -362,37 +447,52 @@ extension TokenAuthClient {
         accessor: String,
         by increment: Duration? = nil
     ) async throws -> VaultAuthResponse {
-        let sessionToken = auth.token
+        try await withSpan(Operations.TokenRenewAccessor.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.tokenRenewAccessor(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(accessor: accessor, increment: increment?.formatted(.vaultSeconds)))
-        )
+            let response = try await auth.client.tokenRenewAccessor(
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(accessor: accessor, increment: increment?.formatted(.vaultSeconds)))
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                    throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
-                }
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
+                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                    }
 
-                return .init(
-                    requestID: json.requestId,
-                    clientToken: json.auth.clientToken,
-                    accessor: json.auth.accessor,
-                    tokenPolicies: json.auth.tokenPolicies,
-                    metadata: json.auth.metadata?.additionalProperties ?? [:],
-                    leaseDuration: .seconds(json.auth.leaseDuration),
-                    isRenewable: json.auth.renewable,
-                    entityID: json.auth.entityId,
-                    tokenType: tokenType,
-                    isOrphan: json.auth.orphan,
-                    numberOfUses: json.auth.numUses
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+                    let vaultRequestID = json.requestId
+                    let ttl = increment?.description ?? "default"
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "token renewed via accessor"
+                    span.addEvent(.init(name: eventName, attributes: ["ttl": .string(ttl)]))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "ttl": .string(ttl)
+                    ])
+
+                    return .init(
+                        requestID: json.requestId,
+                        clientToken: json.auth.clientToken,
+                        accessor: json.auth.accessor,
+                        tokenPolicies: json.auth.tokenPolicies,
+                        metadata: json.auth.metadata?.additionalProperties ?? [:],
+                        leaseDuration: .seconds(json.auth.leaseDuration),
+                        isRenewable: json.auth.renewable,
+                        entityID: json.auth.entityId,
+                        tokenType: tokenType,
+                        isOrphan: json.auth.orphan,
+                        numberOfUses: json.auth.numUses
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -407,35 +507,45 @@ extension TokenAuthClient {
         token: String,
         orphan: Bool = false
     ) async throws {
-        let sessionToken = auth.token
+        try await withSpan(Operations.TokenRevokeOrphan.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        if orphan {
-            let response = try await auth.client.tokenRevokeOrphan(
-                headers: .init(xVaultToken: sessionToken),
-                body: .json(.init(token: token))
-            )
+            if orphan {
+                let response = try await auth.client.tokenRevokeOrphan(
+                    headers: .init(xVaultToken: sessionToken),
+                    body: .json(.init(token: token))
+                )
 
-            switch response {
-                case .noContent:
-                    logger.info("Token revoked successfully.")
-                case let .undocumented(statusCode, payload):
-                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                    throw vaultError
-            }
-        } else {
-            let response = try await auth.client.tokenRevoke(
-                headers: .init(xVaultToken: sessionToken),
-                body: .json(.init(token: token))
-            )
+                switch response {
+                    case .noContent:
+                        span.attributes[TracingAttributes.responseStatusCode] = 204
+                        let eventName = "orphan token revoked"
+                        span.addEvent(.init(name: eventName))
+                        logger.trace(.init(stringLiteral: eventName))
+                    case let .undocumented(statusCode, payload):
+                        let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                        logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                        TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                        throw vaultError
+                }
+            } else {
+                let response = try await auth.client.tokenRevoke(
+                    headers: .init(xVaultToken: sessionToken),
+                    body: .json(.init(token: token))
+                )
 
-            switch response {
-                case .noContent:
-                    logger.info("Token revoked successfully.")
-                case let .undocumented(statusCode, payload):
-                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                    throw vaultError
+                switch response {
+                    case .noContent:
+                        span.attributes[TracingAttributes.responseStatusCode] = 204
+                        let eventName = "token revoked"
+                        span.addEvent(.init(name: eventName))
+                        logger.trace(.init(stringLiteral: eventName))
+                    case let .undocumented(statusCode, payload):
+                        let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                        logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                        TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                        throw vaultError
+                }
             }
         }
     }
@@ -444,19 +554,25 @@ extension TokenAuthClient {
     ///
     /// When the token is revoked, all dynamic secrets generated with it are also revoked.
     public func revokeCurrentToken() async throws {
-        let sessionToken = auth.token
+        try await withSpan(Operations.TokenRevokeSelf.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.tokenRevokeSelf(
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await auth.client.tokenRevokeSelf(
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Token revoked successfully.")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    let eventName = "client's token revoked"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -467,20 +583,26 @@ extension TokenAuthClient {
     public func revokeToken(
         accessor: String
     ) async throws {
-        let sessionToken = auth.token
+        try await withSpan(Operations.TokenRevokeAccessor.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.tokenRevokeAccessor(
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(accessor: accessor))
-        )
+            let response = try await auth.client.tokenRevokeAccessor(
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(accessor: accessor))
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Token revoked successfully.")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    let eventName = "token revoked via accessor"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -489,37 +611,47 @@ extension TokenAuthClient {
     /// - Parameter name: The name of the token role.
     /// - Returns: ``VaultTokenRole``
     public func readTokenRole(name: String) async throws -> VaultTokenRole {
-        let sessionToken = auth.token
+        try await withSpan(Operations.ReadTokenRole.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.readTokenRole(
-            path: .init(roleName: name),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await auth.client.readTokenRole(
+                path: .init(roleName: name),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .ok(let content):
-                let json = try content.body.json
-                return .init(
-                    roleName: json.data.name,
-                    allowedPolicies: json.data.allowedPolicies,
-                    disallowedPolicies: json.data.disallowedPolicies,
-                    allowedPoliciesGlob: json.data.allowedPoliciesGlob,
-                    disallowedPoliciesGlob: json.data.disallowedPoliciesGlob,
-                    orphan: json.data.orphan ?? false,
-                    noDefaultPolicy: json.data.tokenNoDefaultPolicy ?? false,
-                    isRenewable: json.data.renewable,
-                    allowedEntityAliases: json.data.allowedEntityAliases,
-                    tokenBoundCidrs: json.data.tokenBoundCidrs,
-                    tokenType: .init(rawValue: json.data.tokenType?.rawValue ?? ""),
-                    tokenExplicitMaxTTL: json.data.tokenExplicitMaxTtl.flatMap({.seconds($0)}),
-                    tokenNumberOfUses: json.data.tokenNumUses,
-                    tokenPeriod: json.data.tokenPeriod.flatMap({.seconds($0)}),
-                    pathSufix: json.data.pathSuffix
-                )
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    logger.trace(
+                        .init(stringLiteral: "read token role"),
+                        metadata: [
+                        TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                    ])
+                    return .init(
+                        roleName: json.data.name,
+                        allowedPolicies: json.data.allowedPolicies,
+                        disallowedPolicies: json.data.disallowedPolicies,
+                        allowedPoliciesGlob: json.data.allowedPoliciesGlob,
+                        disallowedPoliciesGlob: json.data.disallowedPoliciesGlob,
+                        orphan: json.data.orphan ?? false,
+                        noDefaultPolicy: json.data.tokenNoDefaultPolicy ?? false,
+                        isRenewable: json.data.renewable,
+                        allowedEntityAliases: json.data.allowedEntityAliases,
+                        tokenBoundCidrs: json.data.tokenBoundCidrs,
+                        tokenType: .init(rawValue: json.data.tokenType?.rawValue ?? ""),
+                        tokenExplicitMaxTTL: json.data.tokenExplicitMaxTtl.flatMap({.seconds($0)}),
+                        tokenNumberOfUses: json.data.tokenNumUses,
+                        tokenPeriod: json.data.tokenPeriod.flatMap({.seconds($0)}),
+                        pathSufix: json.data.pathSuffix
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -528,12 +660,13 @@ extension TokenAuthClient {
     public func updateTokenRole(
         _ capabilities: VaultTokenRole
     ) async throws {
-        let sessionToken = auth.token
+        try await withSpan(Operations.UpdateTokenRole.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.updateTokenRole(
-            path: .init(roleName: capabilities.roleName),
-            headers: .init(xVaultToken: sessionToken),
-            body: .json(.init(
+            let response = try await auth.client.updateTokenRole(
+                path: .init(roleName: capabilities.roleName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
                     allowedPolicies: capabilities.allowedPolicies,
                     disallowedPolicies: capabilities.disallowedPolicies,
                     allowedPoliciesGlob: capabilities.allowedPoliciesGlob,
@@ -549,16 +682,21 @@ extension TokenAuthClient {
                     tokenPeriod: capabilities.tokenPeriod?.formatted(.vaultSeconds),
                     tokenType: .init(rawValue: capabilities.tokenType?.rawValue ?? "")
                 )
+                )
             )
-        )
 
-        switch response {
-            case .noContent:
-                logger.info("Token role updated successfully.")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    let eventName = "token role updated"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 
@@ -566,20 +704,26 @@ extension TokenAuthClient {
     /// Deletes the named token role.
     /// - Parameter name:The name of the token role.
     public func deleteTokenRole(name: String) async throws {
-        let sessionToken = auth.token
+        try await withSpan(Operations.DeleteTokenRole.id, ofKind: .client) { span in
+            let sessionToken = auth.token
 
-        let response = try await auth.client.deleteTokenRole(
-            path: .init(roleName: name),
-            headers: .init(xVaultToken: sessionToken)
-        )
+            let response = try await auth.client.deleteTokenRole(
+                path: .init(roleName: name),
+                headers: .init(xVaultToken: sessionToken)
+            )
 
-        switch response {
-            case .noContent:
-                logger.info("Token role deleted successfully.")
-            case let .undocumented(statusCode, payload):
-                let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
-                logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
-                throw vaultError
+            switch response {
+                case .noContent:
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    let eventName = "token role deleted"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
         }
     }
 }
