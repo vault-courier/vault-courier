@@ -531,5 +531,38 @@ extension AppRoleAuthClient {
             }
         }
     }
+
+    public func destroySecretID(
+        role: String,
+        accessorSecretID: String
+    ) async throws {
+        return try await withSpan(Operations.AuthDestroyApproleSecretIdWithAccessor.id, ofKind: .client) { span in
+            guard let sessionToken = token else {
+                let clientError = VaultClientError.clientIsNotLoggedIn()
+               TracingSupport.handleResponse(error: clientError, span)
+               throw clientError
+            }
+            let mountPath = self.mountPath
+
+            let response = try await auth.client.authDestroyApproleSecretIdWithAccessor(
+                path: .init(enginePath: mountPath, roleName: role),
+                headers: .init(xVaultToken: .init(sessionToken)),
+                body: .json(.init(secretIdAccessor: accessorSecretID))
+            )
+
+            switch response {
+                case .noContent:
+                    let eventName = "approle secretID destroyed"
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
 }
 #endif
