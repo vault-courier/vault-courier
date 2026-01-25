@@ -47,4 +47,16 @@ package struct TracingSupport {
         span.setStatus(.init(code: .error))
         span.recordError(error)
     }
+
+    static package func handleVaultResponse(
+        requestID: String,
+        _ span: some Span,
+        _ statusCode: Int? = nil
+    ) {
+        if let statusCode {
+            span.attributes[AttributeKeys.responseStatusCode] = SpanAttribute.int64(Int64(statusCode))
+        }
+
+        span.attributes[AttributeKeys.vaultRequestID] = requestID
+    }
 }
