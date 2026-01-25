@@ -254,6 +254,7 @@ let package = Package(
                 .target(name: "VaultCourier"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "Logging", package: "swift-log"),
                 .product(name: "Configuration", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
                 .product(name: "ConfigurationTesting", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name]))
             ],
@@ -265,6 +266,7 @@ let package = Package(
             name: "VaultCourierTests",
             dependencies: [
                 .target(name: "VaultCourier"),
+                .product(name: "Logging", package: "swift-log"),
                 .product(name: "Tracing", package: "swift-distributed-tracing"),
                 .product(name: "InMemoryTracing", package: "swift-distributed-tracing"),
             ]
