@@ -24,6 +24,7 @@ import OpenAPIRuntime
 import OpenAPIAsyncHTTPClient
 import VaultCourier
 import Logging
+import AsyncHTTPClient
 
 extension VaultClient {
     @TaskLocal static var current = VaultClient(
@@ -35,37 +36,45 @@ extension VaultClient {
 struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
     let apiURL: URL
     let token: String
-    let logger: Logger?
+    let httpClientConfiguration: HTTPClient.Configuration
+    let logger: Logger
     let middlewares: [any ClientMiddleware]
 
-    func setupClient() async throws -> VaultClient {
+    func setupWith(httpClient: HTTPClient) async throws -> VaultClient {
         let vaultClient = VaultClient(
             configuration: .init(
                 apiURL: apiURL,
                 backgroundActivityLogger: logger),
-            clientTransport: AsyncHTTPClientTransport(),
-            middlewares: middlewares)
+            clientTransport: AsyncHTTPClientTransport(configuration: .init(client: httpClient)),
+            middlewares: middlewares
+        )
         try await vaultClient.login(method: .token("integration_token"))
         return vaultClient
     }
 
     func provideScope(for test: Test, testCase: Test.Case?, performing function: @Sendable () async throws -> Void) async throws {
-        let vaultClient = try await setupClient()
-        try await VaultClient.$current.withValue(vaultClient) {
-            try await function()
+        try await withHTTPClient(httpClientConfiguration, logger) { httpClient in
+            let vaultClient = try await setupWith(httpClient: httpClient)
+            try await VaultClient.$current.withValue(vaultClient) {
+                try await function()
+            }
         }
+
     }
 }
 
 extension SuiteTrait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
-                                 logger: Logger? = nil,
+                                 httpClientConfiguration: HTTPClient.Configuration = .singletonConfiguration,
+                                 logger: @autoclosure () -> Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
     ) -> Self {
+        let testLogger = logger() ?? Logger(label: "test-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
         return Self(apiURL: apiURL,
                     token: token,
-                    logger: logger,
+                    httpClientConfiguration: httpClientConfiguration,
+                    logger: testLogger,
                     middlewares: middlewares)
     }
 }
@@ -73,12 +82,36 @@ extension SuiteTrait where Self == VaultClientTrait {
 extension TestTrait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
-                                 logger: Logger? = nil,
+                                 httpClientConfiguration: HTTPClient.Configuration = .singletonConfiguration,
+                                 logger: @autoclosure () -> Logger? = nil,
                                  middlewares: [any ClientMiddleware] = []
     ) -> Self {
+        let testLogger = logger() ?? Logger(label: "test-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
         return Self(apiURL: apiURL,
                     token: token,
-                    logger: logger,
+                    httpClientConfiguration: httpClientConfiguration,
+                    logger: testLogger,
                     middlewares: middlewares)
     }
+}
+
+func withHTTPClient<Value>(
+    _ configuration: HTTPClient.Configuration,
+    _ logger: Logger,
+    _ process: (HTTPClient) async throws -> Value
+) async throws -> Value {
+    let httpClient = HTTPClient(
+        eventLoopGroup: HTTPClient.defaultEventLoopGroup,
+        configuration: configuration,
+        backgroundActivityLogger: logger
+    )
+    let value: Value
+    do {
+        value = try await process(httpClient)
+    } catch {
+        try? await httpClient.shutdown()
+        throw error
+    }
+    try await httpClient.shutdown()
+    return value
 }

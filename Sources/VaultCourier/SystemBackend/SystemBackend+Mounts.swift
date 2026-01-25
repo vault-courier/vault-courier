@@ -50,8 +50,8 @@ extension SystemBackend {
                 case .noContent:
                     let eventName = "secret engine enabled"
                     span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
-                    span.addEvent(.init(name: eventName, attributes: ["mountType": .string(mountConfig.mountType)]))
-                    logger.trace(.init(stringLiteral: eventName), metadata: ["mountType": .string(mountConfig.mountType)])
+                    span.addEvent(.init(name: eventName, attributes: ["mount-type": .string(mountConfig.mountType)]))
+                    logger.trace(.init(stringLiteral: eventName), metadata: ["mount-type": .string(mountConfig.mountType)])
                     return
                 case let .undocumented(statusCode, payload):
                     let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
