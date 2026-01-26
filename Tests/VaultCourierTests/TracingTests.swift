@@ -22,10 +22,15 @@ import InMemoryTracing
 import Logging
 import Utils
 import HTTPTypes
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.Date
+#endif
 
 @testable import Instrumentation
 
-@Suite
+@Suite(.serialized)
 struct TracingTests {
     static let testTracer = {
         let tracer = InMemoryTracer()
@@ -55,6 +60,29 @@ struct TracingTests {
 
     static let transportClient = MockVaultClientTransport { req, _, _, _ in
         switch req.normalizedPath {
+            case "/auth/token/lookup-self":
+                return (.init(status: .ok),
+                        try await MockVaultClientTransport.encode(response:
+                            LookupTokenResponse(
+                                requestID: vaultRequestID,
+                                clientToken: clientToken,
+                                accessor: "accessor_token",
+                                createdAt: .now,
+                                creationTimeToLive: .seconds(60),
+                                displayName: "vault-client-token",
+                                expiresAt: .now,
+                                explicitMaxTimeToLive: .seconds(60*60),
+                                timeToLive: .seconds(60),
+                                policies: ["default"],
+                                metadata: metadata,
+                                isRenewable: true,
+                                tokenType: .batch,
+                                isOrphan: true,
+                                numberOfUses: 0,
+                                path: "auth/token/create")
+                    )
+                )
+
             case "/auth/\(appRoleMountPath)/login":
 
                 return (.init(status: .ok),
@@ -87,7 +115,7 @@ struct TracingTests {
                                 leaseDuration: .seconds(3600*24),
                                 isRenewable: true,
                                 entityID: "913160eb-837f-ee8c-e6aa-9ded162b5b75",
-                                tokenType: .batch,
+                                tokenType: .service,
                                 isOrphan: true,
                                 numberOfUses: 0
                             )

@@ -66,9 +66,69 @@ public struct MockVaultClientTransport: ClientTransport {
         return (.init(status: .ok), responseBody)
     }
 
-    public static var successful: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .ok), HTTPBody("bye")) } }
+    public static var successful: Self {
+        MockVaultClientTransport { req, body, _, _ in
+            switch req.normalizedPath {
+                case "/auth/token/lookup-self":
+                    return (.init(status: .ok),
+                            try await Self.encode(response:
+                                                    LookupTokenResponse(
+                                                        requestID: "bb10149f-39dd-8261-a427-d52e64922355",
+                                                        clientToken: "education",
+                                                        accessor: "accessor_token",
+                                                        createdAt: .now,
+                                                        creationTimeToLive: .seconds(60),
+                                                        displayName: "vault-client-token",
+                                                        expiresAt: .now,
+                                                        explicitMaxTimeToLive: .seconds(60*60),
+                                                        timeToLive: .seconds(60),
+                                                        policies: ["default"],
+                                                        metadata: ["env": "stage"],
+                                                        isRenewable: true,
+                                                        tokenType: .batch,
+                                                        isOrphan: true,
+                                                        numberOfUses: 0,
+                                                        path: "auth/token/create")
+                                                 )
+                    )
 
-    public static var forbidden: Self { MockVaultClientTransport { _, _, _, _ in (HTTPResponse(status: .forbidden), HTTPBody("error")) } }
+                default:
+                    return (HTTPResponse(status: .ok), HTTPBody("bye"))
+            }
+        }
+    }
+
+    public static var forbidden: Self {
+        MockVaultClientTransport { req, body, _, _ in
+            switch req.normalizedPath {
+                case "/auth/token/lookup-self":
+                    return (.init(status: .ok),
+                            try await Self.encode(response:
+                                                    LookupTokenResponse(
+                                                        requestID: "bb10149f-39dd-8261-a427-d52e64922355",
+                                                        clientToken: "education",
+                                                        accessor: "accessor_token",
+                                                        createdAt: .now,
+                                                        creationTimeToLive: .seconds(60),
+                                                        displayName: "vault-client-token",
+                                                        expiresAt: .now,
+                                                        explicitMaxTimeToLive: .seconds(60*60),
+                                                        timeToLive: .seconds(60),
+                                                        policies: ["default"],
+                                                        metadata: ["env": "stage"],
+                                                        isRenewable: true,
+                                                        tokenType: .batch,
+                                                        isOrphan: true,
+                                                        numberOfUses: 0,
+                                                        path: "auth/token/create")
+                                                 )
+                    )
+
+                default:
+                    return (HTTPResponse(status: .forbidden), HTTPBody("error"))
+            }
+        }
+    }
 
     /// KeyValue response body
     ///
@@ -127,6 +187,29 @@ extension MockVaultClientTransport {
     ) -> Self {
         MockVaultClientTransport { req, body, _, _ in
             switch req.normalizedPath {
+                case "/auth/token/lookup-self":
+                    return (.init(status: .ok),
+                            try await MockVaultClientTransport.encode(response:
+                                LookupTokenResponse(
+                                    requestID: "bb10149f-39dd-8261-a427-d52e64922355",
+                                    clientToken: clientToken,
+                                    accessor: "accessor_token",
+                                    createdAt: .now,
+                                    creationTimeToLive: .seconds(60),
+                                    displayName: "vault-client-token",
+                                    expiresAt: .now,
+                                    explicitMaxTimeToLive: .seconds(60*60),
+                                    timeToLive: .seconds(60),
+                                    policies: ["default"],
+                                    metadata: ["env": "stage"],
+                                    isRenewable: true,
+                                    tokenType: .batch,
+                                    isOrphan: true,
+                                    numberOfUses: 0,
+                                    path: "auth/token/create")
+                        )
+                    )
+
                 case "/auth/\(apppRoleMountPath)/login":
                     return (.init(status: .ok),
                             try await Self.encode(response:

@@ -73,8 +73,42 @@ struct VaultClientTests {
 
         let mockClient = MockVaultClientTransport { req, _, _, _ in
             #expect(req.normalizedPath == "/auth/\(approleMount)/login", "custom approle path was not taken into account")
-
-            return (.init(status: .ok), .init("""
+            switch req.normalizedPath {
+                case "/auth/token/lookup-self":
+                    return (.init(status: .ok), .init("""
+                        {
+                          "request_id": "f1974b8f-266e-2dd6-3ed3-13d330d4589e",
+                          "lease_id": "",
+                          "renewable": false,
+                          "lease_duration": 0,
+                          "data": {
+                            "accessor": "ufPPb3VC6rTBCIOqtZydD0bu",
+                            "creation_time": 1769460540,
+                            "creation_ttl": 0,
+                            "display_name": "token",
+                            "entity_id": "",
+                            "expire_time": null,
+                            "explicit_max_ttl": 0,
+                            "id": "integration_token",
+                            "issue_time": "2026-01-26T20:49:00.428750095Z",
+                            "meta": null,
+                            "num_uses": 0,
+                            "orphan": true,
+                            "path": "auth/token/create",
+                            "policies": [
+                              "root"
+                            ],
+                            "renewable": false,
+                            "ttl": 0,
+                            "type": "service"
+                          },
+                          "wrap_info": null,
+                          "warnings": null,
+                          "auth": null
+                        }
+                        """))
+                default:
+                    return (.init(status: .ok), .init("""
                 {
                   "request_id": "bb10149f-39dd-8261-a427-d52e64922355",
                   "auth": {
@@ -99,6 +133,7 @@ struct VaultClientTests {
                   }
                 }
                 """))
+            }
         }
 
         let vaultClient = VaultClient(configuration: .defaultHttp(backgroundActivityLogger: Self.logger),

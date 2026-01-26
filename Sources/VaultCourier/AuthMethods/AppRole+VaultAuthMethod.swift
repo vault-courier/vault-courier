@@ -47,8 +47,7 @@ extension AppRoleAuth: VaultAuthMethod {
                     let json = try content.body.json
 
                     let vaultRequestID = json.requestId
-                    span.attributes[TracingSupport.AttributeKeys.vaultRequestID] = vaultRequestID
-                    span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 200
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
                     let eventName = "login"
                     span.addEvent(.init(name: eventName, attributes: [TracingSupport.AttributeKeys.vaultAuthMethod: .string("approle")] ))
 

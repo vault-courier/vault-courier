@@ -125,7 +125,7 @@ extension TokenAuthClient {
                         clientToken: json.auth.clientToken,
                         accessor: json.auth.accessor,
                         tokenPolicies: json.auth.tokenPolicies,
-                        metadata: json.auth.metadata?.additionalProperties ?? [:],
+                        metadata: metadata,
                         leaseDuration: .seconds(json.auth.leaseDuration),
                         isRenewable: json.auth.renewable,
                         entityID: json.auth.entityId,
@@ -183,6 +183,7 @@ extension TokenAuthClient {
                         metadata: [
                         TracingAttributes.vaultRequestID: .string(vaultRequestID)
                     ])
+
                     return .init(
                         requestID: json.requestId,
                         clientToken: json.data.id,
@@ -224,7 +225,9 @@ extension TokenAuthClient {
                 case .ok(let content):
                     let json = try content.body.json
                     guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
-                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
                     }
 
                     let vaultRequestID = json.requestId
@@ -232,7 +235,8 @@ extension TokenAuthClient {
                     logger.trace(
                         .init(stringLiteral: "lookup current token"),
                         metadata: [
-                        TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                        "vault.token.display_name" : .string(json.data.displayName)
                     ])
 
                     return .init(
@@ -278,7 +282,9 @@ extension TokenAuthClient {
                 case .ok(let content):
                     let json = try content.body.json
                     guard let tokenType = TokenType(rawValue: json.data._type.rawValue) else {
-                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.data._type))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
                     }
 
                     let vaultRequestID = json.requestId
@@ -341,7 +347,9 @@ extension TokenAuthClient {
                 case .ok(let content):
                     let json = try content.body.json
                     guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
                     }
 
                     let vaultRequestID = json.requestId
@@ -399,7 +407,9 @@ extension TokenAuthClient {
                 case .ok(let content):
                     let json = try content.body.json
                     guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
                     }
 
                     let vaultRequestID = json.requestId
@@ -459,7 +469,9 @@ extension TokenAuthClient {
                 case .ok(let content):
                     let json = try content.body.json
                     guard let tokenType = TokenType(rawValue: json.auth.tokenType.rawValue) else {
-                        throw VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected token type: \(String(describing: json.auth.tokenType))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
                     }
 
                     let vaultRequestID = json.requestId

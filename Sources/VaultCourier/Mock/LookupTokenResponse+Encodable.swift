@@ -41,7 +41,7 @@ extension LookupTokenResponse: Encodable {
         case policies
         case metadata
         case isRenewable = "renewable"
-        case tokenType = "token_type"
+        case tokenType = "type"
         case isOrphan = "orphan"
         case numberOfUses = "num_uses"
         case path
@@ -55,15 +55,16 @@ extension LookupTokenResponse: Encodable {
         var auth = container.nestedContainer(keyedBy: DataKeys.self, forKey: .data)
         try auth.encode(clientToken, forKey: .clientToken)
         try auth.encode(accessor, forKey: .accessor)
-        try auth.encode(createdAt, forKey: .createdAt)
+        let creationTime = Int(createdAt.timeIntervalSince1970)
+        try auth.encode(creationTime, forKey: .createdAt)
         try auth.encode(creationTimeToLive.components.seconds, forKey: .creationTimeToLive)
         try auth.encodeIfPresent(displayName, forKey: .displayName)
         try auth.encodeIfPresent(expiresAt, forKey: .expiresAt)
-        try auth.encode(timeToLive, forKey: .timeToLive)
+        try auth.encode(timeToLive.components.seconds, forKey: .timeToLive)
         try auth.encode(policies, forKey: .policies)
         try auth.encode(metadata, forKey: .metadata)
         try auth.encode(isRenewable, forKey: .isRenewable)
-        try auth.encode(tokenType, forKey: .tokenType)
+        try auth.encode(tokenType.rawValue, forKey: .tokenType)
         try auth.encode(isOrphan, forKey: .isOrphan)
         try auth.encode(numberOfUses, forKey: .numberOfUses)
         try auth.encodeIfPresent(path, forKey: .path)
