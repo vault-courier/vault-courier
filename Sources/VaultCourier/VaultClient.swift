@@ -74,6 +74,10 @@ public final class VaultClient: Sendable {
         }
 
         /// Default Configuration with base URL `http://127.0.0.1:8200/v1`
+        ///
+        /// - warning:
+        /// This configuration is just for local development.
+        /// Never use this configuration in production. Always use TLS for production deployments
         public static func defaultHttp(backgroundActivityLogger: Logging.Logger? = nil) -> Self {
             .init(apiURL: VaultClient.Server.defaultHttpURL,
                   backgroundActivityLogger: backgroundActivityLogger)
@@ -141,7 +145,7 @@ public final class VaultClient: Sendable {
 
 extension VaultClient {
     public func login(method: AuthMethod) async throws {
-        try await withSpan("login") { span in
+        try await withSpan("login", ofKind: .client) { span in
             let authenticator = makeAuthenticator(method, apiURL: apiURL, clientTransport: clientTransport)
             let startEvent = "Starting login"
             self.logger.trace(.init(stringLiteral: startEvent), metadata: ["auth-method": .stringConvertible(method)])
