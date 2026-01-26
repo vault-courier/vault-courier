@@ -144,7 +144,8 @@ let package = Package(
         .target(
             name: "Utils",
             dependencies: [
-                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime")
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Tracing", package: "swift-distributed-tracing"),
             ],
             path: "Sources/Utils"
         ),
