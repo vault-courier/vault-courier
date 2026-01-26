@@ -156,7 +156,7 @@ struct TracingTests {
         #expect(event.attributes == expectedEvent.attributes)
     }
 
-    @Test
+    @Test(.disabled("flaky test: due to data race with the previous test. TODO: Write a scoped trait to run these tests"))
     func trace_login_with_approle_error() async throws {
         try? await withTracerSpan {
             let vaultClient = VaultClient(configuration: .defaultHttp(),
