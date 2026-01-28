@@ -31,27 +31,33 @@ import Tracing
 
 /// Client for Token Authentication
 ///
-/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withTokenAuthClient(execute:)`` to interact with this type
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withTokenAuthClient(namespace:execute:)`` to interact with this type
 public final class TokenAuthClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "token-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
+         namespace: String,
          clientTransport: any ClientTransport,
          middlewares: [any ClientMiddleware] = [],
          token: String? = nil,
          logger: Logger? = nil) {
         self.auth = TokenAuth(
             apiURL: apiURL,
+            namespace: namespace,
             clientTransport: clientTransport,
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
+        self.namespace = namespace
         self._token = .init(token)
         self.logger = logger ?? Self.loggingDisabled
     }
 
     /// Vault's URL
     let apiURL: URL
+
+    /// Vault's isolated namespace
+    let namespace: String
 
     /// Authentication client
     let auth: TokenAuth

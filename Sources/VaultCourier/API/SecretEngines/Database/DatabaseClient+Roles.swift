@@ -110,8 +110,8 @@ extension DatabaseEngineClient {
                 case .ok , .noContent:
                     let eventName = "database static role written"
                     span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
-                    span.addEvent(.init(name: eventName))
-                    logger.trace(.init(stringLiteral: eventName))
+                    span.addEvent(.init(name: eventName, attributes: [TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)]))
+                    logger.trace(.init(stringLiteral: eventName), metadata: [TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)])
                     return
                 case let .undocumented(statusCode, payload):
                     let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
@@ -181,8 +181,8 @@ extension DatabaseEngineClient {
                 case .noContent:
                     let eventName = "database dynamic role written"
                     span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
-                    span.addEvent(.init(name: eventName))
-                    logger.trace(.init(stringLiteral: eventName))
+                    span.addEvent(.init(name: eventName, attributes: [TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)]))
+                    logger.trace(.init(stringLiteral: eventName), metadata: [TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)])
                     return
                 case let .undocumented(statusCode, payload):
                     let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
@@ -220,7 +220,13 @@ extension DatabaseEngineClient {
                 case .noContent:
                     let eventName = "database static role \(name) deleted"
                     span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
-                    span.addEvent(.init(name: eventName, attributes: ["role": .string(name)]))
+                    span.addEvent(.init(
+                        name: eventName,
+                        attributes: [
+                            "role": .string(name),
+                            TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)
+                        ])
+                    )
                     logger.trace(.init(stringLiteral: eventName), metadata: ["role": .string(name)])
                     return
                 case let .undocumented(statusCode, payload):
@@ -256,8 +262,16 @@ extension DatabaseEngineClient {
                 case .noContent:
                     let eventName = "database dynamic role deleted"
                     span.attributes[TracingSupport.AttributeKeys.responseStatusCode] = 204
-                    span.addEvent(.init(name: eventName, attributes: ["role": .string(name)]))
-                    logger.trace(.init(stringLiteral: eventName), metadata: ["role": .string(name)])
+                    span.addEvent(.init(name: eventName,
+                                        attributes: [
+                                            "role": .string(name),
+                                            TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)
+                                        ]))
+                    logger.trace(.init(stringLiteral: eventName),
+                                 metadata: [
+                                    "role": .string(name),
+                                    TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)
+                                 ])
                     return
                 case let .undocumented(statusCode, payload):
                     let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
@@ -314,7 +328,8 @@ extension DatabaseEngineClient {
                     logger.trace(
                         .init(stringLiteral: "read database credentials"),
                         metadata: [
-                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID)
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
+                            TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)
                     ])
 
                     return .init(
@@ -364,7 +379,8 @@ extension DatabaseEngineClient {
                     logger.trace(
                         .init(stringLiteral: "read database credentials"),
                         metadata: [
-                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID)
+                            TracingSupport.AttributeKeys.vaultRequestID: .string(vaultRequestID),
+                            TracingSupport.AttributeKeys.vaultNamespace: .string(self.namespace)
                         ])
                     
                     return .init(

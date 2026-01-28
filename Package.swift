@@ -133,6 +133,7 @@ let package = Package(
                 .target(name: "SystemAuth"),
                 .target(name: "SystemPolicies"),
                 .target(name: "SystemMounts"),
+                .target(name: "SystemNamespaces"),
                 // Authentication Methods
                 .target(name: "TokenAuth"),
                 .target(name: "AppRoleAuth", condition: .when(traits: [AppRoleTrait.name])),
@@ -219,6 +220,18 @@ let package = Package(
                 .target(name: "Utils")
             ],
             path: "Sources/SystemMounts",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "SystemNamespaces",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "Utils")
+            ],
+            path: "Sources/Namespaces",
             plugins: [
                 .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]

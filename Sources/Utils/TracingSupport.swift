@@ -29,6 +29,7 @@ package struct TracingSupport {
     package struct AttributeKeys: Sendable {
         package static let requestMethod: String = "http.request.method"
         package static let responseStatusCode: String = "http.status_code"
+        package static let vaultNamespace: String = "vault.namespace"
         package static let vaultRequestID: String = "vault.request.id"
         package static let vaultAuthMethod: String = "vault.auth.method"
         package static let databasePlugin: String = "vault.database"

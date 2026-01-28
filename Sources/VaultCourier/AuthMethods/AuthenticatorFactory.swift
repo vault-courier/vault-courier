@@ -35,22 +35,31 @@ public enum AuthMethod: Sendable, CustomStringConvertible {
 
     public var description: String {
         switch self {
-            case .token: "Token"
+            case .token: "token"
             #if AppRoleSupport
-            case .appRole: "AppRole"
+            case .appRole: "appRole"
             #endif
         }
     }
 }
 
-package func makeAuthenticator(_ method: AuthMethod,
-                               apiURL: URL,
-                               clientTransport: any ClientTransport) -> any VaultAuthMethod {
+package func makeAuthenticator(
+    _ method: AuthMethod,
+    apiURL: URL,
+    namespace: VaultClient.Namespace,
+    clientTransport: any ClientTransport,
+    middlewares: [any ClientMiddleware]
+) throws -> any VaultAuthMethod {
+    let namespaceMiddleware = try namespace.middleware()
+    let namespaceName = namespaceMiddleware.first?.name ?? "root"
+    let middlewares = middlewares + namespaceMiddleware
     switch method {
         case .token(let token):
             return TokenAuth(
                 apiURL: apiURL,
+                namespace: namespaceName,
                 clientTransport: clientTransport,
+                middlewares: middlewares,
                 token: token
             )
         #if AppRoleSupport
@@ -58,9 +67,11 @@ package func makeAuthenticator(_ method: AuthMethod,
             return AppRoleAuth(
                 configuration: .init(
                     apiURL: apiURL,
+                    namespace: namespaceName,
                     mountPath: path
                 ),
                 clientTransport: clientTransport,
+                middlewares: middlewares,
                 credentials: .init(roleID: credentials.roleID, secretID: credentials.secretID)
             )
         #endif

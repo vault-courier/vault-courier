@@ -116,7 +116,7 @@ extension IntegrationTests.Pkl.SecretReaders {
                     "entity_id": "",
                     "expire_time": null,
                     "explicit_max_ttl": 0,
-                    "id": "integration_token",
+                    "id": "test_token",
                     "issue_time": "2026-01-26T20:49:00.428750095Z",
                     "meta": null,
                     "num_uses": 0,

@@ -32,22 +32,24 @@ import Utils
 
 /// Client for Key/Value secret engine
 ///
-/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withKeyValueClient(mountPath:execute:)`` to interact with this type
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withKeyValueClient(namespace:mountPath:execute:)`` to interact with this type
 public final class KeyValueEngineClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "key-value-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
          clientTransport: any ClientTransport,
+         namespace: String,
          mountPath: String,
          middlewares: [any ClientMiddleware] = [],
          token: String? = nil,
          logger: Logger? = nil) {
         self.engine = KeyValueEngine(
-            configuration: .init(apiURL: apiURL, mountPath: mountPath),
+            configuration: .init(apiURL: apiURL, namespace: namespace, mountPath: mountPath),
             clientTransport: clientTransport,
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
+        self.namespace = namespace
         self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
         var logger = logger ?? Self.loggingDisabled
@@ -57,6 +59,9 @@ public final class KeyValueEngineClient: Sendable {
 
     /// Vault's base URL
     let apiURL: URL
+
+    /// Target's namespace
+    let namespace: String
 
     /// Mount path of KeyValue secret engine
     let mountPath: String

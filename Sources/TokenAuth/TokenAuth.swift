@@ -24,10 +24,11 @@ import Synchronization
 import Utils
 
 package final class TokenAuth: Sendable {
-    public init(apiURL: URL,
-                clientTransport: any ClientTransport,
-                middlewares: [any ClientMiddleware] = [],
-                token: String? = nil) {
+    package init(apiURL: URL,
+                 namespace: String,
+                 clientTransport: any ClientTransport,
+                 middlewares: [any ClientMiddleware] = [],
+                 token: String? = nil) {
         self.client = Client(
             serverURL: apiURL,
             configuration: .init(dateTranscoder: .fallbackISO8601),
@@ -35,10 +36,13 @@ package final class TokenAuth: Sendable {
             middlewares: middlewares
         )
         self.basePath = URL(string: "/token", relativeTo: apiURL.appending(path: "auth"))!
+        self.namespace =  namespace
         self._token = .init(token)
     }
 
     package let basePath: URL
+
+    package let namespace: String
 
     package let client: any APIProtocol
 
