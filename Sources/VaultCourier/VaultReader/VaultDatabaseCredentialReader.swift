@@ -77,7 +77,7 @@ public final class VaultDatabaseCredentialReader: Sendable {
     ///
     /// - Parameters:
     ///   - mountPath: mount path of database secret engine
-    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the (escaped) characters plus ("+"), period ("."), and hyphen ("-") are allowed.
+    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the (escaped) characters plus ("+"), period ("."), and hyphen ("-") are allowed.  This prefix can be used to mark different database engines mounted in the same namespace
     /// - Returns: encoded scheme
     public static func buildSchemeFor(
         mountPath: String,
@@ -87,8 +87,9 @@ public final class VaultDatabaseCredentialReader: Sendable {
             throw VaultClientError.invalidVault(mountPath: mountPath)
         }
 
-        let mount = mountPath.replacingOccurrences(of: "_", with: "-")
-                             .replacingOccurrences(of: "/", with: ".")
+        let mount = mountPath.replacing("_", with: "-")
+                             .replacing("/", with: ".")
+
         return "\(prefix?.appending(".") ?? "")vault.\(mount)"
     }
 }
@@ -154,7 +155,7 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - mountPath: database mount path. This will be part of the scheme.
-    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"--"z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed.
+    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"--"z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed. This prefix can be used to mark different database engines mounted in the same namespace
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeDatabaseCredentialReader(
         mountPath: String,

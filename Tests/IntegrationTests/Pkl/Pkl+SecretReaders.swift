@@ -65,7 +65,9 @@ extension IntegrationTests.Pkl.SecretReaders {
             expectedSecrets: [secret: value]
         )
 
-        let vaultClient = VaultClient(configuration: .defaultHttp(),
+        let namespace = "ns/tenant1/stage"
+        let vaultClient = VaultClient(configuration: .init(apiURL: VaultClient.Server.defaultHttpURL,
+                                                           namespace: namespace),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .token(clientToken))
 
@@ -156,8 +158,10 @@ extension IntegrationTests.Pkl.SecretReaders {
             }
         }
 
+        let namespace = "ns/tenant1/stage"
         let databaseMount = "path/to/database/secrets"
-        let vaultClient = VaultClient(configuration: .defaultHttp(),
+        let vaultClient = VaultClient(configuration: .init(apiURL: VaultClient.Server.defaultHttpURL,
+                                                           namespace: namespace),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .token("test_token"))
 

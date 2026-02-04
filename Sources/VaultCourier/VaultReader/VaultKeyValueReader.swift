@@ -77,7 +77,7 @@ public final class VaultKeyValueReader: Sendable {
     ///
     /// - Parameters:
     ///   - mountPath: mount path of database secret engine
-    ///   - prefix: optional prefix to add in the scheme. It must be a RFC1738 conformant scheme string.
+    ///   - prefix: optional prefix to add in the scheme. It must be a RFC1738 conformant scheme string.  This prefix can be used to mark different key-value engines mounted in the same namespace
     /// - Returns: encoded scheme
     public static func buildSchemeFor(
         mountPath: String,
@@ -87,8 +87,8 @@ public final class VaultKeyValueReader: Sendable {
             throw VaultClientError.invalidVault(mountPath: mountPath)
         }
 
-        let mount = mountPath.replacingOccurrences(of: "_", with: "-")
-                             .replacingOccurrences(of: "/", with: ".")
+        let mount = mountPath.replacing("_", with: "-")
+                             .replacing("/", with: ".")
         return "\(prefix?.appending(".") ?? "")vault.kv.\(mount)"
     }
 }
@@ -155,7 +155,7 @@ extension VaultClient {
     ///
     /// - Parameters:
     ///   - mountPath: mount path to key/value secret engine
-    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed.
+    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed. This prefix can be used to mark different key-value engines mounted in the same namespace
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeKeyValueSecretReader(
         mountPath: String,

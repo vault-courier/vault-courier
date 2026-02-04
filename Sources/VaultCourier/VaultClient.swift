@@ -103,14 +103,6 @@ public final class VaultClient: Sendable {
     public struct Namespace: Sendable {
         public let name: String
 
-//        var middleware: [VaultNamespaceMiddleware] {
-//            guard name != "root" else {
-//                return []
-//            }
-//
-//            return [VaultNamespaceMiddleware(name: name)]
-//        }
-
         func middleware(_ childNamespace: String? = nil) throws -> [VaultNamespaceMiddleware] {
             if let childNamespace {
                 guard childNamespace.isValidNamespaceName else {
