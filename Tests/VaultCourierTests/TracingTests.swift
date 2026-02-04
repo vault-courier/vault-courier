@@ -156,7 +156,7 @@ struct TracingTests {
         #expect(event.attributes == expectedEvent.attributes)
     }
 
-    @Test(.disabled("flaky test: due to data race with the previous test. TODO: Write a scoped trait to run these tests"))
+    @Test
     func trace_login_with_approle_error() async throws {
         try? await withTracerSpan {
             let vaultClient = VaultClient(configuration: .defaultHttp(),
@@ -167,12 +167,11 @@ struct TracingTests {
         }
 
         let finishedSpans = Self.popSpans
-        let span = try #require(finishedSpans.first(where: {$0.operationName == "auth-approle-login"}))
+        let span = try #require(finishedSpans.first(where: {$0.operationName == "auth-approle-login" && $0.status == .init(code: .error)}))
 
         let error = try #require(span.errors.first?.error as? VaultServerError)
         let forbidden = VaultServerError.forbidden(errors: nil)
         #expect(error == forbidden)
-        #expect(span.status == .init(code: .error))
     }
 
     @Test

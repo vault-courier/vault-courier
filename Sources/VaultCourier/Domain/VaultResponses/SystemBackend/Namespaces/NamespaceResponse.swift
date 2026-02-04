@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-//  Copyright (c) 2025 Javier Cuesta
+//  Copyright (c) 2026 Javier Cuesta
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,16 +14,25 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import HTTPTypes
+public struct NamespaceResponse: Sendable {
+    public let requestID: String
+    
+    public let id: String
 
-extension HTTPField.Name {
-    static let wrapTTL = Self("X-VAULT-WRAP-TTL")!
-    static let vaultToken = Self("X-VAULT-TOKEN")!
-    static let vaultNamespace = Self("X-VAULT-NAMESPACE")!
+    /// User-defined metadata to describe the namespace
+    public let metadata: [String: String]
+
+    public let isLocked: Bool
+
+    public let isTainted: Bool
+
+    /// Relative path of the namespace
+    public let path: String
+
+    public let uuid: String
 }
 
-public enum VaultHeaderName {
-    public static let wrapTTL = HTTPField.Name.wrapTTL
-    public static let vaultToken = HTTPField.Name.vaultToken
-    public static let vaultNamespace = HTTPField.Name.vaultNamespace
+public enum DeleteNamespaceState: String, Sendable {
+    case deleted
+    case inProgress = "in-progress"
 }

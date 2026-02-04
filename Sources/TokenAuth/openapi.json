@@ -1238,6 +1238,14 @@
         "schema": {
           "type": "string"
         }
+      },
+      "VaultNamespace": {
+        "description": "Namespaces enable secure multi-tenancy. Each tenant (isolated environments e.g., team, organisation, or application) operates within its namespace, isolated from others",
+        "name": "X-Vault-Namespace",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
       }
     }
   }

@@ -41,4 +41,48 @@ struct VaultPaths {
             else { throw VaultClientError.invalidVault(mountPath: mount) }
         }
     }
+
+    @Test(arguments: [
+        ".",
+        "..",
+        "root",
+        "sys",
+        "audit",
+        "auth",
+        "cubbyhole",
+        "identity",
+        "name with spaces",
+        "ends_with_slash/"
+    ])
+    func invalid_namespace_names(_ name: String) async throws {
+        #expect(throws: VaultClientError.self) {
+            guard name.isValidNamespaceName
+            else { throw VaultClientError.invalidVault(namespace: name) }
+        }
+    }
+
+    @Test(arguments: [
+        "ns/audit",
+        "audit",
+        "name with spaces"
+    ])
+    func invalid_namespace_paths(_ mount: String) async throws {
+        #expect(throws: VaultClientError.self) {
+            guard mount.isValidNamespace
+            else { throw VaultClientError.invalidVault(namespace: mount) }
+        }
+    }
+
+    @Test(arguments: [
+        "ns/root.dev",
+        "ns/tenant1/stage",
+        "my_namespace",
+        "isc.platform"
+    ])
+    func valid_namespace_paths(_ mount: String) async throws {
+        #expect(throws: Never.self) {
+            guard mount.isValidNamespace
+            else { throw VaultClientError.invalidVault(namespace: mount) }
+        }
+    }
 }

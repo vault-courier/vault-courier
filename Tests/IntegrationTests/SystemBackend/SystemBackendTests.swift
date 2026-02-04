@@ -187,3 +187,30 @@ extension IntegrationTests.System.Mounts {
         }
     }
 }
+
+// MARK: Namespaces
+extension IntegrationTests.System.Namespaces {
+    @Test
+    func create_read_patch_and_delete_namespace() async throws {
+        let vaultClient = VaultClient.current
+
+        // MUT
+        try await vaultClient.withSystemBackend { backend in
+            let namespace = "my_app"
+            let response = try await backend.createNamespace(namespace, metadata: ["region": "asia"])
+            let info = try await backend.readNamespace(namespace)
+            #expect(response.id == info.id)
+            #expect(response.uuid == info.uuid)
+
+            let patchedInfo = try await backend.patchNamespace(namespace, metadata: ["region": "europe"])
+            #expect(patchedInfo.metadata["region"] == "europe")
+            var status = try await backend.deleteNamespace(namespace)
+            #expect(status == .inProgress)
+
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+
+            status = try await backend.deleteNamespace(namespace)
+            #expect(status == .deleted)
+        }
+    }
+}

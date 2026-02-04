@@ -30,22 +30,26 @@ import Utils
 
 /// Client for AppRole Authentication
 ///
-/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withAppRoleClient(mountPath:execute:)`` to interact with this type
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withAppRoleClient(namespace:mountPath:execute:)`` to interact with this type
 public final class AppRoleAuthClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "app-role-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
          clientTransport: any ClientTransport,
+         namespace: String,
          mountPath: String,
          middlewares: [any ClientMiddleware] = [],
          token: String? = nil,
          logger: Logger? = nil) {
         self.auth = AppRoleAuth(
-            configuration: .init(apiURL: apiURL, mountPath: mountPath),
+            configuration: .init(apiURL: apiURL,
+                                 namespace: namespace,
+                                 mountPath: mountPath),
             clientTransport: clientTransport,
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
+        self.namespace = namespace
         self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
         var logger = logger ?? Self.loggingDisabled
@@ -56,6 +60,10 @@ public final class AppRoleAuthClient: Sendable {
     /// Vault's URL
     let apiURL: URL
 
+    /// Target namespace
+    let namespace: String
+
+    /// Path to AppRole mount
     let mountPath: String
 
     /// Authentication client

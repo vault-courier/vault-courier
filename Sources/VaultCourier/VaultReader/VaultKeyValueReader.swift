@@ -30,7 +30,7 @@ import Utils
 
 /// A Pkl resource reader for a KeyValue Vault secret
 ///
-/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeKeyValueSecretReader(mountPath:prefix:)``
+/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeKeyValueSecretReader(mountPath:namespace:)``
 ///
 /// ## Package traits
 ///
@@ -52,9 +52,12 @@ public final class VaultKeyValueReader: Sendable {
 
     public let mountPath: String
 
+    public let namespace: String?
+
     init(client: VaultClient,
          scheme: String,
          mountPath: String,
+         namespace: String?,
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
@@ -63,6 +66,7 @@ public final class VaultKeyValueReader: Sendable {
         logger[metadataKey: "scheme"] = .string(scheme)
         self.logger = logger
         self.mountPath = mountPath
+        self.namespace = namespace
     }
 
     /// Builds scheme for the ``VaultKeyValueReader``
@@ -77,19 +81,31 @@ public final class VaultKeyValueReader: Sendable {
     ///
     /// - Parameters:
     ///   - mountPath: mount path of database secret engine
-    ///   - prefix: optional prefix to add in the scheme. It must be a RFC1738 conformant scheme string.
+    ///   - namespace: optional child namespace. Let it be `nil` for the parent namespace
     /// - Returns: encoded scheme
     public static func buildSchemeFor(
         mountPath: String,
-        prefix: String? = nil
+        namespace: String? = nil
     ) throws -> String {
         guard mountPath.isValidVaultMountPath else {
             throw VaultClientError.invalidVault(mountPath: mountPath)
         }
 
-        let mount = mountPath.replacingOccurrences(of: "_", with: "-")
-                             .replacingOccurrences(of: "/", with: ".")
-        return "\(prefix?.appending(".") ?? "")vault.kv.\(mount)"
+        let childNamespace: String?
+        if let namespace {
+            guard namespace.isValidNamespace else {
+                throw VaultClientError.invalidVault(namespace: namespace)
+            }
+
+            childNamespace = namespace.replacing("_", with: "-")
+                                      .replacing("/", with: ".")
+        } else {
+            childNamespace = nil
+        }
+
+        let mount = mountPath.replacing("_", with: "-")
+                             .replacing("/", with: ".")
+        return "\(childNamespace?.appending(".") ?? "")vault.kv.\(mount)"
     }
 }
 
@@ -117,17 +133,24 @@ extension VaultKeyValueReader: ResourceReader {
                     TracingSupport.handleResponse(error: error, span)
                     throw error
                 }
-                
-                let buffer = try await client.readKeyValueSecretData(
-                    mountPath: mountPath.removeSlash(),
-                    key: key,
-                    version: version
-                )
+
+                let buffer = try await client.withKeyValueClient(namespace: namespace, mountPath: mountPath) { client in
+                    try await client.readKeyValueSecretData(
+                        key: key,
+                        version: version
+                    )
+                }
+                let fullNamespace = if let namespace {
+                    client.namespace.name + "/\(namespace)"
+                } else {
+                    client.namespace.name
+                }
                 logger.trace("read kv secret",
                              metadata: [
                                 "key": .string(key),
                                 "version": .stringConvertible(version ?? "last"),
-                                "path": .string(mountPath)
+                                "path": .string(mountPath),
+                                "full_namespace": .string(fullNamespace)
                              ])
                 return Array(buffer)
             } catch let error as VaultServerError {
@@ -151,19 +174,19 @@ extension VaultKeyValueReader: ResourceReader {
 extension VaultClient {
     /// Creates a KeyValue resource reader for Pkl configuration files using this `VaultClient` instance and its Logger.
     ///
-    /// See ``VaultCourier/VaultKeyValueReader/buildSchemeFor(mountPath:prefix:)`` for how the scheme is built.
+    /// See ``VaultCourier/VaultKeyValueReader/buildSchemeFor(mountPath:namespace:)`` for how the scheme is built.
     ///
     /// - Parameters:
     ///   - mountPath: mount path to key/value secret engine
-    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed.
+    ///   - namespace: optional child namespace. Let it be `nil` for the parent namespace
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeKeyValueSecretReader(
         mountPath: String,
-        prefix: String? = nil
+        namespace: String? = nil
     ) throws -> VaultKeyValueReader {
-        let schemeString = try VaultKeyValueReader.buildSchemeFor(mountPath: mountPath, prefix: prefix)
+        let schemeString = try VaultKeyValueReader.buildSchemeFor(mountPath: mountPath, namespace: namespace)
         guard let uri = URL(string: "\(schemeString):") else {
-            throw VaultClientError.invalidVault(mountPath: mountPath)
+            throw VaultClientError.invalidArgument("mountPath: \(mountPath), namespace: \(namespace ?? "<empty>")")
         }
 
         guard let scheme = uri.scheme else {
@@ -174,6 +197,7 @@ extension VaultClient {
             client: self,
             scheme: scheme,
             mountPath: mountPath,
+            namespace: namespace,
             backgroundActivityLogger: logger
         )
     }
@@ -184,10 +208,10 @@ extension ResourceReader where Self == VaultKeyValueReader {
     public static func vaultKeyValue(
         client: VaultClient,
         mountPath: String,
-        prefix: String? = nil,
+        namespace: String? = nil,
         backgroundActivityLogger: Logging.Logger? = nil
     ) -> VaultKeyValueReader? {
-        guard let schemeString = try? VaultKeyValueReader.buildSchemeFor(mountPath: mountPath, prefix: prefix),
+        guard let schemeString = try? VaultKeyValueReader.buildSchemeFor(mountPath: mountPath, namespace: namespace),
               let uri = URL(string: "\(schemeString):"),
               let scheme = uri.scheme else {
             return nil
@@ -197,6 +221,7 @@ extension ResourceReader where Self == VaultKeyValueReader {
             client: client,
             scheme: scheme,
             mountPath: mountPath,
+            namespace: namespace,
             backgroundActivityLogger: backgroundActivityLogger
         )
     }

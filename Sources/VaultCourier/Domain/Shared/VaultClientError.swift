@@ -29,6 +29,10 @@ public struct VaultClientError: Error, Sendable {
         .init(message: "Invalid vault mount path: '\(mountPath)'")
     }
 
+    package static func invalidVault(namespace: String) -> VaultClientError {
+        .init(message: "Invalid vault namespace name: '\(namespace)'")
+    }
+
     package static func decodingFailed(_ message: String? = nil,
                                        file: String = #filePath) -> VaultClientError {
         .init(message: "Decoding failed")

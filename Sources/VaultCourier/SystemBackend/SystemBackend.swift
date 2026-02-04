@@ -26,15 +26,17 @@ import SystemWrapping
 import SystemAuth
 import SystemPolicies
 import SystemMounts
+import SystemNamespaces
 
 /// The `SystemBackend` is the client for all Vault endpoints under `/sys`.
 /// This client is used to configure Vault and interact with many of Vault's internal features.
 ///
-/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withSystemBackend(execute:)`` to interact with this type
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withSystemBackend(namespace:execute:)`` to interact with this type
 public final class SystemBackend: Sendable {
     static var loggingDisabled: Logger { .init(label: "sys-backend-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     package init(apiURL: URL,
+                 namespace: String,
                  clientTransport: any ClientTransport,
                  middlewares: [any ClientMiddleware] = [],
                  token: String? = nil,
@@ -63,7 +65,14 @@ public final class SystemBackend: Sendable {
             middlewares: middlewares,
             token: token
         )
+        self.namespaces = SystemNamespacesProvider(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            middlewares: middlewares,
+            token: token
+        )
         self.apiURL = apiURL
+        self.namespace = namespace
         self._token = .init(token)
         self.logger = logger ?? Self.loggingDisabled
     }
@@ -71,10 +80,14 @@ public final class SystemBackend: Sendable {
     /// Vault's URL
     let apiURL: URL
 
+    /// Target Namespace
+    let namespace: String
+
     let wrapping: SystemWrapProvider
     let auth: SystemAuthProvider
     let policies: SystemPoliciesProvider
     let mounts: SystemMountsProvider
+    let namespaces: SystemNamespacesProvider
 
     let _token: Mutex<String?>
 

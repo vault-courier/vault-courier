@@ -61,6 +61,71 @@ struct VaultClientTests {
         #endif
     }
 
+    @Test
+    func global_namespace_is_passed_to_token_auth() async throws {
+        let clientToken = "test_token"
+        let namespace = "tenants/tenant-a/stage"
+
+        let transportClient = MockVaultClientTransport { req, _, _, _ in
+            #expect(req.headerFields[VaultHeaderName.vaultNamespace] == namespace)
+            switch req.normalizedPath {
+                case "/auth/token/lookup-self":
+                    return (.init(status: .ok), .init("""
+                        {
+                          "request_id": "f1974b8f-266e-2dd6-3ed3-13d330d4589e",
+                          "lease_id": "",
+                          "renewable": false,
+                          "lease_duration": 0,
+                          "data": {
+                            "accessor": "ufPPb3VC6rTBCIOqtZydD0bu",
+                            "creation_time": 1769460540,
+                            "creation_ttl": 0,
+                            "display_name": "token",
+                            "entity_id": "",
+                            "expire_time": null,
+                            "explicit_max_ttl": 0,
+                            "id": "\(clientToken)",
+                            "issue_time": "2026-01-26T20:49:00.428750095Z",
+                            "meta": null,
+                            "num_uses": 0,
+                            "orphan": true,
+                            "path": "auth/token/create",
+                            "policies": [
+                              "root"
+                            ],
+                            "renewable": false,
+                            "ttl": 0,
+                            "type": "service"
+                          },
+                          "wrap_info": null,
+                          "warnings": null,
+                          "auth": null
+                        }
+                        """))
+                default:
+                    Issue.record("Unexpected request made to \(String(reflecting: req.path)): \(req)")
+                    throw TestError()
+            }
+        }
+
+        let vaultClient = VaultClient(
+            configuration: .init(
+                apiURL: VaultClient.Server.defaultHttpURL,
+                namespace: namespace,
+                backgroundActivityLogger: Self.logger
+            ),
+            clientTransport: transportClient
+        )
+
+        // Base URL stays the same
+        #expect(vaultClient.apiURL == VaultClient.Server.defaultHttpURL)
+        #expect(vaultClient.namespace.name == namespace)
+
+        try await vaultClient.login(method: .token(clientToken))
+
+
+    }
+
     #if AppRoleSupport
     @Test
     func login_with_unwrapped_app_role_secret() async throws {
@@ -89,7 +154,7 @@ struct VaultClientTests {
                             "entity_id": "",
                             "expire_time": null,
                             "explicit_max_ttl": 0,
-                            "id": "integration_token",
+                            "id": "\(clientToken)",
                             "issue_time": "2026-01-26T20:49:00.428750095Z",
                             "meta": null,
                             "num_uses": 0,
@@ -136,7 +201,7 @@ struct VaultClientTests {
             }
         }
 
-        let vaultClient = VaultClient(configuration: .defaultHttp(backgroundActivityLogger: Self.logger),
+        let vaultClient = VaultClient(configuration: .defaultHttp(),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .appRole(path: approleMount,
                                                      credentials: .init(roleID: roleID,
@@ -166,7 +231,7 @@ struct VaultClientTests {
                             "entity_id": "",
                             "expire_time": null,
                             "explicit_max_ttl": 0,
-                            "id": "integration_token",
+                            "id": "test_token",
                             "issue_time": "2026-01-26T20:49:00.428750095Z",
                             "meta": null,
                             "num_uses": 0,
@@ -243,13 +308,15 @@ struct VaultClientTests {
 #if AppRoleSupport
 extension VaultClientTests {
     struct Mock {
-        @Test func approle_login() async throws {
+        @Test func approle_login_with_namespace() async throws {
+            let namespace = "tenants/tenant-a/stage"
             let apppRoleMountPath = "path/to/approle"
             let roleID = "role_id"
             let secretID = "secret_id"
             let clientToken = "approle_client_token"
 
             let transportClient = MockVaultClientTransport { req, _, _, _ in
+                #expect(req.headerFields[VaultHeaderName.vaultNamespace] == namespace)
                 switch req.normalizedPath {
                     case "/auth/\(apppRoleMountPath)/login":
 
@@ -276,8 +343,14 @@ extension VaultClientTests {
                 }
             }
 
-            let vaultClient = VaultClient(configuration: .defaultHttp(),
-                                          clientTransport: transportClient)
+            let vaultClient = VaultClient(
+                configuration: .init(
+                    apiURL: VaultClient.Server.defaultHttpURL,
+                    namespace: namespace,
+                    backgroundActivityLogger: VaultClientTests.logger
+                ),
+                clientTransport: transportClient
+            )
             try await vaultClient.login(method: .appRole(path: apppRoleMountPath,
                                                          credentials: .init(roleID: roleID, secretID: secretID)))
             #expect(try vaultClient.sessionToken() == clientToken)

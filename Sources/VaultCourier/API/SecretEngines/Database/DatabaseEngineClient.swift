@@ -38,22 +38,24 @@ import Utils
 /// This client is guarded by the `DatabaseEngineSupport` package trait.
 ///
 ///
-/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withDatabaseClient(mountPath:execute:)`` to interact with this type
+/// - Note: You don't usually create this type directly, but instead use ``VaultClient/withDatabaseClient(namespace:mountPath:execute:)`` to interact with this type
 public final class DatabaseEngineClient: Sendable {
     static var loggingDisabled: Logger { .init(label: "database-engine-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
          clientTransport: any ClientTransport,
+         namespace: String,
          mountPath: String,
          middlewares: [any ClientMiddleware] = [],
          token: String? = nil,
          logger: Logger? = nil) {
         self.engine = DatabaseEngine(
-            configuration: .init(apiURL: apiURL, mountPath: mountPath),
+            configuration: .init(apiURL: apiURL, namespace: namespace, mountPath: mountPath),
             clientTransport: clientTransport,
             middlewares: middlewares,
             token: token)
         self.apiURL = apiURL
+        self.namespace = namespace
         self.mountPath = mountPath.removeSlash()
         self._token = .init(token)
         var logger =  logger ?? Self.loggingDisabled
@@ -64,6 +66,10 @@ public final class DatabaseEngineClient: Sendable {
     /// Vault's base URL
     let apiURL: URL
 
+    /// Target's namespace
+    let namespace: String
+
+    /// Path to database secret mount
     let mountPath: String
 
     /// Engine client

@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-//  Copyright (c) 2025 Javier Cuesta
+//  Copyright (c) 2026 Javier Cuesta
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -22,22 +22,18 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 
-public struct ResponseWrappingMiddleware: ClientMiddleware {
-    public var timeToLive: Duration
+package struct VaultNamespaceMiddleware: ClientMiddleware {
+    package var name: String
 
-    public init(timeToLive: Duration) {
-        self.timeToLive = timeToLive
-    }
-
-    public func intercept(
+    package func intercept(
         _ request: HTTPTypes.HTTPRequest,
         body: OpenAPIRuntime.HTTPBody?,
         baseURL: URL,
         operationID: String,
         next: @Sendable (HTTPTypes.HTTPRequest, OpenAPIRuntime.HTTPBody?, URL) async throws -> (HTTPTypes.HTTPResponse, OpenAPIRuntime.HTTPBody?)
     ) async throws -> (HTTPTypes.HTTPResponse, OpenAPIRuntime.HTTPBody?) {
-        var wrapRequest = request
-        wrapRequest.headerFields.append(.init(name: .wrapTTL, value: String(timeToLive.components.seconds)))
-        return try await next(wrapRequest, body, baseURL)
+        var request = request
+        request.headerFields.append(.init(name: .vaultNamespace, value: name))
+        return try await next(request, body, baseURL)
     }
 }

@@ -27,14 +27,19 @@ import Utils
 package final class AppRoleAuth: Sendable {
     package struct Configuration: Sendable {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
-        public let apiURL: URL
+        package let apiURL: URL
+
+        /// Client's namespace
+        package let namespace: String
 
         /// Custom AppRole authentication path in Vault. Defaults to `approle` when set to `nil`.
-        public let mountPath: String
+        package let mountPath: String
 
-        public init(apiURL: URL,
+        package init(apiURL: URL,
+                    namespace: String,
                     mountPath: String? = nil) {
             self.apiURL = apiURL
+            self.namespace = namespace
             self.mountPath = mountPath ?? "approle"
         }
     }
@@ -51,11 +56,14 @@ package final class AppRoleAuth: Sendable {
             middlewares: middlewares
         )
         self.basePath = .init(string: configuration.mountPath, relativeTo: configuration.apiURL.appending(path: "auth")) ??  URL(string: "/approle", relativeTo: configuration.apiURL.appending(path: "auth"))!
+        self.namespace = configuration.namespace
         self._token = .init(token)
         self._credentials = .init(credentials)
     }
 
     package let basePath: URL
+
+    package let namespace: String
 
     package let client: any APIProtocol
 

@@ -74,6 +74,7 @@ extension IntegrationTests.System {
     @Suite struct Auth {}
     @Suite struct Policies {}
     @Suite struct Mounts {}
+    @Suite struct Namespaces {}
 }
 
 #if PklSupport

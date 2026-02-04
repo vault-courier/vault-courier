@@ -52,8 +52,7 @@ extension HTTPRequest {
 
         return result
 #else
-        self.path?.replacingOccurrences(of: "%2F", with: "/")
+        self.path?.replacing("%2F", with: "/")
 #endif
-
     }
 }

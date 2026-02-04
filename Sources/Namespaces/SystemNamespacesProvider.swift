@@ -1,5 +1,5 @@
 //===----------------------------------------------------------------------===//
-//  Copyright (c) 2025 Javier Cuesta
+//  Copyright (c) 2026 Javier Cuesta
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -21,51 +21,23 @@ import FoundationEssentials
 import struct Foundation.URL
 #endif
 import Synchronization
-import Utils
 
-/// Database secret engine client
-package final class DatabaseEngine: Sendable {
-    package struct Configuration: Sendable {
-        /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
-        package let apiURL: URL
-
-        /// Client's namespace
-        package let namespace: String
-
-        /// Mount path to secret engine
-        package let mountPath: String
-
-        package init(apiURL: URL,
-                     namespace: String,
-                     mountPath: String) {
-            self.apiURL = apiURL
-            self.namespace = namespace
-            self.mountPath = mountPath
-        }
-    }
-
-    package init(configuration: Configuration,
-                 clientTransport: any ClientTransport,
-                 middlewares: [any ClientMiddleware] = [],
-                 token: String? = nil) {
+package final class SystemNamespacesProvider: Sendable {
+    package init(apiURL: URL,
+                clientTransport: any ClientTransport,
+                middlewares: [any ClientMiddleware] = [],
+                token: String? = nil) {
         self.client = Client(
-            serverURL: configuration.apiURL,
-            configuration: .init(dateTranscoder: .fallbackISO8601),
+            serverURL: apiURL,
+            configuration: .init(dateTranscoder: .iso8601WithFractionalSeconds),
             transport: clientTransport,
             middlewares: middlewares
         )
-        self.apiRUL = configuration.apiURL
-        self.namespace = configuration.namespace
-        self.mountPath = configuration.mountPath
+        self.basePath = URL(string: "/namespaces", relativeTo: apiURL.appending(path: "sys"))!
         self._token = .init(token)
     }
 
-    package let apiRUL: URL
-
-    package let namespace: String
-
-    /// The relative mount path, e.g. "database"
-    package let mountPath: String
+    package let basePath: URL
 
     package let client: any APIProtocol
 

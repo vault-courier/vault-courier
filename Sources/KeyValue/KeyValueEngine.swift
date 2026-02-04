@@ -27,14 +27,19 @@ import Utils
 package final class KeyValueEngine: Sendable {
     package struct Configuration: Sendable {
         /// Vault's base URL, e.g. `http://127.0.0.1:8200/v1`
-        public let apiURL: URL
+        package let apiURL: URL
+
+        /// Client's namespace
+        package let namespace: String
 
         /// Mount path to secret engine
-        public let mountPath: String
+        package let mountPath: String
 
-        public init(apiURL: URL,
-                    mountPath: String) {
+        package init(apiURL: URL,
+                     namespace: String,
+                     mountPath: String) {
             self.apiURL = apiURL
+            self.namespace = namespace
             self.mountPath = mountPath
         }
     }
