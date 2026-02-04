@@ -29,6 +29,7 @@ import struct Foundation.Data
 import OpenAPIRuntime
 import HTTPTypes
 import Utils
+import Logging
 
 extension IntegrationTests.Pkl.SecretReaders {
     @Test
@@ -44,10 +45,10 @@ extension IntegrationTests.Pkl.SecretReaders {
 
     @Test
     func encode_mount_in_scheme_of_database_credential_reader() async throws {
-        let scheme1 = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: "path/to/database", prefix: "test")
+        let scheme1 = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: "path/to/database", namespace: "test")
         #expect(scheme1 == "test.vault.path.to.database")
 
-        let scheme2 = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: "path_to_database", prefix: "test")
+        let scheme2 = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: "path_to_database", namespace: "test")
         #expect(scheme2 == "test.vault.path-to-database")
     }
 
@@ -65,17 +66,19 @@ extension IntegrationTests.Pkl.SecretReaders {
             expectedSecrets: [secret: value]
         )
 
-        let namespace = "ns/tenant1/stage"
+        let namespace = "ns"
+        var logger = Logger(label: "test")
+        logger.logLevel = .trace
         let vaultClient = VaultClient(configuration: .init(apiURL: VaultClient.Server.defaultHttpURL,
-                                                           namespace: namespace),
+                                                           namespace: namespace, backgroundActivityLogger: logger),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .token(clientToken))
 
-        let schemePrefix = "test"
-        let scheme = try VaultKeyValueReader.buildSchemeFor(mountPath: kvMountPath, prefix: schemePrefix)
+        let childNamespace = "tenant1/stage"
+        let scheme = try VaultKeyValueReader.buildSchemeFor(mountPath: kvMountPath, namespace: childNamespace)
         let sut = try vaultClient.makeKeyValueSecretReader(
             mountPath: kvMountPath,
-            prefix: schemePrefix
+            namespace: childNamespace
         )
         // MUT
         let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in
@@ -100,6 +103,9 @@ extension IntegrationTests.Pkl.SecretReaders {
 
         let username = "test_static_role_username"
         let password = "XS-bh8o95yFzdd3N9Gv-"
+        let namespace = "ns"
+        let childNamespace = "tenant1/stage"
+        let databaseMount = "path/to/database/secrets"
 
         let mockClient = MockVaultClientTransport { req, _, _, _ in
             switch req.normalizedPath {
@@ -136,7 +142,8 @@ extension IntegrationTests.Pkl.SecretReaders {
                   "auth": null
                 }
                 """))
-                default:
+                case "/\(databaseMount)/static-creds/qa_role":
+                    #expect(req.headerFields[VaultHeaderName.vaultNamespace] == "\(namespace)/\(childNamespace)")
                     return (.init(status: .ok), .init("""
                 {
                   "request_id": "04c78e0d-141e-3a13-5d38-17821fbdb3c1",
@@ -155,19 +162,18 @@ extension IntegrationTests.Pkl.SecretReaders {
                   "auth": null
                 }
                 """))
+                default:
+                    throw MockClientTransportError()
             }
         }
 
-        let namespace = "ns/tenant1/stage"
-        let databaseMount = "path/to/database/secrets"
         let vaultClient = VaultClient(configuration: .init(apiURL: VaultClient.Server.defaultHttpURL,
                                                            namespace: namespace),
                                       clientTransport: mockClient)
         try await vaultClient.login(method: .token("test_token"))
 
-        let schemePrefix = "test"
-        let scheme = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: databaseMount, prefix: schemePrefix)
-        let sut = try vaultClient.makeDatabaseCredentialReader(mountPath: databaseMount, prefix: schemePrefix)
+        let scheme = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: databaseMount, namespace: childNamespace)
+        let sut = try vaultClient.makeDatabaseCredentialReader(mountPath: databaseMount, namespace: childNamespace)
 
         // MUT
         let output = try await withEvaluator(options: .preconfigured.withResourceReader(sut)) { evaluator in

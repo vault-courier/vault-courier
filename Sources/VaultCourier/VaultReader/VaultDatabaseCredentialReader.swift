@@ -30,7 +30,7 @@ import Utils
 
 /// A Pkl resource reader for database credentials managed by Vault
 ///
-/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeDatabaseCredentialReader(mountPath:prefix:)``
+/// You can generate this class from an already existing ``VaultClient`` with ``VaultClient/makeDatabaseCredentialReader(mountPath:namespace:)``
 ///
 /// ## Package traits
 ///
@@ -50,11 +50,16 @@ public final class VaultDatabaseCredentialReader: Sendable {
 
     let logger: Logging.Logger
 
+    /// Path to database engine mount
     public let mountPath: String
+
+    /// Optional child namespace with respect to the client's namespace.
+    public let namespace: String?
 
     init(client: VaultClient,
          scheme: String,
          mountPath: String,
+         namespace: String? = nil,
          backgroundActivityLogger: Logging.Logger? = nil) {
         self.client = client
         self.scheme = scheme
@@ -63,6 +68,7 @@ public final class VaultDatabaseCredentialReader: Sendable {
         logger[metadataKey: "scheme"] = .string(scheme)
         self.logger = logger
         self.mountPath = mountPath
+        self.namespace = namespace
     }
 
     /// Builds scheme for the ``VaultDatabaseCredentialReader``
@@ -75,22 +81,39 @@ public final class VaultDatabaseCredentialReader: Sendable {
     /// Then a credential can be read with the scheme
     /// `vault.path.to.my-database`
     ///
+    ///  An optional namespace with respect to the vault client's namespace can be added. The resulting scheme for a namespace
+    ///  is prepended to `vault.path.to.my-database`. E.g. for the child namespace `tenant-a/stage` the resulting scheme is
+    ///  `tenant-a.stage.vault.path.to.my-database`
+    ///
+    ///
     /// - Parameters:
     ///   - mountPath: mount path of database secret engine
-    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"..."z", digits, and the (escaped) characters plus ("+"), period ("."), and hyphen ("-") are allowed.  This prefix can be used to mark different database engines mounted in the same namespace
+    ///   - namespace: optional child namespace. Let it `nil` for the parent namespace
     /// - Returns: encoded scheme
     public static func buildSchemeFor(
         mountPath: String,
-        prefix: String? = nil
+        namespace: String? = nil
     ) throws -> String {
         guard mountPath.isValidVaultMountPath else {
             throw VaultClientError.invalidVault(mountPath: mountPath)
         }
 
+        let childNamespace: String?
+        if let namespace {
+            guard namespace.isValidNamespace else {
+                throw VaultClientError.invalidVault(namespace: namespace)
+            }
+
+            childNamespace = namespace.replacing("_", with: "-")
+                                      .replacing("/", with: ".")
+        } else {
+            childNamespace = nil
+        }
+
         let mount = mountPath.replacing("_", with: "-")
                              .replacing("/", with: ".")
 
-        return "\(prefix?.appending(".") ?? "")vault.\(mount)"
+        return "\(childNamespace?.appending(".") ?? "")vault.\(mount)"
     }
 }
 
@@ -102,24 +125,35 @@ extension VaultDatabaseCredentialReader: ResourceReader {
             do {
                 let credentials: DatabaseCredentials
                 let relativePath = url.relativePath.removeSlash()
+                let fullNamespace = if let namespace {
+                    client.namespace.name + "/\(namespace)"
+                } else {
+                    client.namespace.name
+                }
 
                 if relativePath.hasPrefix("static-creds/") {
                     let roleName = relativePath.suffix(from: "static-creds/".endIndex)
-                    let response = try await client.databaseCredentials(staticRole: String(roleName), mountPath: mountPath)
+                    let response = try await client.withDatabaseClient(namespace: namespace, mountPath: mountPath) { client in
+                        try await client.databaseCredentials(staticRole: String(roleName))
+                    }
                     credentials = DatabaseCredentials(username: response.username, password: response.password)
                     logger.trace("read static database credentials",
                                  metadata: [
                                     "role": .stringConvertible(roleName),
-                                    "path": .string(mountPath)
+                                    "path": .string(mountPath),
+                                    "namespace": .string(namespace ?? "root")
                                  ])
                 } else if relativePath.hasPrefix("creds/") {
                     let roleName = relativePath.suffix(from: "creds/".endIndex)
-                    let response = try await client.databaseCredentials(dynamicRole: String(roleName), mountPath: mountPath)
+                    let response = try await client.withDatabaseClient(namespace: namespace, mountPath: mountPath) { client in
+                        try await client.databaseCredentials(dynamicRole: String(roleName))
+                    }
                     credentials = DatabaseCredentials(username: response.username, password: response.password)
                     logger.trace("read dynamic database credentials",
                                  metadata: [
                                     "role": .stringConvertible(roleName),
-                                    "path": .string(mountPath)
+                                    "path": .string(mountPath),
+                                    "full_namespace": .string(fullNamespace)
                                  ])
                 } else {
                     let error = VaultReaderError.readingUnsupportedDatabaseEndpoint(url.relativePath)
@@ -151,19 +185,19 @@ extension VaultClient {
     /// Creates a Database credential reader for Pkl configuration files using this `VaultClient` instance and its Logger..
     /// 
     /// Example of resource URI: `vault.database:/creds/qa_role`.
-    /// See ``VaultCourier/VaultDatabaseCredentialReader/buildSchemeFor(mountPath:prefix:)`` for how the scheme is built.
+    /// See ``VaultCourier/VaultDatabaseCredentialReader/buildSchemeFor(mountPath:namespace:)`` for how the scheme is built.
     ///
     /// - Parameters:
     ///   - mountPath: database mount path. This will be part of the scheme.
-    ///   - prefix: optional prefix to add to the scheme. Lower case letters "a"--"z", digits, and the characters plus ("+"), period ("."), and hyphen ("-") are allowed. This prefix can be used to mark different database engines mounted in the same namespace
+    ///   - namespace: optional child namespace. Let it `nil` for the parent namespace
     /// - Returns: A `ResourceReader` capable of retrieving secrets from Vault using this client.
     public func makeDatabaseCredentialReader(
         mountPath: String,
-        prefix: String? = nil
+        namespace: String? = nil
     ) throws -> VaultDatabaseCredentialReader {
-        let schemeString = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: mountPath, prefix: prefix)
+        let schemeString = try VaultDatabaseCredentialReader.buildSchemeFor(mountPath: mountPath, namespace: namespace)
         guard let uri = URL(string: "\(schemeString):") else {
-            throw VaultClientError.invalidVault(mountPath: mountPath)
+            throw VaultClientError.invalidArgument("mountPath: \(mountPath), namespace: \(namespace ?? "<empty>")")
         }
 
         guard let scheme = uri.scheme else {
@@ -174,6 +208,7 @@ extension VaultClient {
             client: self,
             scheme: scheme,
             mountPath: mountPath,
+            namespace: namespace,
             backgroundActivityLogger: logger
         )
     }
@@ -184,10 +219,10 @@ extension ResourceReader where Self == VaultDatabaseCredentialReader {
     public static func vaultDatabase(
         client: VaultClient,
         mountPath: String,
-        prefix: String? = nil,
+        namespace: String? = nil,
         backgroundActivityLogger: Logging.Logger? = nil
     ) -> VaultDatabaseCredentialReader? {
-        guard let schemeString = try? VaultDatabaseCredentialReader.buildSchemeFor(mountPath: mountPath, prefix: prefix),
+        guard let schemeString = try? VaultDatabaseCredentialReader.buildSchemeFor(mountPath: mountPath, namespace: namespace),
               let uri = URL(string: "\(schemeString):"),
               let scheme = uri.scheme else {
             return nil
@@ -197,6 +232,7 @@ extension ResourceReader where Self == VaultDatabaseCredentialReader {
             client: client,
             scheme: scheme,
             mountPath: mountPath,
+            namespace: namespace,
             backgroundActivityLogger: backgroundActivityLogger
         )
     }
