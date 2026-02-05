@@ -17,7 +17,6 @@ migrator app roleID: 323184a0-7665-f89f-6350-aa2c4005dc4c
 
 approle-vapor-example % ROLE_ID=323184a0-7665-f89f-6350-aa2c4005dc4c SECRET_ID_FILEPATH=./approle_secret_id.txt swift run Migrator
 
-info migrator : [VaultCourier] login authorized
 Migration successfull! 'todos' table created.
 
 approle-vapor-example % PKL_EXEC=./pkl swift run Operations credentials todo Sources/Operations/Pkl/Stage/vaultAdminConfig.pkl
@@ -27,5 +26,4 @@ todo app roleID: 8039d04e-f609-2733-fe7a-ef682d709548
 
 approle-vapor-example % PKL_EXEC=./pkl ROLE_ID=8039d04e-f609-2733-fe7a-ef682d709548 SECRET_ID_FILEPATH=./approle_secret_id.txt swift run App 
 
-[ INFO ] login authorized
 [ NOTICE ] Server started on http://127.0.0.1:8080
