@@ -85,6 +85,8 @@
             @Step {
                 Set the toolchain to 6.1 which is the current minimum version supported by VaultCourier. Set supported Platforms.
                 
+                (Perhaps you need to conform `Logger.Level` to the new `ExpressibleByArgument` in `App.swift`)
+                
                 @Code(name: "Package.swift", file: hummingbird.0.0.1.swift, previousFile:  hummingbird.0.0.0.swift)
             }
             
