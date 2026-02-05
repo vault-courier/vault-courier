@@ -14,7 +14,9 @@
 - Manage third-party secrets: generate and revoke on-demand credentials for database systems, like PostgreSQL and Valkey.
 - AppRole Authentication
 - Token Authentication
-- Pkl Resource Reader (Enabled with PackageTrait `PklSupport`).
+- Namespaces: manage isolated secrets from different deployment environments, applications, or teams within a single vault instance. 
+- Tracing support
+- Pkl Resource Reader (Enabled with PackageTrait `PklSupport`)
 
 ## Usage
 
@@ -104,7 +106,7 @@ try await withDatabaseClient(mountPath: "database_eu_central") { client in
 }
 ```
 
-These types of handler methods are useful for Vault operators when multiple calls are going to be made to the same group of endpoints, or when functions need to be scoped to a particular mount. Application owners will rarely use these handlers, as they simply consume the secrets and the default functionality can be accessed directly from the VaultClient.
+These types of handler methods are useful for Vault operators when multiple calls are going to be made to the same group of endpoints, or when functions need to be scoped to a particular mount or child namespace. Application owners will rarely use these handlers, as they simply consume the secrets and the default functionality can be accessed directly from the VaultClient.
 
 The opt-in Vault API is only accessible via an API handler method.
 
