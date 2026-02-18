@@ -50,6 +50,11 @@ let DatabaseEngineTrait: Trait = .trait(
     description: "Enable support for database engine clients"
 )
 
+let TransitEngineTrait: Trait = .trait(
+    name: "TransitEngineSupport",
+    description: "Enable support for transit engine client. This allows to access Vault's cryptograpy-as-a-service secret engine."
+)
+
 let PostgresDatabasePluginTrait: Trait = .trait(
     name: "PostgresPluginSupport",
     description: "Enable support for Vault's PostgreSQL database plugin HTTP API",
@@ -83,6 +88,7 @@ var traits: Set<Trait> = [
     DatabaseEngineTrait,
     PostgresDatabasePluginTrait,
     ValkeyDatabasePluginTrait,
+    TransitEngineTrait,
     PklTrait,
     ConfigProviderTrait
 ]
@@ -91,6 +97,7 @@ let defaultTraits: Set<String> = .init([
     MockTrait,
     AppRoleTrait,
     DatabaseEngineTrait,
+    TransitEngineTrait,
     PostgresDatabasePluginTrait,
     ValkeyDatabasePluginTrait,
 ].map(\.name))
@@ -139,7 +146,8 @@ let package = Package(
                 .target(name: "AppRoleAuth", condition: .when(traits: [AppRoleTrait.name])),
                 // Secrets
                 .target(name: "KeyValue"),
-                .target(name: "DatabaseEngine", condition: .when(traits: [DatabaseEngineTrait.name]))
+                .target(name: "DatabaseEngine", condition: .when(traits: [DatabaseEngineTrait.name])),
+                .target(name: "TransitEngine", condition: .when(traits: [TransitEngineTrait.name])),
             ]
         ),
         .target(
@@ -258,6 +266,18 @@ let package = Package(
                 .target(name: "Utils")
             ],
             path: "Sources/DatabaseEngine",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
+        ),
+        .target(
+            name: "TransitEngine",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "Logging", package: "swift-log"),
+                .target(name: "Utils")
+            ],
+            path: "Sources/TransitEngine",
             plugins: [
                 .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
             ]
