@@ -69,6 +69,12 @@ extension IntegrationTests.SecretEngine.Database {
 }
 #endif
 
+#if TransitEngineSupport
+extension IntegrationTests.SecretEngine {
+    @Suite(.setupSecretEngine(type: "transit", mountPath: "custom")) struct Transit {}
+}
+#endif
+
 extension IntegrationTests.System {
     @Suite struct Wrapping {}
     @Suite struct Auth {}

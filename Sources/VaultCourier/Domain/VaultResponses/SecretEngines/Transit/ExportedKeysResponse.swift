@@ -15,19 +15,24 @@
 //===----------------------------------------------------------------------===//
 
 #if TransitEngineSupport
-public struct DerivedEncryption: Sendable {
-    public var isConvergentEncryption: Bool
 
-    public init(isConvergentEncryption: Bool = false) {
-        self.isConvergentEncryption = isConvergentEncryption
-    }
+#if canImport(FoundationEssentials)
+import FoundationEssentials
+#else
+import struct Foundation.Date
+#endif
+
+public struct ExportedKeyResponse: Sendable {
+    public let requestID: String
+
+    /// Array of all the versions of the key
+    public let keys: [String]
+
+    /// Name of the key
+    public let name: String
+
+    /// Type of encryption key
+    public let type: EncryptionKey.KeyType
 }
 
-public struct DerivedContext: Sendable {
-    public var value: String
-
-    public init(value: String) {
-        self.value = value
-    }
-}
 #endif

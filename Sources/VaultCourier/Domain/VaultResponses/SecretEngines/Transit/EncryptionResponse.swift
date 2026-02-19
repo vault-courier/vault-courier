@@ -15,19 +15,14 @@
 //===----------------------------------------------------------------------===//
 
 #if TransitEngineSupport
-public struct DerivedEncryption: Sendable {
-    public var isConvergentEncryption: Bool
 
-    public init(isConvergentEncryption: Bool = false) {
-        self.isConvergentEncryption = isConvergentEncryption
-    }
+public struct EncryptionResponse: Sendable {
+    public let requestID: String
+    
+    public let ciphertext: String
+
+    /// Key version
+    public let version: Int?
 }
 
-public struct DerivedContext: Sendable {
-    public var value: String
-
-    public init(value: String) {
-        self.value = value
-    }
-}
 #endif

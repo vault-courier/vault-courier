@@ -18,7 +18,7 @@ services:
   openbao:
     image: 'openbao/openbao:latest'
     container_name: openbao
-    command: server -dev -dev-root-token-id="integration_token"
+    command: server -dev -dev-root-token-id="integration_token" -log-level="trace"
     ports:
       - "8200:8200"
     environment:

@@ -31,7 +31,7 @@ public struct EncryptionKeyResponse: Sendable {
 
     public let isPlaintextBackupAllowed: Bool
 
-    public let keyType: EncryptionKey
+    public let keyType: EncryptionKey.KeyType
 
     public let autoRotatePeriod: Duration?
 

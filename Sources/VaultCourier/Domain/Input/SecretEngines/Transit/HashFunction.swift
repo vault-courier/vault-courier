@@ -15,19 +15,14 @@
 //===----------------------------------------------------------------------===//
 
 #if TransitEngineSupport
-public struct DerivedEncryption: Sendable {
-    public var isConvergentEncryption: Bool
 
-    public init(isConvergentEncryption: Bool = false) {
-        self.isConvergentEncryption = isConvergentEncryption
-    }
+public enum HashFunction: String, Codable, Sendable {
+    case SHA224
+    case SHA256
+    case SHA384
+    case SHA512
 }
 
-public struct DerivedContext: Sendable {
-    public var value: String
 
-    public init(value: String) {
-        self.value = value
-    }
-}
 #endif
+

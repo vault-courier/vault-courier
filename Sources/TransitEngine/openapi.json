@@ -35,57 +35,11 @@
         "operationId": "read-upsert-config",
         "responses": {
           "200": {
-            "description": "Ok",
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "request_id": {
-                      "type": "string"
-                    },
-                    "lease_id": {
-                      "type": "string"
-                    },
-                    "renewable": {
-                      "type": "boolean"
-                    },
-                    "lease_duration": {
-                      "type": "integer"
-                    },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "disable_upsert": {
-                          "type": "boolean",
-                          "description": "Specifies whether to disable upserting on encryption (automatic creation of unknown keys)."
-                        }
-                      },
-                      "required": [
-                        "disable_upsert"
-                      ]
-                    },
-                    "wrap_info": {
-                      "type": "object"
-                    },
-                    "warnings": {
-                      "type": "array",
-                      "description": "A list of warnings, e.g. ignored parameters",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "auth": {
-                      "type": "object"
-                    },
-                    "mount_type": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "request_id",
-                    "data"
-                  ]
+                  "$ref": "#/components/schemas/WriteUpsertResponse"
                 }
               }
             }
@@ -105,50 +59,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "request_id": {
-                    "type": "string"
-                  },
-                  "lease_id": {
-                    "type": "string"
-                  },
-                  "renewable": {
-                    "type": "boolean"
-                  },
-                  "lease_duration": {
-                    "type": "integer"
-                  },
-                  "data": {
-                    "type": "object",
-                    "properties": {
-                      "disable_upsert": {
-                        "type": "boolean",
-                        "description": "Specifies whether to disable upserting on encryption (automatic creation of unknown keys)."
-                      }
-                    },
-                    "required": [
-                      "disable_upsert"
-                    ]
-                  },
-                  "wrap_info": {
-                    "type": "object"
-                  },
-                  "warnings": {
-                    "type": "array",
-                    "description": "A list of warnings, e.g. ignored parameters",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "auth": {
-                    "type": "object"
-                  },
-                  "mount_type": {
-                    "type": "string"
+                  "disable_upsert": {
+                    "type": "boolean",
+                    "description": "Specifies whether to disable upserting on encryption (automatic creation of unknown keys)."
                   }
                 },
                 "required": [
-                  "request_id",
-                  "data"
+                  "disable_upsert"
                 ]
               }
             }
@@ -156,8 +73,15 @@
           "required": true
         },
         "responses": {
-          "204": {
-            "description": "NoContent"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteUpsertResponse"
+                }
+              }
+            }
           }
         }
       },
@@ -170,6 +94,9 @@
           "schema": {
             "type": "string"
           }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
         }
       ]
     },
@@ -339,8 +266,7 @@
                   "exportable",
                   "allow_plaintext_backup",
                   "type",
-                  "auto_rotate_period",
-                  "ciphertext"
+                  "auto_rotate_period"
                 ]
               }
             }
@@ -421,10 +347,7 @@
                     "type": "integer",
                     "description": "Key version to be updated, if left empty, a new version will be created unless a private key is specified and the 'Latest' key is missing a private key."
                   }
-                },
-                "required": [
-                  "ciphertext"
-                ]
+                }
               }
             }
           },
@@ -456,6 +379,139 @@
         {
           "description": "The key path for a stored secret in this path",
           "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/export/{key_type}/{name}": {
+      "description": "Returns the named key. The keys object shows the value of the key for each version. If version is specified, the specific version will be returned. \nIf latest is provided as the version, the current key will be provided. Depending on the type of key, different information may be returned. \nThe key must be exportable to support this operation and the version must still be valid.\n\nNote: This endpoint has originally an OPTIONAL version path parameter, but this is illegal in openapi v3",
+      "get": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Export encryption key",
+        "description": "Returns the named key. The keys object shows the value of the key for each version. If version is specified, the specific version will be returned. \nIf latest is provided as the version, the current key will be provided. Depending on the type of key, different information may be returned. \nThe key must be exportable to support this operation and the version must still be valid.",
+        "operationId": "export-encryption-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "format": {
+                    "type": "string",
+                    "description": "Specifies the format of the exported key. The empty string preserves existing behavior, \nwith format unique to each key type (base64 encoded raw keys for symmetric keys or Ed25519 keys, PKCS#1 for RSA private keys, SEC 1 for EC private keys, and PKIX format for RSA or EC public keys). \nThe raw format always returns a base64 encoded raw key (only applicable to symmetric keys and Ed25519 keys). \nThe der and pem formats always returns a PKIX (SubjectPublicKeyInfo) or PrivateKeyInfo encoded object for asymmetric keys.",
+                    "enum": [
+                      "base64",
+                      "raw",
+                      "der",
+                      "pem"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "keys": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "keys",
+                        "name",
+                        "type"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the type of the key to export",
+          "name": "key_type",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the key to read information about",
+          "name": "name",
           "in": "path",
           "required": true,
           "schema": {
@@ -658,10 +714,6 @@
                     "type": "string",
                     "description": "Specifies the base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused."
                   },
-                  "reference": {
-                    "type": "string",
-                    "description": " A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input. Only valid on batch requests when using `batch_input` below."
-                  },
                   "batch_input": {
                     "type": "array",
                     "items": {
@@ -674,6 +726,10 @@
                         "context": {
                           "type": "string",
                           "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
                         }
                       },
                       "required": [
@@ -732,15 +788,52 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ciphertext": {
+                    "request_id": {
                       "type": "string"
                     },
-                    "key_version": {
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
                       "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ciphertext": {
+                          "type": "string"
+                        },
+                        "key_version": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "ciphertext"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
                     }
                   },
                   "required": [
-                    "ciphertext"
+                    "request_id",
+                    "data"
                   ]
                 }
               }
@@ -799,10 +892,6 @@
                     "type": "string",
                     "description": "Specifies the base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused."
                   },
-                  "reference": {
-                    "type": "string",
-                    "description": " A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input. Only valid on batch requests when using `batch_input` below."
-                  },
                   "batch_input": {
                     "type": "array",
                     "items": {
@@ -815,6 +904,10 @@
                         "context": {
                           "type": "string",
                           "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
                         }
                       },
                       "required": [
@@ -3074,6 +3167,55 @@
               "supports_decryption",
               "supports_derivation",
               "supports_signing"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "WriteUpsertResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "disable_upsert": {
+                "type": "boolean",
+                "description": "Specifies whether to disable upserting on encryption (automatic creation of unknown keys)."
+              }
+            },
+            "required": [
+              "disable_upsert"
             ]
           },
           "wrap_info": {
