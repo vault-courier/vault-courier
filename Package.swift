@@ -97,7 +97,6 @@ let defaultTraits: Set<String> = .init([
     MockTrait,
     AppRoleTrait,
     DatabaseEngineTrait,
-    TransitEngineTrait,
     PostgresDatabasePluginTrait,
     ValkeyDatabasePluginTrait,
 ].map(\.name))
