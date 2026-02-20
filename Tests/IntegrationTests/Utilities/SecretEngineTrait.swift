@@ -14,23 +14,29 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-#if TransitEngineSupport
 import Testing
 import VaultCourier
+import Algorithms
 
 extension VaultClient {
     @TaskLocal static var secretEngine: EnableSecretMountConfig = EnableSecretMountConfig(mountType: "kv", path: "custom_kv")
 }
 
-struct SecretEngineTrait: SuiteTrait, TestScoping {
+struct SecretEngineTrait: SuiteTrait, TestTrait, TestScoping {
     let type: String
-    let mountPath: String
+
+    static var enginePath: String {
+        let suffix = "abcdefghijklmnopqrstuvwxyz".randomSample(count: 10).map { String($0) }.joined()
+        let path = "transit_\(suffix)"
+        return path
+    }
 
     func provideScope(for test: Test, testCase: Test.Case?, performing function: @Sendable () async throws -> Void) async throws {
         let vaultClient = VaultClient.current
+        let mountPath = Self.enginePath
         let mountConfig = EnableSecretMountConfig(mountType: type, path: mountPath)
         try await vaultClient.enableSecretEngine(mountConfig: mountConfig)
-        
+
         try await VaultClient.$secretEngine.withValue(mountConfig) {
             try await function()
         }
@@ -39,12 +45,8 @@ struct SecretEngineTrait: SuiteTrait, TestScoping {
     }
 }
 
-extension SuiteTrait where Self == SecretEngineTrait {
-    static func setupSecretEngine(
-        type: String,
-        mountPath: String
-    ) -> Self {
-        return Self(type: type, mountPath: mountPath)
+extension TestTrait where Self == SecretEngineTrait {
+    static func setupSecretEngine(type: String) -> Self {
+        return Self(type: type)
     }
 }
-#endif

@@ -19,15 +19,14 @@ import Testing
 import VaultCourier
 
 extension IntegrationTests.SecretEngine.Transit {
-    static var enginePath: String { "custom" }
-
-    @Test
+    @Test(.setupSecretEngine(type: "transit"))
     func create_encryption_key_encrypt_and_decrypt() async throws {
         let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
 
         let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
         let key = EncryptionKey(name: "test_key", type: .`aes256-gcm96`, version: 1)
-        let response = try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+        let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
 
             let encryption = try await client.encrypt(plaintext: plaintext, key: key)
@@ -38,25 +37,27 @@ extension IntegrationTests.SecretEngine.Transit {
         #expect(response.plaintext == plaintext)
     }
 
-    @Test
+    @Test(.setupSecretEngine(type: "transit"))
     func ed25519_cannot_encrypt() async throws {
         let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
 
         let key = EncryptionKey(name: "test_key", type: .ed25519, version: 1)
         await #expect(throws: VaultClientError.self) {
-            try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+            try await vaultClient.withTransitClient(mountPath: mountPath) { client in
                 _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
                 return try await client.encrypt(plaintext: "dGhlIHF1aWNrIGJyb3duIGZveAo=", key: key)
             }
         }
     }
 
-    @Test
+    @Test(.setupSecretEngine(type: "transit"))
     func generate_key_with_invalid_bits_fails() async throws {
         let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
 
         let key = EncryptionKey(name: "test_key", type: .`aes256-gcm96`, version: 1)
-        let response = try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+        let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
             return try await client.generateDataKey(outputType: .plaintext, keyName: key.name, bits: .bit512)
         }
@@ -64,14 +65,15 @@ extension IntegrationTests.SecretEngine.Transit {
         _ = try #require(response.plaintext)
     }
 
-    @Test
+    @Test(.setupSecretEngine(type: "transit"))
     func sign_and_verify_data() async throws {
         let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
 
         let key = EncryptionKey(name: "test_key", type: .ed25519, version: 1)
         let input = "adba32=="
         let hashAlgorithm = HashAlgorithm.SHA2_224
-        let isValid = try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+        let isValid = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
             let signature = try await client.sign(input: input, hashAlgorithm: hashAlgorithm, keyName: key.name)
             return try await client.verifySignedInput(input, verificationKey: .signature(signature), hashAlgorithm: hashAlgorithm, keyName: key.name)
@@ -80,13 +82,14 @@ extension IntegrationTests.SecretEngine.Transit {
         #expect(isValid)
     }
 
-    @Test
+    @Test(.setupSecretEngine(type: "transit"))
     func sign_csr() async throws {
         let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
 
         let key = EncryptionKey(name: "test_key", type: .ed25519, version: 1)
 
-        try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+        try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
             _ = try await client.signCSR(nil, keyName: key.name)
         }

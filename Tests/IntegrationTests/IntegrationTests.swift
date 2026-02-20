@@ -71,7 +71,7 @@ extension IntegrationTests.SecretEngine.Database {
 
 #if TransitEngineSupport
 extension IntegrationTests.SecretEngine {
-    @Suite(.setupSecretEngine(type: "transit", mountPath: "custom")) struct Transit {}
+    @Suite struct Transit {}
 }
 #endif
 
