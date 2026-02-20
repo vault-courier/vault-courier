@@ -25,7 +25,7 @@ extension IntegrationTests.SecretEngine.Transit {
         let mountPath = VaultClient.secretEngine.path
 
         let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
-        let key = EncryptionKey(name: "test_key", type: .`aes256-gcm96`, version: 1)
+        let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
         let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
 
@@ -56,7 +56,7 @@ extension IntegrationTests.SecretEngine.Transit {
         let vaultClient = VaultClient.current
         let mountPath = VaultClient.secretEngine.path
 
-        let key = EncryptionKey(name: "test_key", type: .`aes256-gcm96`, version: 1)
+        let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
         let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
             return try await client.generateDataKey(outputType: .plaintext, keyName: key.name, bits: .bit512)
