@@ -22,17 +22,20 @@ extension IntegrationTests.SecretEngine.Transit {
     static var enginePath: String { "custom" }
 
     @Test
-    func create_encryption_key() async throws {
+    func create_encryption_key_encrypt_and_decrypt() async throws {
         let vaultClient = VaultClient.current
 
+        let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
         let key = EncryptionKey(name: "test_key", type: .`aes256-gcm96`, version: 1)
         let response = try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
 
-            return try await client.encrypt(plaintext: "dGhlIHF1aWNrIGJyb3duIGZveAo=", key: key)
+            let encryption = try await client.encrypt(plaintext: plaintext, key: key)
+
+            return try await client.decrypt(ciphertext: encryption.ciphertext, key: key)
         }
 
-        print(response)
+        #expect(response.plaintext == plaintext)
     }
 
     @Test
@@ -46,10 +49,36 @@ extension IntegrationTests.SecretEngine.Transit {
                 return try await client.encrypt(plaintext: "dGhlIHF1aWNrIGJyb3duIGZveAo=", key: key)
             }
         }
-
     }
 
+    @Test
+    func generate_key_with_invalid_bits_fails() async throws {
+        let vaultClient = VaultClient.current
 
+        let key = EncryptionKey(name: "test_key", type: .`aes256-gcm96`, version: 1)
+        let response = try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+            _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
+            return try await client.generateDataKey(outputType: .plaintext, keyName: key.name, bits: .bit512)
+        }
+
+        _ = try #require(response.plaintext)
+    }
+
+    @Test
+    func sign_and_verify_data() async throws {
+        let vaultClient = VaultClient.current
+
+        let key = EncryptionKey(name: "test_key", type: .ed25519, version: 1)
+        let input = "adba32=="
+        let hashAlgorithm = HashAlgorithm.SHA2_224
+        let isValid = try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+            _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
+            let signature = try await client.sign(input: input, hashAlgorithm: hashAlgorithm, keyName: key.name)
+            return try await client.verifySignedInput(input, verificationKey: .signature(signature), hashAlgorithm: hashAlgorithm, keyName: key.name)
+        }
+
+        #expect(isValid)
+    }
 }
 
 #endif

@@ -16,33 +16,34 @@
 
 #if TransitEngineSupport
 
-public struct EncryptionResponse: Sendable {
-    public let requestID: String
-    
-    public let ciphertext: String
-
-    public let plaintext: String?
-
-    /// Key version
-    public let version: Int?
-
-    package init(
-        requestID: String,
-        ciphertext: String,
-        plaintext: String? = nil,
-        version: Int?
-    ) {
-        self.requestID = requestID
-        self.ciphertext = ciphertext
-        self.plaintext = plaintext
-        self.version = version
+/// Request input to generate random bytes
+public struct GenerateRandomBytes: Sendable {
+    public enum Source: String, Sendable {
+        case platfrom
+        case all
     }
-}
 
-public struct DecryptionResponse: Sendable {
-    public let requestID: String
+    public enum Format: String, Sendable {
+        case hex
+        case base64
+    }
 
-    public let plaintext: String
+    /// Source of the requested bytes
+    public let source: Self.Source
+
+    /// Output format
+    public let format: Self.Format
+
+    /// Number of bytes
+    public let count: Int
+
+    public init(source: Self.Source,
+                format: Self.Format,
+                count: Int = 32) {
+        self.source = source
+        self.format = format
+        self.count = count
+    }
 }
 
 #endif

@@ -636,7 +636,8 @@ extension TransitEngineClient {
         }
     }
     
-    /// <#Description#>
+    /// Encrypts plaintext using the named key
+    ///
     /// - Parameters:
     ///   - plaintext: base64 encoded plaintext to be encoded
     ///   - key: `ed25519` is not supported for encryption
@@ -705,6 +706,538 @@ extension TransitEngineClient {
         }
     }
 
+    /// Decrypts ciphertext with given named encryption key
+    /// - Parameters:
+    ///   - ciphertext: ciphertext to decrypt.
+    ///   - key: encryption key
+    ///   - associatedData: base64 encoded associated data (also known as additional data or AAD) to also be authenticated with AEAD ciphers (`aes128-gcm96`, `aes256-gcm`, `chacha20-poly1305`, and `xchacha20-poly1305`). This is only needed if the encryption used it.
+    ///   - context: base64 encoded context for key derivation. This is required if key derivation is enabled for this key
+    ///   - nonce: base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused.
+    /// - Returns: decrypted plaintext in base64
+    public func decrypt(
+        ciphertext: String,
+        key: EncryptionKey,
+        associatedData: String? = nil,
+        context: String? = nil,
+        nonce: String? = nil,
+    ) async throws -> DecryptionResponse {
+        return try await withSpan(Operations.Decrypt.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            if case .ed25519 = key.type {
+                throw VaultClientError.invalidArgument("message encryption not supported for key type \(key.type)")
+            }
+
+            let response = try await engine.client.decrypt(
+                path: .init(transitPath: enginePath, secretKey: key.name),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    associatedData: associatedData,
+                    context: context,
+                    nonce: nonce,
+                    batchInput: nil,
+                    partialFailureResponseCode: nil,
+                    ciphertext: ciphertext)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "decryption with key \(key.type)"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        ])
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        plaintext: json.data.plaintext
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
+    /// Rewraps the provided ciphertext using the latest version of the named key.
+    ///
+    /// Because this never returns plaintext, it is possible to delegate this functionality to untrusted users or scripts.
+    ///
+    /// - Parameters:
+    ///   - ciphertext: ciphertext to decrypt.
+    ///   - key: encryption key
+    ///   - associatedData: base64 encoded associated data (also known as additional data or AAD) to also be authenticated with AEAD ciphers (`aes128-gcm96`, `aes256-gcm`, `chacha20-poly1305`, and `xchacha20-poly1305`). This is only needed if the encryption used it.
+    ///   - context: base64 encoded context for key derivation. This is required if key derivation is enabled for this key
+    ///   - nonce: base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused.
+    /// - Returns: wrapped ciphertext
+    public func rewrap(
+        ciphertext: String,
+        key: EncryptionKey,
+        associatedData: String? = nil,
+        context: String? = nil,
+        nonce: String? = nil
+    ) async throws -> EncryptionResponse {
+        return try await withSpan(Operations.RewrapCiphertext.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            if case .ed25519 = key.type {
+                throw VaultClientError.invalidArgument("message encryption not supported for key type \(key.type)")
+            }
+
+            let response = try await engine.client.rewrapCiphertext(
+                path: .init(transitPath: enginePath, secretKey: key.name),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    ciphertext: ciphertext,
+                    keyVersion: key.version,
+                    nonce: nonce,
+                    batchInput: nil,
+                    context: context)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "ciphertext rewrapped with key \(key.type)"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        ])
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        ciphertext: json.data.ciphertext,
+                        version: json.data.keyVersion
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
+    /// Generates a new high-entropy key and the value encrypted with the named key
+    /// 
+    /// - Parameters:
+    ///   - outputType: type of key to generate. If `plaintext`, the plaintext key will be returned along with the ciphertext. If `wrapped`, only the ciphertext value will be returned
+    ///   - keyName: name of the encryption key to use for generation
+    ///   - associatedData: base64 encoded associated data (also known as additional data or AAD) to also be authenticated with AEAD ciphers (`aes128-gcm96`, `aes256-gcm`, `chacha20-poly1305`, and `xchacha20-poly1305`). This is only needed if the encryption used it.
+    ///   - context: base64 encoded context for key derivation. This is required if key derivation is enabled for this key
+    ///   - nonce: base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused.
+    ///   - bits: number of bits for key generation. It can be 128, 256, or 512.
+    /// - Returns: new encryption key
+    public func generateDataKey(
+        outputType: EncryptionKey.Output,
+        keyName: String,
+        associatedData: String? = nil,
+        context: String? = nil,
+        nonce: String? = nil,
+        bits: EncryptionKey.BitNumber? = nil
+    ) async throws -> EncryptionResponse {
+        return try await withSpan(Operations.GenerateKeyData.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.generateKeyData(
+                path: .init(transitPath: enginePath, _type: outputType.rawValue, secretKey: keyName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    associatedData: associatedData,
+                    context: context,
+                    nonce: nonce,
+                    bits: bits?.rawValue)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+
+                    logger.trace(
+                        .init(stringLiteral: "new \(outputType.rawValue) key generated with key \(keyName)"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        ])
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        ciphertext: json.data.ciphertext,
+                        plaintext: json.data.plaintext,
+                        version: json.data.keyVersion
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
+    /// Generates high-quality random bytes of the specified length.
+    public func generateRandomBytes(
+        _ randomBytes: GenerateRandomBytes
+    ) async throws -> String {
+        return try await withSpan(Operations.GenerateRandomBytes.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.generateRandomBytes(
+                path: .init(transitPath: enginePath),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    bytes: randomBytes.count,
+                    format: .init(rawValue: randomBytes.format.rawValue),
+                    source: .init(rawValue: randomBytes.source.rawValue)
+                    )
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+
+                    logger.trace(
+                        .init(stringLiteral: "random bytes generated"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        ])
+
+                    return json.data.randomBytes
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
+    /// Hashes input with the specified algorithm
+    /// - Parameters:
+    ///   - input: base64 encoded input data
+    ///   - algorithm: hash algorithm to use
+    ///   - format: hex or base64 output format
+    /// - Returns: formatted hash
+    public func hash(
+        input: String,
+        algorithm: HashAlgorithm,
+        format: GenerateRandomBytes.Format
+    ) async throws -> String {
+        return try await withSpan(Operations.HashData.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.hashData(
+                path: .init(transitPath: enginePath),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    algorithm: .init(rawValue: algorithm.rawValue),
+                    format: .init(rawValue: format.rawValue),
+                    input: input)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+
+                    logger.trace(
+                        .init(stringLiteral: "input hashed"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "\(TracingAttributes.transitEngine).hash_algorithm": .string(algorithm.rawValue),
+                            "\(TracingAttributes.transitEngine).format": .string(format.rawValue)
+                        ])
+
+                    return json.data.sum
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+    
+    /// Generates HMAC
+    /// - Parameters:
+    ///   - input: base64 encoded input data
+    ///   - algorithm: hash algorithm to use
+    ///   - keyName: name of the encryption key
+    ///   - keyVersion: specific key version to use. `nil` uses the latest value
+    /// - Returns: Returns the digest of given data using the specified hash algorithm and the named key.
+    ///
+    /// - warning: In FIPS 140-2 mode, the following hash algorithms are not certified and thus should not be used: sha3-224, sha3-256, sha3-384, and sha3-512.
+    public func hmac(
+        input: String,
+        hashAlgorithm: HashAlgorithm,
+        keyName: String,
+        keyVersion: Int? = nil,
+    ) async throws -> String {
+        return try await withSpan(Operations.GenerateHmac.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.generateHmac(
+                path: .init(transitPath: enginePath, secretKey: keyName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    algorithm: .init(rawValue: hashAlgorithm.rawValue),
+                    input: input,
+                    keyVersion: keyVersion,
+                    batchInput: nil)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+
+                    logger.trace(
+                        .init(stringLiteral: "hmac generated"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "\(TracingAttributes.transitEngine).hash_algorithm": .string(hashAlgorithm.rawValue),
+                            "\(TracingAttributes.transitEngine).key_name": .string(keyName),
+                            "\(TracingAttributes.transitEngine).key_version": .stringConvertible(keyVersion ?? "latest")
+                        ])
+
+                    switch json.data {
+                        case .case1:
+                            throw VaultClientError.receivedUnexpectedResponse()
+                        case let .case2(result):
+                            return result.hmac
+                    }
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
+    /// Signs of the given data using the named key and the specified hash algorithm
+    /// 
+    /// 
+    /// - Parameters:
+    ///   - input: base64 encoded input data
+    ///   - isInputPreHashed: Set to true when the input is already hashed. If the key type is rsa-2048, rsa-3072 or rsa-4096, then the algorithm used to hash the input should be indicated by the `hashAlgorithm` parameter. Just as the value to sign should be the base64-encoded representation of the exact binary data you want signed, when set, input is expected to be base64-encoded binary hashed data, not hex-formatted. (As an example, on the command line, you could generate a suitable input via `openssl dgst -sha256 -binary | base64`.)
+    ///   - hashAlgorithm: hash algorithm to use for supporting key types (notably, not including ed25519 which specifies its own hash algorithm)
+    ///   - keyName: name of encryption key
+    ///   - keyVersion: version of the key to use. `nil` sets the latest version.
+    ///   - context: Base64 encoded context for key derivation. Required if key derivation is enabled; currently only available with ed25519 keys.
+    ///   - rsaSignatureAlgorithm: When using a RSA key, specifies the RSA signature algorithm to use for signing
+    ///   - marshalingAlgorithm: The way in which the signature should be marshaled. This currently only applies to ECDSA keys
+    /// - Returns: signature
+    public func sign(
+        input: String,
+        isInputPreHashed: Bool = false,
+        hashAlgorithm: HashAlgorithm?,
+        keyName: String,
+        keyVersion: Int? = nil,
+        context: String? = nil,
+        rsaSignatureAlgorithm: RSASignatureAlgorithm? = nil,
+        marshalingAlgorithm: MarshalingAlgorithm? = nil
+    ) async throws -> String {
+        return try await withSpan(Operations.SignData.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let algorithm: Operations.SignData.Input.Body.JsonPayload.HashAlgorithmPayload?  = if let hashAlgorithm {
+                .init(rawValue: hashAlgorithm.rawValue) ?? nil
+            } else {
+                Operations.SignData.Input.Body.JsonPayload.HashAlgorithmPayload.none
+            }
+
+            let saltLength: Operations.SignData.Input.Body.JsonPayload.SaltLengthPayload? = if case let .pss(lenght) = rsaSignatureAlgorithm {
+                switch lenght {
+                    case .auto: .case1(.auto)
+                    case .hash: .case1(.hash)
+                    case .count(let count): .case2(count)
+                }
+            } else {
+                nil
+            }
+
+
+            let response = try await engine.client.signData(
+                path: .init(transitPath: enginePath, secretKey: keyName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(
+                    .init(hashAlgorithm: algorithm,
+                          input: input,
+                          batchInput: nil,
+                          context: context,
+                          prehashed: isInputPreHashed,
+                          signatureAlgorithm: rsaSignatureAlgorithm.flatMap({ .init(rawValue: $0.rawValue) }),
+                          marshalingAlgorithm: marshalingAlgorithm.flatMap({ .init(rawValue: $0.rawValue) }),
+                          saltLength: saltLength)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+
+                    logger.trace(
+                        .init(stringLiteral: "data signed"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "\(TracingAttributes.transitEngine).key_name": .string(keyName),
+                            "\(TracingAttributes.transitEngine).key_version": .stringConvertible(keyVersion ?? "latest")
+                        ])
+
+                    switch json.data {
+                        case .case1:
+                            throw VaultClientError.receivedUnexpectedResponse()
+                        case let .case2(result):
+                            return result.signature
+                    }
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+    
+    /// Verifies the signature or HMAC of a given input
+    ///
+    /// - Parameters:
+    ///   - input: base64 encoded input data
+    ///   - verificationKey: either a signature or hmac
+    ///   - isInputPreHashed: Set to true when the input is already hashed. If the key type is rsa-2048, rsa-3072 or rsa-4096, then the algorithm used to hash the input should be indicated by the `hashAlgorithm` parameter. Just as the value to sign should be the base64-encoded representation of the exact binary data you want signed, when set, input is expected to be base64-encoded binary hashed data, not hex-formatted. (As an example, on the command line, you could generate a suitable input via `openssl dgst -sha256 -binary | base64`.)
+    ///   - hashAlgorithm: hash algorithm to use for supporting key types (notably, not including ed25519 which specifies its own hash algorithm)
+    ///   - keyName: name of encryption key
+    ///   - keyVersion: version of the key to use. `nil` sets the latest version.
+    ///   - context: Base64 encoded context for key derivation. Required if key derivation is enabled; currently only available with ed25519 keys.
+    ///   - rsaSignatureAlgorithm: When using a RSA key, specifies the RSA signature algorithm to use for signing
+    ///   - marshalingAlgorithm: The way in which the signature should be marshaled. This currently only applies to ECDSA keys
+    /// - Returns: whether the signature or HMAC valid is
+    public func verifySignedInput(
+        _ input: String,
+        verificationKey: VerificationType,
+        isInputPreHashed: Bool = false,
+        hashAlgorithm: HashAlgorithm?,
+        keyName: String,
+        keyVersion: Int? = nil,
+        context: String? = nil,
+        rsaSignatureAlgorithm: RSASignatureAlgorithm? = nil,
+        marshalingAlgorithm: MarshalingAlgorithm? = nil
+    ) async throws -> Bool {
+        return try await withSpan(Operations.VerifySignedData.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let algorithm: Operations.VerifySignedData.Input.Body.JsonPayload.HashAlgorithmPayload?  = if let hashAlgorithm {
+                .init(rawValue: hashAlgorithm.rawValue) ?? nil
+            } else {
+                Operations.VerifySignedData.Input.Body.JsonPayload.HashAlgorithmPayload.none
+            }
+
+            let saltLength: Operations.VerifySignedData.Input.Body.JsonPayload.SaltLengthPayload? = if case let .pss(lenght) = rsaSignatureAlgorithm {
+                switch lenght {
+                    case .auto: .case1(.auto)
+                    case .hash: .case1(.hash)
+                    case .count(let count): .case2(count)
+                }
+            } else {
+                nil
+            }
+
+            let (hmac, signature): (String?, String?) = switch verificationKey {
+            case .signature(let string):
+                (nil, string)
+            case .hmac(let string):
+                (string, nil)
+            }
+
+            let response = try await engine.client.verifySignedData(
+                path: .init(transitPath: enginePath, secretKey: keyName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(
+                    .init(
+                        hashAlgorithm: algorithm,
+                        input: input,
+                        batchInput: nil,
+                        context: context,
+                        prehashed: isInputPreHashed,
+                        signatureAlgorithm: rsaSignatureAlgorithm.flatMap({ .init(rawValue: $0.rawValue) }),
+                        marshalingAlgorithm: marshalingAlgorithm.flatMap({ .init(rawValue: $0.rawValue) }),
+                        saltLength: saltLength,
+                        signature: signature,
+                        hmac: hmac
+                    )
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+
+                    logger.trace(
+                        .init(stringLiteral: "verifying signed input"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "\(TracingAttributes.transitEngine).key_name": .string(keyName),
+                            "\(TracingAttributes.transitEngine).key_version": .stringConvertible(keyVersion ?? "latest")
+                        ])
+
+                    switch json.data {
+                        case .case1:
+                            throw VaultClientError.receivedUnexpectedResponse()
+                        case let .case2(result):
+                            return result.valid
+                    }
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
     /// Retrieves the wrapping key to use for importing keys
     ///
     /// - Returns: 4096-bit RSA public key
@@ -740,8 +1273,6 @@ extension TransitEngineClient {
             }
         }
     }
-
-
 
     public func importEncryption(
         key: EncryptionKey,

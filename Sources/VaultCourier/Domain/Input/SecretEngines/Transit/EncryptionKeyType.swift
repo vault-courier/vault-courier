@@ -112,6 +112,17 @@ extension EncryptionKey {
         /// Inherits the key format
         case inherit
     }
+
+    public enum Output: String, Sendable {
+        case plaintext
+        case wrapped
+    }
+
+    public enum BitNumber: Int, Sendable {
+        case bit128 = 128
+        case bit256 = 256
+        case bit512 = 512
+    }
 }
 
 #endif

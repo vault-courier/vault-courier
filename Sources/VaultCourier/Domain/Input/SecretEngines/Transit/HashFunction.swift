@@ -23,6 +23,14 @@ public enum HashFunction: String, Codable, Sendable {
     case SHA512
 }
 
+public enum HashAlgorithm: String, Codable, Sendable {
+    case SHA2_224 = "sha2-224"
+    case SHA2_384 = "sha2-384"
+    case SHA2_512 = "sha2-512"
+    case SHA3_256 = "sha3-256"
+    case SHA3_384 = "sha3-384"
+    case SHA3_512 = "sha3-512"
+}
 
 #endif
 

@@ -940,12 +940,49 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "plaintext": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "plaintext": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "plaintext"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
                       "type": "string"
                     }
                   },
                   "required": [
-                    "plaintext"
+                    "request_id",
+                    "data"
                   ]
                 }
               }
@@ -1062,59 +1099,16 @@
                     },
                     "data": {
                       "type": "object",
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "batch_results": {
-                              "type": "array",
-                              "items": {
-                                "oneOf": [
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "hmac": {
-                                        "type": "string"
-                                      },
-                                      "reference": {
-                                        "type": "string",
-                                        "description": "A user-supplied string"
-                                      }
-                                    },
-                                    "required": [
-                                      "hmac"
-                                    ]
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "error": {
-                                        "type": "string"
-                                      }
-                                    },
-                                    "required": [
-                                      "error"
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          },
-                          "required": [
-                            "batch_results"
-                          ]
+                      "properties": {
+                        "ciphertext": {
+                          "type": "string"
                         },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "hmac": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "hmac"
-                          ]
+                        "key_version": {
+                          "type": "integer"
                         }
+                      },
+                      "required": [
+                        "ciphertext"
                       ]
                     },
                     "wrap_info": {
@@ -1351,19 +1345,56 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ciphertext": {
+                    "request_id": {
                       "type": "string"
                     },
-                    "key_version": {
+                    "lease_id": {
                       "type": "string"
                     },
-                    "plaintext": {
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ciphertext": {
+                          "type": "string"
+                        },
+                        "key_version": {
+                          "type": "integer"
+                        },
+                        "plaintext": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "ciphertext",
+                        "key_version"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
                       "type": "string"
                     }
                   },
                   "required": [
-                    "ciphertext",
-                    "key_version"
+                    "request_id",
+                    "data"
                   ]
                 }
               }
@@ -1420,7 +1451,7 @@
                 "type": "object",
                 "properties": {
                   "bytes": {
-                    "type": "string",
+                    "type": "integer",
                     "description": "Specifies the number of bytes to return."
                   },
                   "format": {
@@ -1433,7 +1464,11 @@
                   },
                   "source": {
                     "type": "string",
-                    "description": "Specifies the source of the requested bytes. platform, the default, sources bytes from the platform's entropy source. all mixes bytes from all available sources."
+                    "description": "Specifies the source of the requested bytes. platform, the default, sources bytes from the platform's entropy source. all mixes bytes from all available sources.",
+                    "enum": [
+                      "platform",
+                      "all"
+                    ]
                   }
                 }
               }
@@ -1864,14 +1899,6 @@
                     "type": "string",
                     "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
                   },
-                  "signature": {
-                    "type": "string",
-                    "description": "Specifies the signature output from the /transit/sign function. Either this must be supplied or hmac must be supplied."
-                  },
-                  "hmac": {
-                    "type": "string",
-                    "description": "Specifies the signature output from the /transit/hmac function. Either this must be supplied or signature must be supplied."
-                  },
                   "batch_input": {
                     "type": "array",
                     "items": {
@@ -2123,14 +2150,6 @@
                     "type": "string",
                     "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
                   },
-                  "signature": {
-                    "type": "string",
-                    "description": "Specifies the signature output from the /transit/sign function. Either this must be supplied or hmac must be supplied."
-                  },
-                  "hmac": {
-                    "type": "string",
-                    "description": "Specifies the signature output from the /transit/hmac function. Either this must be supplied or signature must be supplied."
-                  },
                   "batch_input": {
                     "type": "array",
                     "items": {
@@ -2199,6 +2218,14 @@
                         "description": "An integer between the minimum and the maximum permissible salt lengths for the given RSA key size."
                       }
                     ]
+                  },
+                  "signature": {
+                    "type": "string",
+                    "description": "Specifies the signature output from the /transit/sign function. Either this must be supplied or hmac must be supplied."
+                  },
+                  "hmac": {
+                    "type": "string",
+                    "description": "Specifies the signature output from the /transit/hmac function. Either this must be supplied or signature must be supplied."
                   }
                 },
                 "required": [
@@ -2281,12 +2308,12 @@
                         {
                           "type": "object",
                           "properties": {
-                            "signature": {
-                              "type": "string"
+                            "valid": {
+                              "type": "boolean"
                             }
                           },
                           "required": [
-                            "signature"
+                            "valid"
                           ]
                         }
                       ]
@@ -3238,6 +3265,20 @@
         "required": [
           "request_id",
           "data"
+        ]
+      },
+      "EncryptionResponseBody": {
+        "type": "object",
+        "properties": {
+          "ciphertext": {
+            "type": "string"
+          },
+          "key_version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ciphertext"
         ]
       },
       "VaultErrorsResponseBody": {
