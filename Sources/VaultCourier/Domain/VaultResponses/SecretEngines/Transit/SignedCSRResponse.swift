@@ -16,11 +16,13 @@
 
 #if TransitEngineSupport
 
-public struct ExportedKeyResponse: Sendable {
+/// Signed CSR
+public struct SignedCSRResponse: Sendable {
+    /// Vault's request ID
     public let requestID: String
 
-    /// Array of all the versions of the key
-    public let keys: [String]
+    /// Certificate Signing Request
+    public let csr: String
 
     /// Name of the key
     public let name: String

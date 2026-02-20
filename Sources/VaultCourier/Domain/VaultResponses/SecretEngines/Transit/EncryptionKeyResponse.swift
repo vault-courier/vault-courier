@@ -35,12 +35,11 @@ public struct EncryptionKeyResponse: Sendable {
 
     public let autoRotatePeriod: Duration?
 
-    // End of core
-
     public let isDeletionAllowed: Bool
 
     public let isImported: Bool
 
+    /// Key Derivation Function
     public let kdf: String?
 
     public let keys: [AsymmetricKeyData]

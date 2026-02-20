@@ -91,8 +91,15 @@ public final class TransitEngineClient: Sendable {
 }
 
 extension TransitEngineClient {
-
-    
+    /// Creates a new encryption key
+    /// - Parameters:
+    ///   - name: name of encryption key
+    ///   - type: type of encryption key
+    ///   - isDerived: whether is a derived key
+    ///   - isExportable:  Enables keys to be exportable.
+    ///   - allowPlainTextBackup: If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled.
+    ///   - autoRotatePeriod: The period at which this key should be rotated automatically. Setting to `nil` will disable automatic key rotation.
+    /// - Returns: new encryption key
     public func writeEncryptionKey(
         name: String,
         type: EncryptionKey.KeyType,
@@ -180,7 +187,10 @@ extension TransitEngineClient {
             }
         }
     }
-
+    
+    /// Gets encryption key
+    /// - Parameter name: name of the encryption key
+    /// - Returns: encryption key
     public func readEncryptionKey(
         name: String
     ) async throws -> EncryptionKeyResponse {
@@ -244,10 +254,12 @@ extension TransitEngineClient {
         }
     }
 
+    /// Deletes encryption key
+    /// - Parameter name: name of the encryption key
     public func deleteEncryptionKey(
         name: String
     ) async throws {
-        return try await withSpan(Operations.ReadEncryptionKey.id, ofKind: .client) { span in
+        return try await withSpan(Operations.DeleteEncryptionKey.id, ofKind: .client) { span in
             let sessionToken = self.engine.token
             let enginePath = self.engine.mountPath
 
@@ -270,7 +282,18 @@ extension TransitEngineClient {
             }
         }
     }
-
+    
+    /// Updates cryptographic key storage properties
+    ///
+    /// - Parameters:
+    ///   - name: name of the key
+    ///   - minDecryptionVersion: minimum decryption version available
+    ///   - minEncryptionVersion: minimum encryption version available
+    ///   - isDeletionAllowed: whether deletion is enabled
+    ///   - isExportable:  Enables keys to be exportable.
+    ///   - allowPlainTextBackup: If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled.
+    ///   - autoRotatePeriod: The period at which this key should be rotated automatically. Setting to `nil` will disable automatic key rotation.
+    /// - Returns: <#description#>
     public func updateKeyConfiguration(
         name: String,
         minDecryptionVersion: Int?,
@@ -1238,6 +1261,286 @@ extension TransitEngineClient {
         }
     }
 
+    
+    /// Backup of a named key.
+    ///
+    /// The backup is in plaintext and contains all the configuration data and keys of all the versions along with the HMAC key. The response from this endpoint can be used with
+    /// - Parameter keyName: name of the encryption key
+    /// - Returns: plaintext backup with configuration data and versioned keys
+    public func backup(
+        keyName: String
+    ) async throws -> String {
+        return try await withSpan(Operations.BackupKey.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.backupKey(
+                path: .init(transitPath: enginePath, secretKey: keyName),
+                headers: .init(xVaultToken: sessionToken)
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+
+                    logger.trace(
+                        .init(stringLiteral: "backup key"),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "\(TracingAttributes.transitEngine).key_name": .string(keyName),
+                        ])
+
+                    return json.data.backup
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+    
+    /// Restores a plaintext backup
+    /// - Parameters:
+    ///   - backup: plaintext backup
+    ///   - name: name of the restored key
+    ///   - force: If set, force the restore to proceed even if a key by this name already exists.
+    public func restore(
+        backup: String,
+        name: String,
+        force: Bool = false
+    ) async throws {
+        return try await withSpan(Operations.RestoreKey.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.restoreKey(
+                path: .init(transitPath: enginePath, secretKey: name),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(
+                    .init(
+                        backup: backup,
+                        force: force
+                    )
+                )
+            )
+
+            switch response {
+                case .noContent:
+                    let eventName = "encryption key restored"
+                    span.attributes[TracingAttributes.responseStatusCode] = 204
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(.init(stringLiteral: eventName))
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
+    
+    /// Removes older key versions setting a minimum version for the keyring. Once trimmed, previous versions of the key cannot be recovered.
+    /// - Parameters:
+    ///   - name: name of the encryption key
+    ///   - minAvailableVersion: new minimum version
+    /// - Returns: updated encryption key
+    public func trimKey(
+        name: String,
+        minAvailableVersion: Int
+    ) async throws -> EncryptionKeyResponse {
+        return try await withSpan(Operations.TrimKey.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.trimKey(
+                path: .init(transitPath: enginePath, secretKey: name),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(
+                    .init(minAvailableVersion: minAvailableVersion)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let encryptionKeyType = EncryptionKey.KeyType(rawValue: json.data._type.rawValue) else {
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected encryption key type: \(String(describing: json.data._type.rawValue))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
+                    }
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "encryption key soft-deleted"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        ])
+
+                    let keys: [AsymmetricKeyData] = json.data.keys.additionalProperties.asymmetricKeys
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        isDerived: json.data.derived,
+                        isExportable: json.data.exportable,
+                        isPlaintextBackupAllowed: json.data.allowPlaintextBackup,
+                        keyType: encryptionKeyType,
+                        autoRotatePeriod: Duration.seconds(json.data.autoRotatePeriod),
+                        isDeletionAllowed: json.data.deletionAllowed ?? false,
+                        isImported: json.data.importedKey ?? false,
+                        kdf: json.data.kdf,
+                        keys: keys,
+                        latestVersion: json.data.latestVersion,
+                        minAvailableVersion: json.data.minAvailableVersion ?? 0,
+                        minDecryptionVersion: json.data.minDecryptionVersion,
+                        minEncryptionVersion: json.data.minEncryptionVersion,
+                        name: json.data.name,
+                        isSoftDeleted: json.data.softDeleted ?? false,
+                        supportsDecryption: json.data.supportsDecryption,
+                        supportsEncryption: json.data.supportsEncryption,
+                        supportsSigning: json.data.supportsSigning,
+                        supportsDerivation: json.data.supportsDerivation
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+    
+    /// Signs a CSR using the given key name.
+    ///
+    /// - Note: The signing key must not be derived.
+    /// - Parameters:
+    ///   - csr: certificate signing request. If no CSR is provided, it signs an empty CSR. Otherwise, it signs the provided CSR, replacing its key material with the :name key material.
+    ///   - keyName: name of the signing key.
+    ///   - keyVersion: optional key version. `nil` uses the latest key version.
+    /// - Returns: signed csr
+    public func signCSR(
+        _ csr: String?,
+        keyName: String,
+        keyVersion: Int? = nil
+    ) async throws -> SignedCSRResponse {
+        return try await withSpan(Operations.SignCsr.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.signCsr(
+                path: .init(transitPath: enginePath, secretKey: keyName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    csr: csr,
+                    version: keyVersion)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let encryptionKeyType = EncryptionKey.KeyType(rawValue: json.data._type) else {
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected encryption key type: \(String(describing: json.data._type))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
+                    }
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "csr signed"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        ])
+
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        csr: json.data.csr,
+                        name: json.data.name,
+                        type: encryptionKeyType
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+    
+    /// Sets the certificate chain for the named key, ensuring the key material stays within the Transit engine and certificates are managed in one place.
+    ///
+    /// It also allows chain updates and rotation, as it will overwrite any existing certificate chain.
+    /// - Parameters:
+    ///   - certificateChain: certificate chain
+    ///   - keyName: name of the encryption key
+    ///   - keyVersion: optional key version. `nil` uses the latest key version.
+    /// - Returns: the written certificate chain
+    public func setCertificateChain(
+        _ certificateChain: String,
+        keyName: String,
+        keyVersion: Int? = nil
+    ) async throws -> CertificateChainResponse {
+        return try await withSpan(Operations.SetCertificateChain.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            let response = try await engine.client.setCertificateChain(
+                path: .init(transitPath: enginePath, secretKey: keyName),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                        certificateChain: certificateChain,
+                        version: keyVersion)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+                    guard let encryptionKeyType = EncryptionKey.KeyType(rawValue: json.data._type) else {
+                        let clientError = VaultClientError.receivedUnexpectedResponse("unexpected encryption key type: \(String(describing: json.data._type))")
+                        TracingSupport.handleResponse(error: clientError, span)
+                        throw clientError
+                    }
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "certificate chain was set"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID),
+                            "\(TracingAttributes.transitEngine).key_name": .string(keyName),
+                            "\(TracingAttributes.transitEngine).key_version": .stringConvertible(keyVersion ?? "latest")
+                        ])
+
+
+                    return .init(
+                        requestID: vaultRequestID,
+                        certificateChain: json.data.certificateChain,
+                        name: json.data.name,
+                        type: encryptionKeyType
+                    )
+                case let .undocumented(statusCode, payload):
+                    let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                    logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                    throw vaultError
+            }
+        }
+    }
+
     /// Retrieves the wrapping key to use for importing keys
     ///
     /// - Returns: 4096-bit RSA public key
@@ -1273,7 +1576,18 @@ extension TransitEngineClient {
             }
         }
     }
-
+    
+    ///  Imports existing key material into a new transit-engine-managed encryption key.
+    ///
+    /// - Parameters:
+    ///   - key: encryption key
+    ///   - importedType: ciphertext or public key
+    ///   - hashFunction: The hash function used for the RSA-OAEP step of creating the ciphertext.
+    ///   - derivedContext: Specifies if key derivation is to be used. If enabled, all encrypt/decrypt requests to this named key must provide a context which is used for key derivation.
+    ///   - isExportable:  Enables keys to be exportable.
+    ///   - allowPlainTextBackup: If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled.
+    ///   - autoRotatePeriod: The period at which this key should be rotated automatically. Setting to `nil` will disable automatic key rotation.
+    /// - Returns: the imported encryption key with its properties
     public func importEncryption(
         key: EncryptionKey,
         importedType: EncryptionKey.ImportedType,

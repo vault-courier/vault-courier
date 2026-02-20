@@ -79,6 +79,18 @@ extension IntegrationTests.SecretEngine.Transit {
 
         #expect(isValid)
     }
+
+    @Test
+    func sign_csr() async throws {
+        let vaultClient = VaultClient.current
+
+        let key = EncryptionKey(name: "test_key", type: .ed25519, version: 1)
+
+        try await vaultClient.withTransitClient(mountPath: Self.enginePath) { client in
+            _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
+            _ = try await client.signCSR(nil, keyName: key.name)
+        }
+    }
 }
 
 #endif

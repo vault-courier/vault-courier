@@ -2479,12 +2479,8 @@
                     "type": "string",
                     "description": "Backed up key data to be restored. This should be the output from the /backup endpoint."
                   },
-                  "name": {
-                    "type": "string",
-                    "description": "If set, this will be the name of the restored key."
-                  },
                   "force": {
-                    "type": "string",
+                    "type": "boolean",
                     "description": "If set, force the restore to proceed even if a key by this name already exists."
                   }
                 },
@@ -2513,7 +2509,7 @@
           }
         },
         {
-          "description": "Specifies the name of the encryption key to generate hmac against.",
+          "description": "Name of the restored key.",
           "name": "secret_key",
           "in": "path",
           "required": true,
@@ -2821,6 +2817,7 @@
                       },
                       "required": [
                         "csr",
+                        "name",
                         "type"
                       ]
                     },
@@ -2942,6 +2939,7 @@
                       },
                       "required": [
                         "certificate_chain",
+                        "name",
                         "type"
                       ]
                     },
