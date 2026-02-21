@@ -714,32 +714,6 @@
                     "type": "string",
                     "description": "Specifies the base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused."
                   },
-                  "batch_input": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "plaintext": {
-                          "type": "string",
-                          "description": "Specifies base64 encoded plaintext to be encoded."
-                        },
-                        "context": {
-                          "type": "string",
-                          "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
-                        },
-                        "nonce": {
-                          "type": "string"
-                        },
-                        "reference": {
-                          "type": "string",
-                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
-                        }
-                      },
-                      "required": [
-                        "plaintext"
-                      ]
-                    }
-                  },
                   "partial_failure_response_code": {
                     "type": "integer",
                     "description": "Ordinarily, if a batch item fails to encrypt due to a bad input, but other batch items succeed, the HTTP response code is 400 (Bad Request). \nSome applications may want to treat partial failures differently. Providing the parameter returns the given response code integer instead of a failed status code in this case. \nIf all values fail an error code is still returned. Be warned that some failures (such as failure to decrypt) could be indicative of a security breach and should not be ignored."
@@ -771,8 +745,34 @@
                     ]
                   },
                   "convergent_encryption": {
-                    "type": "string",
+                    "type": "boolean",
                     "description": "This parameter will only be used when a key is expected to be created. Whether to support convergent encryption. \nThis is only supported when using a key with key derivation enabled and will require all requests to carry both a context and 96-bit (12-byte) for AES and ChaCha20 or 192-bit (24-byte) for XChaCha20 nonce. \nThe given nonce will be used in place of a randomly generated nonce. As a result, when the same context and nonce are supplied, the same ciphertext is generated. \nIt is very important when using this mode that you ensure that all nonces are unique for a given context. Failing to do so will severely impact the ciphertext's security."
+                  },
+                  "batch_input": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "plaintext": {
+                          "type": "string",
+                          "description": "Specifies base64 encoded plaintext to be encoded."
+                        },
+                        "context": {
+                          "type": "string",
+                          "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                        },
+                        "nonce": {
+                          "type": "string"
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
+                        }
+                      },
+                      "required": [
+                        "plaintext"
+                      ]
+                    }
                   }
                 },
                 "required": [
@@ -943,12 +943,20 @@
                     "type": "string",
                     "description": "Specifies the base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused."
                   },
+                  "partial_failure_response_code": {
+                    "type": "integer",
+                    "description": "Ordinarily, if a batch item fails to encrypt due to a bad input, but other batch items succeed, the HTTP response code is 400 (Bad Request). \nSome applications may want to treat partial failures differently. Providing the parameter returns the given response code integer instead of a failed status code in this case. \nIf all values fail an error code is still returned. Be warned that some failures (such as failure to decrypt) could be indicative of a security breach and should not be ignored."
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "description": "Specifies base64 encoded plaintext to be encoded."
+                  },
                   "batch_input": {
                     "type": "array",
                     "items": {
                       "type": "object",
                       "properties": {
-                        "plaintext": {
+                        "ciphertext": {
                           "type": "string",
                           "description": "Specifies base64 encoded plaintext to be encoded."
                         },
@@ -968,14 +976,6 @@
                         "plaintext"
                       ]
                     }
-                  },
-                  "partial_failure_response_code": {
-                    "type": "integer",
-                    "description": "Ordinarily, if a batch item fails to encrypt due to a bad input, but other batch items succeed, the HTTP response code is 400 (Bad Request). \nSome applications may want to treat partial failures differently. Providing the parameter returns the given response code integer instead of a failed status code in this case. \nIf all values fail an error code is still returned. Be warned that some failures (such as failure to decrypt) could be indicative of a security breach and should not be ignored."
-                  },
-                  "ciphertext": {
-                    "type": "string",
-                    "description": "Specifies base64 encoded plaintext to be encoded."
                   }
                 },
                 "required": [
@@ -1008,13 +1008,67 @@
                     },
                     "data": {
                       "type": "object",
-                      "properties": {
-                        "plaintext": {
-                          "type": "string"
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "batch_results": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "plaintext": {
+                                        "type": "string"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      },
+                                      "error": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "plaintext"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "error": {
+                                        "type": "string"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "error"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "batch_results"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "plaintext": {
+                              "type": "string"
+                            },
+                            "reference": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "plaintext"
+                          ]
                         }
-                      },
-                      "required": [
-                        "plaintext"
                       ]
                     },
                     "wrap_info": {

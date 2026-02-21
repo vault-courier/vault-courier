@@ -96,13 +96,15 @@ extension IntegrationTests.SecretEngine.Transit {
     }
 
     @Test(.setupSecretEngine(type: "transit"))
-    func batch_encryption() async throws {
+    func batch_encryption_decryption() async throws {
         let vaultClient = VaultClient.current
         let mountPath = VaultClient.secretEngine.path
 
         let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
         let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
-        let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
+
+        // Encryption
+        let encryptionResponse = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
 
             let encryption = try await client.encryptBatch(
@@ -117,7 +119,90 @@ extension IntegrationTests.SecretEngine.Transit {
             return encryption
         }
 
+        #expect(encryptionResponse.hasPartialFailure == false)
+
+        // Decryption
+        let decryptBatch: [DecryptionBatchElement] = encryptionResponse.output.map { element in
+                .init(ciphertext: element.ciphertext, associatedData: nil, reference: element.reference)
+        }
+
+        let decryptionResponse = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
+            return try await client.decryptBatch(decryptBatch, key: key)
+        }
+
+        #expect(decryptionResponse.hasPartialFailure == false)
+        for decryption in decryptionResponse.output {
+            #expect(decryption.plaintext == plaintext)
+        }
+    }
+
+    @Test(.setupSecretEngine(type: "transit"))
+    func batch_encryption_and_decryption_with_derivation() async throws {
+        let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
+
+        let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let associatedData = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let context = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
+        let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
+            _ = try await client.writeEncryptionKey(name: key.name, type: key.type, derivedKey: .init(isConvergentEncryption: true))
+
+            let encryption = try await client.encryptBatch(
+                [
+                    .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_1", derivedKeyContext: .init(context: context, nonce: nil)),
+                    .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_2", derivedKeyContext: .init(context: context, nonce: nil)),
+                    .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_3", derivedKeyContext: .init(context: context, nonce: nil))
+                ],
+                key: key,
+                convergentEncryption: true
+            )
+
+            // Decryption
+            let decryptBatch: [DecryptionBatchElement] = encryption.output.map { element in
+                    .init(ciphertext: element.ciphertext, associatedData: associatedData, derivedKeyContext: .init(context: context, nonce: nil), reference: element.reference)
+            }
+
+            let decryptionResponse = try await client.decryptBatch(decryptBatch, key: key)
+
+            return decryptionResponse
+        }
+
         #expect(response.hasPartialFailure == false)
+    }
+
+    @Test(.setupSecretEngine(type: "transit"))
+    func batch_decryption_with_derivation_and_missing_context_fails() async throws {
+        let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
+
+        let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let associatedData = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
+        let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
+            _ = try await client.writeEncryptionKey(name: key.name, type: key.type, derivedKey: .init(isConvergentEncryption: true))
+
+            let encryption = try await client.encryptBatch(
+                [
+                    .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_1", derivedKeyContext: .init(context: associatedData, nonce: nil)),
+                    .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_2", derivedKeyContext: .init(context: associatedData, nonce: nil)),
+                    .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_3", derivedKeyContext: .init(context: associatedData, nonce: nil))
+                ],
+                key: key,
+                convergentEncryption: true
+            )
+
+            // Decryption without context
+            let decryptBatch: [DecryptionBatchElement] = encryption.output.map { element in
+                    .init(ciphertext: element.ciphertext, associatedData: associatedData, derivedKeyContext: nil, reference: element.reference)
+            }
+
+            let decryptionResponse = try await client.decryptBatch(decryptBatch, key: key)
+
+            return decryptionResponse
+        }
+
+        #expect(response.hasPartialFailure == true)
     }
 
     @Test(.setupSecretEngine(type: "transit"))
@@ -126,16 +211,16 @@ extension IntegrationTests.SecretEngine.Transit {
         let mountPath = VaultClient.secretEngine.path
 
         let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
-        let associatedData = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+
         let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
         let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
             _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
 
             let encryption = try await client.encryptBatch(
                 [
-                .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_1", derivedKeyContext: nil),
-                .init(plaintext: "not based64 encoded", associatedData: associatedData, reference: "reference_2", derivedKeyContext: nil),
-                .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_3", derivedKeyContext: nil)
+                .init(plaintext: plaintext, associatedData: nil, reference: "reference_1", derivedKeyContext: nil),
+                .init(plaintext: "not based64 encoded", associatedData: nil, reference: "reference_2", derivedKeyContext: nil),
+                .init(plaintext: plaintext, associatedData: nil, reference: "reference_3", derivedKeyContext: nil)
                 ],
                 key: key
             )
