@@ -727,6 +727,9 @@
                           "type": "string",
                           "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
                         },
+                        "nonce": {
+                          "type": "string"
+                        },
                         "reference": {
                           "type": "string",
                           "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
@@ -802,16 +805,64 @@
                     },
                     "data": {
                       "type": "object",
-                      "properties": {
-                        "ciphertext": {
-                          "type": "string"
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "batch_results": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "ciphertext": {
+                                        "type": "string"
+                                      },
+                                      "key_version": {
+                                        "type": "integer"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "ciphertext"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "error": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "error"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "batch_results"
+                          ]
                         },
-                        "key_version": {
-                          "type": "integer"
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ciphertext": {
+                              "type": "string"
+                            },
+                            "key_version": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "ciphertext"
+                          ]
                         }
-                      },
-                      "required": [
-                        "ciphertext"
                       ]
                     },
                     "wrap_info": {
@@ -904,6 +955,9 @@
                         "context": {
                           "type": "string",
                           "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                        },
+                        "nonce": {
+                          "type": "string"
                         },
                         "reference": {
                           "type": "string",

@@ -94,6 +94,82 @@ extension IntegrationTests.SecretEngine.Transit {
             _ = try await client.signCSR(nil, keyName: key.name)
         }
     }
+
+    @Test(.setupSecretEngine(type: "transit"))
+    func batch_encryption() async throws {
+        let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
+
+        let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
+        let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
+            _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
+
+            let encryption = try await client.encryptBatch(
+                [
+                .init(plaintext: plaintext, associatedData: nil, reference: "reference_1", derivedKeyContext: nil),
+                .init(plaintext: plaintext, associatedData: nil, reference: "reference_2", derivedKeyContext: nil),
+                .init(plaintext: plaintext, associatedData: nil, reference: "reference_3", derivedKeyContext: nil)
+                ],
+                key: key
+            )
+
+            return encryption
+        }
+
+        #expect(response.hasPartialFailure == false)
+    }
+
+    @Test(.setupSecretEngine(type: "transit"))
+    func batch_encryption_with_partial_failure() async throws {
+        let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
+
+        let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let associatedData = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
+        let response = try await vaultClient.withTransitClient(mountPath: mountPath) { client in
+            _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
+
+            let encryption = try await client.encryptBatch(
+                [
+                .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_1", derivedKeyContext: nil),
+                .init(plaintext: "not based64 encoded", associatedData: associatedData, reference: "reference_2", derivedKeyContext: nil),
+                .init(plaintext: plaintext, associatedData: associatedData, reference: "reference_3", derivedKeyContext: nil)
+                ],
+                key: key
+            )
+
+            return encryption
+        }
+
+        #expect(response.hasPartialFailure == true)
+    }
+
+    @Test(.setupSecretEngine(type: "transit"))
+    func batch_encryption_with_full_failure() async throws {
+        let vaultClient = VaultClient.current
+        let mountPath = VaultClient.secretEngine.path
+
+        let plaintext = "dGhlIHF1aWNrIGJyb3duIGZveAo="
+        let key = EncryptionKey(name: "test_key", type: .aes256_gcm96, version: 1)
+
+        await #expect(throws: VaultServerError.self) {
+            try await vaultClient.withTransitClient(mountPath: mountPath) { client in
+                _ = try await client.writeEncryptionKey(name: key.name, type: key.type)
+
+                // Context should be set on all or none
+                return try await client.encryptBatch(
+                    [
+                    .init(plaintext: plaintext, associatedData: nil, reference: "reference_1", derivedKeyContext: nil),
+                    .init(plaintext: plaintext, associatedData: nil, reference: "reference_2", derivedKeyContext: .init(context: plaintext, nonce: nil)),
+                    .init(plaintext: plaintext, associatedData: nil, reference: "reference_3", derivedKeyContext: nil)
+                    ],
+                    key: key
+                )
+            }
+        }
+    }
 }
 
 #endif

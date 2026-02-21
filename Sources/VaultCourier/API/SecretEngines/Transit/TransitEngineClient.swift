@@ -95,7 +95,7 @@ extension TransitEngineClient {
     /// - Parameters:
     ///   - name: name of encryption key
     ///   - type: type of encryption key
-    ///   - isDerived: whether is a derived key
+    ///   - derivedKey: whether is a derived key. Set to `nil` if its not derived. Convergent encryption can be set here.
     ///   - isExportable:  Enables keys to be exportable.
     ///   - allowPlainTextBackup: If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled.
     ///   - autoRotatePeriod: The period at which this key should be rotated automatically. Setting to `nil` will disable automatic key rotation.
@@ -103,7 +103,7 @@ extension TransitEngineClient {
     public func writeEncryptionKey(
         name: String,
         type: EncryptionKey.KeyType,
-        isDerived: DerivedEncryption? = nil,
+        derivedKey: DerivedEncryption? = nil,
         isExportable: Bool = false,
         allowPlainTextBackup: Bool = false,
         autoRotatePeriod: Duration? = nil
@@ -112,8 +112,8 @@ extension TransitEngineClient {
             let sessionToken = self.engine.token
             let enginePath = self.engine.mountPath
 
-            let (derived, isConvergentEncryption) = if let isDerived {
-                (true, isDerived.isConvergentEncryption)
+            let (derived, isConvergentEncryption) = if let derivedKey {
+                (true, derivedKey.isConvergentEncryption)
             } else {
                 (false, false)
             }
@@ -293,7 +293,7 @@ extension TransitEngineClient {
     ///   - isExportable:  Enables keys to be exportable.
     ///   - allowPlainTextBackup: If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled.
     ///   - autoRotatePeriod: The period at which this key should be rotated automatically. Setting to `nil` will disable automatic key rotation.
-    /// - Returns: <#description#>
+    /// - Returns: encryption key
     public func updateKeyConfiguration(
         name: String,
         minDecryptionVersion: Int?,
@@ -513,7 +513,7 @@ extension TransitEngineClient {
 
     /// Restores a soft-deleted encryption key
     ///
-    /// See ``softDeleteKey(name:)``
+    /// Reverses the action of ``softDeleteKey(name:)``
     public func restoreSoftDeletedKey(
         name: String
     ) async throws -> EncryptionKeyResponse {
@@ -663,7 +663,7 @@ extension TransitEngineClient {
     ///
     /// - Parameters:
     ///   - plaintext: base64 encoded plaintext to be encoded
-    ///   - key: `ed25519` is not supported for encryption
+    ///   - key: encryption key. `ed25519` is not supported for encryption
     ///   - associatedData: base64 encoded associated data (also known as additional data or AAD) to also be authenticated with AEAD ciphers (`aes128-gcm96`, `aes256-gcm`, `chacha20-poly1305`, and `xchacha20-poly1305`). If given, this value is needed for decryption
     ///   - context: base64 encoded context for key derivation. This is required if key derivation is enabled for this key
     ///   - nonce: base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused.
@@ -715,11 +715,16 @@ extension TransitEngineClient {
                             TracingAttributes.vaultRequestID: .string(vaultRequestID)
                         ])
 
-                    return .init(
-                        requestID: vaultRequestID,
-                        ciphertext: json.data.ciphertext,
-                        version: json.data.keyVersion
-                    )
+                    switch json.data {
+                        case .case1(let batch):
+                            throw VaultClientError.receivedUnexpectedResponse()
+                        case .case2(let result):
+                            return .init(
+                                requestID: vaultRequestID,
+                                ciphertext: result.ciphertext,
+                                version: result.keyVersion
+                            )
+                    }
                 case let .undocumented(statusCode, payload):
                     let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
                     logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
@@ -788,6 +793,146 @@ extension TransitEngineClient {
                     logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
                     TracingSupport.handleResponse(error: vaultError, span, statusCode)
                     throw vaultError
+            }
+        }
+    }
+
+    public func encryptBatch(
+        _ batch: [EncryptionBatchElement],
+        key: EncryptionKey,
+        convergentEncryption: String? = nil,
+        partialFailureResponseCode: Int = 400
+    ) async throws -> BatchEncryptionResponse {
+        return try await withSpan(Operations.Encrypt.id, ofKind: .client) { span in
+            let sessionToken = self.engine.token
+            let enginePath = self.engine.mountPath
+
+            if case .ed25519 = key.type {
+                throw VaultClientError.invalidArgument("message encryption not supported for key type \(key.type)")
+            }
+            let batchInput: [Operations.Encrypt.Input.Body.JsonPayload.BatchInputPayloadPayload] = batch.map({
+                .init(
+                    plaintext: $0.plaintext,
+                    context: $0.derivedKeyContext?.context,
+                    reference: $0.reference
+                )
+            })
+            let response = try await engine.client.encrypt(
+                path: .init(transitPath: enginePath, secretKey: key.name),
+                headers: .init(xVaultToken: sessionToken),
+                body: .json(.init(
+                    associatedData: nil,
+                    context: nil,
+                    nonce: nil,
+                    batchInput: batchInput,
+                    partialFailureResponseCode: partialFailureResponseCode,
+                    plaintext: "",
+                    keyVersion: key.version,
+                    _type: .init(rawValue: key.type.rawValue),
+                    convergentEncryption: convergentEncryption)
+                )
+            )
+
+            switch response {
+                case .ok(let content):
+                    let json = try content.body.json
+
+                    let vaultRequestID = json.requestId
+                    TracingSupport.handleVaultResponse(requestID: vaultRequestID, span, 200)
+                    let eventName = "encryption with key \(key.type)"
+                    span.addEvent(.init(name: eventName))
+                    logger.trace(
+                        .init(stringLiteral: eventName),
+                        metadata: [
+                            TracingAttributes.vaultRequestID: .string(vaultRequestID)
+                        ])
+
+                    final class FailureResult {
+                        var hasPartialFailure: Bool
+
+                        init(hasPartialFailure: Bool) {
+                            self.hasPartialFailure = hasPartialFailure
+                        }
+                    }
+                    let failureResult = FailureResult(hasPartialFailure: false)
+                    switch json.data {
+                        case .case1(let batch):
+                            let output: [EncryptionBatchOutput] = batch.batchResults.map {  [weak failureResult] result in
+                                switch result {
+                                    case .case1(let encryption):
+                                        return EncryptionBatchOutput(ciphertext: encryption.ciphertext, version: encryption.keyVersion, reference: encryption.reference)
+                                    case .case2(let failure):
+                                        failureResult?.hasPartialFailure = true
+                                        return EncryptionBatchOutput(ciphertext: "", version: nil, reference: failure.error)
+                                }
+                            }
+
+                            return .init(
+                                requestID: vaultRequestID,
+                                hasPartialFailure: failureResult.hasPartialFailure,
+                                output: output
+                            )
+                        case .case2:
+                            throw VaultClientError.receivedUnexpectedResponse()
+                    }
+                case let .undocumented(statusCode, payload):
+                    if statusCode == partialFailureResponseCode {
+                        let errors: String?
+                        if let body = payload.body {
+                            let expectedLength: Int? = switch body.length {
+                                case let .known(size): Int(size)
+                                case .unknown: nil
+                            }
+
+                            let data = try await Data(collecting: body, upTo: expectedLength ?? 1024*1024)
+                            do {
+                                errors = try JSONDecoder().decode(VaultErrorBody.self, from: data).errors.joined(separator: ", ")
+                            } catch {
+                                errors = nil
+                            }
+                            if errors == nil {
+                                let json = try JSONDecoder().decode(Operations.Encrypt.Output.Ok.Body.JsonPayload.self, from: data)
+
+                                let failureResult = FailureResult(hasPartialFailure: false)
+                                switch json.data {
+                                    case .case1(let batch):
+                                        let output: [EncryptionBatchOutput] = batch.batchResults.map {  [weak failureResult] result in
+                                            switch result {
+                                                case .case1(let encryption):
+                                                    return EncryptionBatchOutput(ciphertext: encryption.ciphertext, version: encryption.keyVersion, reference: encryption.reference)
+                                                case .case2(let failure):
+                                                    let vaultError = VaultServerError.invalidRequest(errors: failure.error)
+                                                    logger.debug(.init(stringLiteral: "Partial failure during batch encryption: \(failure.error)"))
+                                                    TracingSupport.handleResponse(error: vaultError, span, statusCode)
+
+                                                    failureResult?.hasPartialFailure = true
+                                                    return EncryptionBatchOutput(ciphertext: "", version: nil, reference: "")
+                                            }
+                                        }
+
+                                        return .init(
+                                            requestID: json.requestId,
+                                            hasPartialFailure: true,
+                                            output: output
+                                        )
+                                    case .case2:
+                                        throw VaultClientError.receivedUnexpectedResponse()
+                                }
+                            }
+                        } else {
+                            errors = nil
+                        }
+
+                        let vaultError = VaultServerError.invalidRequest(errors: errors)
+                        logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                        TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                        throw vaultError
+                    } else {
+                        let vaultError = await makeVaultError(statusCode: statusCode, payload: payload)
+                        logger.debug(.init(stringLiteral: "operation failed with Vault Server error: \(vaultError)"))
+                        TracingSupport.handleResponse(error: vaultError, span, statusCode)
+                        throw vaultError
+                    }
             }
         }
     }
@@ -1759,5 +1904,12 @@ private extension [String: Components.Schemas.WriteEncryptionKeyResponse.DataPay
     }
 }
 
+private final class FailureResult {
+    var hasPartialFailure: Bool
+
+    init(hasPartialFailure: Bool) {
+        self.hasPartialFailure = hasPartialFailure
+    }
+}
 
 #endif
