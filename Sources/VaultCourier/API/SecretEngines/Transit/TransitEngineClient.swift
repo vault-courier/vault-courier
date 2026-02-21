@@ -803,6 +803,17 @@ extension TransitEngineClient {
         }
     }
 
+    /// Decrypts batch of ciphertext with the same key
+    /// - Parameters:
+    ///   - batch: batch of ciphertexts with optional derived key context
+    ///   - key: encryption key
+    ///   - partialFailureResponseCode: Ordinarily, if a batch item fails to encrypt due to a bad input, but other batch items succeed, the HTTP response code is 400 (Bad Request).
+    ///   Some applications may want to treat partial failures differently. Providing the parameter returns the given response code integer instead of a failed status code in this case.
+    ///   If all values fail an error code is still returned.
+    ///
+    /// - warning: some failures (such as failure to decrypt) could be indicative of a security breach and should not be ignored.
+    ///
+    /// - Returns: decrypted batch
     public func decryptBatch(
         _ batch: [DecryptionBatchElement],
         key: EncryptionKey,
