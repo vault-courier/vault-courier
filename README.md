@@ -11,7 +11,8 @@
 ### Features
 
 - Arbitrary storage of Key/Value secrets (KV-v2)
-- Manage third-party secrets: generate and revoke on-demand credentials for database systems, like PostgreSQL and Valkey.
+- Manage third-party secrets: generate and revoke on-demand credentials for database systems, like PostgreSQL and Valkey
+- Cryptography as a Service (CaaS) via Transit secret engine
 - AppRole Authentication
 - Token Authentication
 - Namespaces: manage isolated secrets from different deployment environments, applications, or teams within a single vault instance. 
@@ -90,7 +91,8 @@ Available Package traits:
 - `ValkeyPluginSupport` (default): Enable support for OpenBao-Valkey database plugin HTTP API. This plugin is only available in OpenBao. This trait enables `DatabaseEngineSupport`.
 - `DatabaseEngineSupport` (default): Enable basic support for database engine clients. 
 - `AppRoleSupport` (default): Enable AppRole authentication.
-- `MockSupport` (default). Provides a mock client transport for unit testing and development, and adds Encodable conformance to certain Vault response types. 
+- `MockSupport` (default): Provides a mock client transport for unit testing and development, and adds Encodable conformance to certain Vault response types. 
+- `TransitEngineSupport`: Provides encryption/decryption as a service. Manage cryptographic keys from a centralized Vault. Sign CSRs and manage certificate chains.
 - `PklSupport` (experimental): Enable [Pkl](https://pkl-lang.org) Resource reader implementations that can read Vault secrets directly from pkl files.
 - `ConfigProviderSupport` (experimental): Enable a Vault configuration provider. This trait provides a `swift-configuration` [ConfigProvider](https://swiftpackageindex.com/apple/swift-configuration/main/documentation/configuration/configprovider) implementation that can fetch Vault secrets.
 

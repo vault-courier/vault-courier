@@ -33,6 +33,7 @@ package struct TracingSupport {
         package static let vaultRequestID: String = "vault.request.id"
         package static let vaultAuthMethod: String = "vault.auth.method"
         package static let databasePlugin: String = "vault.database"
+        package static let transitEngine: String = "vault.transit"
 
 
         package init() {}

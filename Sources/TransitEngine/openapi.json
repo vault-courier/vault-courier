@@ -1,0 +1,3430 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vault Courier Transit Secret Engine API",
+    "version": "0.2.0",
+    "description": "Transit (cryptography-as-a-service) endpoints. Vault Courier is a Swift client for Hashicorp Vault and OpenBao",
+    "license": {
+      "name": "Apache License 2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "{protocol}://127.0.0.1:8200/v1",
+      "description": "Default server url",
+      "variables": {
+        "protocol": {
+          "enum": [
+            "http",
+            "https"
+          ],
+          "default": "https"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/{transit_path}/config/keys": {
+      "description": "This endpoint maintains global configuration across all keys. This allows removing the upsert capability of the `/encrypt/:key` endpoint, preventing new keys from being created if none exists.",
+      "get": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Get Upsert Config",
+        "description": "This path retrieves the current configuration for disable upserting on encryption (automatic creation of unknown keys).",
+        "operationId": "read-upsert-config",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteUpsertResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Configure Key Upsert",
+        "description": "This path configures backend level settings that are applied to every key in the transit store.",
+        "operationId": "write-upsert-config",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "disable_upsert": {
+                    "type": "boolean",
+                    "description": "Specifies whether to disable upserting on encryption (automatic creation of unknown keys)."
+                  }
+                },
+                "required": [
+                  "disable_upsert"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteUpsertResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "Transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}": {
+      "description": "Encryption Keys",
+      "get": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Read encryption key",
+        "description": "Returns information about a named encryption key",
+        "operationId": "read-encryption-key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Write encryption key",
+        "description": "Creates a new named encryption key of the specified type. The values set here cannot be changed after key creation.",
+        "operationId": "write-encryption-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WriteEncryptionKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Deletes Encryption Key",
+        "description": " deletes a named encryption key. It will no longer be possible to decrypt any data encrypted with the named key. Because this is a potentially catastrophic operation, the 'deletion_allowed' tunable must be set in the key's `/config` endpoint.",
+        "operationId": "delete-encryption-key",
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/import": {
+      "description": "Import encryption key",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Import encryption key",
+        "description": "imports existing key material into a new transit-managed encryption key. To import key material into an existing key, see the import_version/ endpoint.\n\nThis supports one of two forms:\n\nPrivate/Symmetric Key import, requiring the ciphertext, hash_function parameters be set (and automatically deriving the public key), or\nPublic Key-only import, restricting the operations that can be done with this key, and requiring only the public_key parameter.\nThe remaining parameters (including name, type, allow_rotation, derived, context, exportable, allow_plaintext_backup, and auto_rotate_period) remain the same across both versions of this call.",
+        "operationId": "import-encryption-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "derived": {
+                    "type": "boolean",
+                    "description": "Specifies if key derivation is to be used. If enabled, all encrypt/decrypt requests to this named key must provide a context which is used for key derivation."
+                  },
+                  "exportable": {
+                    "type": "boolean",
+                    "description": "Enables keys to be exportable. This allows for all the valid keys in the key ring to be exported. Once set, this cannot be disabled."
+                  },
+                  "allow_plaintext_backup": {
+                    "type": "boolean",
+                    "description": "If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Specifies the type of key to create. Defaults to aes256-gcm96",
+                    "enum": [
+                      "aes128-gcm96",
+                      "aes256-gcm96",
+                      "chacha20-poly1305",
+                      "xchacha20-poly1305",
+                      "ed25519",
+                      "ecdsa-p256",
+                      "ecdsa-p384",
+                      "ecdsa-p521",
+                      "rsa-2048",
+                      "rsa-3072",
+                      "rsa-4096",
+                      "hmac"
+                    ]
+                  },
+                  "auto_rotate_period": {
+                    "type": "string",
+                    "description": "The period at which this key should be rotated automatically. Setting this to '0' (the default) will disable automatic key rotation. This value cannot be shorter than one hour."
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "description": "base64-encoded string that contains two values: an ephemeral 256-bit AES key wrapped using the wrapping key returned by OpenBao and the encryption of the import key material under the provided AES key.\nThe wrapped AES key should be the first 512 bytes of the ciphertext, and the encrypted key material should be the remaining bytes.\nSee the BYOK section of the Transit secrets engine documentation for more information on constructing the ciphertext. If public_key is set, this field is not required."
+                  },
+                  "hash_function": {
+                    "type": "string",
+                    "description": "The hash function used for the RSA-OAEP step of creating the ciphertext. Defaults to SHA256",
+                    "enum": [
+                      "SHA224",
+                      "SHA256",
+                      "SHA384",
+                      "SHA512"
+                    ]
+                  },
+                  "public_key": {
+                    "type": "string",
+                    "description": "A plaintext PEM public key to be imported. This limits the operations available under this key to verification and encryption, depending on the key type and algorithm, as no private key is available."
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "A base64-encoded string providing a context for key derivation. Required if derived is set to true."
+                  }
+                },
+                "required": [
+                  "derived",
+                  "exportable",
+                  "allow_plaintext_backup",
+                  "type",
+                  "auto_rotate_period"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/import_version": {
+      "description": "Note: using this method, a private key matching a public key can be imported at a later date.\n\nImportant: Keys whose material was generated by OpenBao do not support importing key material. Only keys that were previously imported into OpenBao can import new key material from an external source.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Import versioned encryption key",
+        "description": "imports existing key material into a new transit-managed encryption key. To import key material into an existing key, see the import_version/ endpoint.\n\nThis supports one of two forms:\n\nPrivate/Symmetric Key import, requiring the ciphertext, hash_function parameters be set (and automatically deriving the public key), or\nPublic Key-only import, restricting the operations that can be done with this key, and requiring only the public_key parameter.\nThe remaining parameters (including name, type, allow_rotation, derived, context, exportable, allow_plaintext_backup, and auto_rotate_period) remain the same across both versions of this call.",
+        "operationId": "import-versioned-encryption-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ciphertext": {
+                    "type": "string",
+                    "description": "base64-encoded string that contains two values: an ephemeral 256-bit AES key wrapped using the wrapping key returned by OpenBao and the encryption of the import key material under the provided AES key.\nThe wrapped AES key should be the first 512 bytes of the ciphertext, and the encrypted key material should be the remaining bytes.\nSee the BYOK section of the Transit secrets engine documentation for more information on constructing the ciphertext. If public_key is set, this field is not required."
+                  },
+                  "hash_function": {
+                    "type": "string",
+                    "description": "The hash function used for the RSA-OAEP step of creating the ciphertext. Defaults to SHA256",
+                    "enum": [
+                      "SHA224",
+                      "SHA256",
+                      "SHA384",
+                      "SHA512"
+                    ]
+                  },
+                  "public_key": {
+                    "type": "string",
+                    "description": "A plaintext PEM public key to be imported. This limits the operations available under this key to verification and encryption, depending on the key type and algorithm, as no private key is available."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "description": "Key version to be updated, if left empty, a new version will be created unless a private key is specified and the 'Latest' key is missing a private key."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/export/{key_type}/{name}": {
+      "description": "Returns the named key. The keys object shows the value of the key for each version. If version is specified, the specific version will be returned. \nIf latest is provided as the version, the current key will be provided. Depending on the type of key, different information may be returned. \nThe key must be exportable to support this operation and the version must still be valid.\n\nNote: This endpoint has originally an OPTIONAL version path parameter, but this is illegal in openapi v3",
+      "get": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Export encryption key",
+        "description": "Returns the named key. The keys object shows the value of the key for each version. If version is specified, the specific version will be returned. \nIf latest is provided as the version, the current key will be provided. Depending on the type of key, different information may be returned. \nThe key must be exportable to support this operation and the version must still be valid.",
+        "operationId": "export-encryption-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "format": {
+                    "type": "string",
+                    "description": "Specifies the format of the exported key. The empty string preserves existing behavior, \nwith format unique to each key type (base64 encoded raw keys for symmetric keys or Ed25519 keys, PKCS#1 for RSA private keys, SEC 1 for EC private keys, and PKIX format for RSA or EC public keys). \nThe raw format always returns a base64 encoded raw key (only applicable to symmetric keys and Ed25519 keys). \nThe der and pem formats always returns a PKIX (SubjectPublicKeyInfo) or PrivateKeyInfo encoded object for asymmetric keys.",
+                    "enum": [
+                      "base64",
+                      "raw",
+                      "der",
+                      "pem"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "keys": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "keys",
+                        "name",
+                        "type"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the type of the key to export",
+          "name": "key_type",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the key to read information about",
+          "name": "name",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/wrapping_key": {
+      "description": "Note: using this method, a private key matching a public key can be imported at a later date.\n\nImportant: Keys whose material was generated by OpenBao do not support importing key material. Only keys that were previously imported into OpenBao can import new key material from an external source.",
+      "get": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Read wrapping key",
+        "description": "retrieve the wrapping key to use for importing keys. The returned key will be a 4096-bit RSA public key.",
+        "operationId": "read-wrapping-key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "public_key": {
+                          "type": "string",
+                          "description": "4096-bit RSA public key"
+                        }
+                      },
+                      "required": [
+                        "public_key"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/config": {
+      "description": "Allows tuning configuration values for a given key. (These values are returned during a read operation on the named key.)",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Configure encryption key",
+        "description": "Sets configuration like if its allow for deletion",
+        "operationId": "config-encryption-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "min_decryption_version": {
+                    "type": "integer",
+                    "description": "Specifies the minimum version of ciphertext allowed to be decrypted. Adjusting this as part of a key rotation policy can prevent old copies of ciphertext from being decrypted,\nshould they fall into the wrong hands. For signatures, this value controls the minimum version of signature that can be verified against. \nFor HMACs, this controls the minimum version of a key allowed to be used as the key for verification."
+                  },
+                  "min_encryption_version": {
+                    "type": "integer",
+                    "description": "Specifies the minimum version of the key that can be used to encrypt plaintext, sign payloads, or generate HMACs. Must be 0 (which will use the latest version) or a value greater or equal to `min_decryption_version`."
+                  },
+                  "deletion_allowed": {
+                    "type": "boolean"
+                  },
+                  "exportable": {
+                    "type": "boolean",
+                    "description": "Enables keys to be exportable. This allows for all the valid keys in the key ring to be exported. Once set, this cannot be disabled."
+                  },
+                  "allow_plaintext_backup": {
+                    "type": "boolean",
+                    "description": "If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled."
+                  },
+                  "auto_rotate_period": {
+                    "type": "string",
+                    "description": "The period at which this key should be rotated automatically. Setting this to '0' (the default) will disable automatic key rotation. This value cannot be shorter than one hour."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/encrypt/{secret_key}": {
+      "description": "Encrypts the provided plaintext using the named key. This path supports the create and update policy capabilities as follows: if the user has the create capability for this endpoint in their policies, \nand the key does not exist, it will be upserted with default values (whether the key requires derivation depends on whether the context parameter is empty or not). \nIf the user only has update capability and the key does not exist, an error will be returned.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Encrypts data",
+        "description": "Encrypts the provided plaintext using the named key",
+        "operationId": "encrypt",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "associated_data": {
+                    "type": "string",
+                    "description": "Specifies base64 encoded associated data (also known as additional data or AAD) to also be authenticated with AEAD ciphers (aes128-gcm96, aes256-gcm, chacha20-poly1305, and xchacha20-poly1305)."
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused."
+                  },
+                  "partial_failure_response_code": {
+                    "type": "integer",
+                    "description": "Ordinarily, if a batch item fails to encrypt due to a bad input, but other batch items succeed, the HTTP response code is 400 (Bad Request). \nSome applications may want to treat partial failures differently. Providing the parameter returns the given response code integer instead of a failed status code in this case. \nIf all values fail an error code is still returned. Be warned that some failures (such as failure to decrypt) could be indicative of a security breach and should not be ignored."
+                  },
+                  "plaintext": {
+                    "type": "string",
+                    "description": "Specifies base64 encoded plaintext to be encoded."
+                  },
+                  "key_version": {
+                    "type": "integer",
+                    "description": "Specifies the version of the key to use for encryption. If not set, uses the latest version. Must be greater than or equal to the key's min_encryption_version, if set."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Specifies the type of key to create. Defaults to aes256-gcm96",
+                    "enum": [
+                      "aes128-gcm96",
+                      "aes256-gcm96",
+                      "chacha20-poly1305",
+                      "xchacha20-poly1305",
+                      "ed25519",
+                      "ecdsa-p256",
+                      "ecdsa-p384",
+                      "ecdsa-p521",
+                      "rsa-2048",
+                      "rsa-3072",
+                      "rsa-4096",
+                      "hmac"
+                    ]
+                  },
+                  "convergent_encryption": {
+                    "type": "boolean",
+                    "description": "This parameter will only be used when a key is expected to be created. Whether to support convergent encryption. \nThis is only supported when using a key with key derivation enabled and will require all requests to carry both a context and 96-bit (12-byte) for AES and ChaCha20 or 192-bit (24-byte) for XChaCha20 nonce. \nThe given nonce will be used in place of a randomly generated nonce. As a result, when the same context and nonce are supplied, the same ciphertext is generated. \nIt is very important when using this mode that you ensure that all nonces are unique for a given context. Failing to do so will severely impact the ciphertext's security."
+                  },
+                  "batch_input": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "plaintext": {
+                          "type": "string",
+                          "description": "Specifies base64 encoded plaintext to be encoded."
+                        },
+                        "context": {
+                          "type": "string",
+                          "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                        },
+                        "nonce": {
+                          "type": "string"
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
+                        }
+                      },
+                      "required": [
+                        "plaintext"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "plaintext"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "batch_results": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "ciphertext": {
+                                        "type": "string"
+                                      },
+                                      "key_version": {
+                                        "type": "integer"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "ciphertext"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "error": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "error"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "batch_results"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ciphertext": {
+                              "type": "string"
+                            },
+                            "key_version": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "ciphertext"
+                          ]
+                        }
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/decrypt/{secret_key}": {
+      "description": "This endpoint decrypts the provided ciphertext using the named key.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Decrypts data",
+        "description": "This endpoint decrypts the provided ciphertext using the named key.",
+        "operationId": "decrypt",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "associated_data": {
+                    "type": "string",
+                    "description": "Specifies base64 encoded associated data (also known as additional data or AAD) to also be authenticated with AEAD ciphers (aes128-gcm96, aes256-gcm, chacha20-poly1305, and xchacha20-poly1305)."
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused."
+                  },
+                  "partial_failure_response_code": {
+                    "type": "integer",
+                    "description": "Ordinarily, if a batch item fails to encrypt due to a bad input, but other batch items succeed, the HTTP response code is 400 (Bad Request). \nSome applications may want to treat partial failures differently. Providing the parameter returns the given response code integer instead of a failed status code in this case. \nIf all values fail an error code is still returned. Be warned that some failures (such as failure to decrypt) could be indicative of a security breach and should not be ignored."
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "description": "Specifies base64 encoded plaintext to be encoded."
+                  },
+                  "batch_input": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "ciphertext": {
+                          "type": "string",
+                          "description": "Specifies base64 encoded plaintext to be encoded."
+                        },
+                        "context": {
+                          "type": "string",
+                          "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                        },
+                        "nonce": {
+                          "type": "string"
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
+                        }
+                      },
+                      "required": [
+                        "plaintext"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "ciphertext"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "batch_results": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "plaintext": {
+                                        "type": "string"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      },
+                                      "error": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "plaintext"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "error": {
+                                        "type": "string"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "error"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "batch_results"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "plaintext": {
+                              "type": "string"
+                            },
+                            "reference": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "plaintext"
+                          ]
+                        }
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/rewrap/{secret_key}": {
+      "description": "Rewraps the provided ciphertext using the latest version of the named key. Because this never returns plaintext, it is possible to delegate this functionality to untrusted users or scripts.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Rewrap ciphertext",
+        "description": "rewraps the provided ciphertext using the latest version of the named key. Because this never returns plaintext, it is possible to delegate this functionality to untrusted users or scripts.",
+        "operationId": "rewrap-ciphertext",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ciphertext": {
+                    "type": "string",
+                    "description": "Specifies the ciphertext to re-encrypt."
+                  },
+                  "key_version": {
+                    "type": "integer",
+                    "description": "Specifies the version of the key to use for the operation. If not set, uses the latest version. Must be greater than or equal to the key's min_encryption_version, if set."
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "description": "Specifies a base64 encoded nonce value used during encryption."
+                  },
+                  "batch_input": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "ciphertext": {
+                          "type": "string",
+                          "description": "Specifies the ciphertext to re-encrypt."
+                        },
+                        "context": {
+                          "type": "string",
+                          "description": "Base64 encoded context for key derivation. Required if key derivation is enabled; currently only available with ed25519 keys."
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
+                        }
+                      },
+                      "required": [
+                        "ciphertext"
+                      ]
+                    }
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled."
+                  }
+                },
+                "required": [
+                  "ciphertext"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ciphertext": {
+                          "type": "string"
+                        },
+                        "key_version": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "ciphertext"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/rotate": {
+      "description": "Allows tuning configuration values for a given key. (These values are returned during a read operation on the named key.)",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Configure encryption key",
+        "description": "Sets configuration like if its allow for deletion",
+        "operationId": "rotate-encryption-key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/soft-delete": {
+      "description": "This endpoint issues a soft delete of the specified versions of the secret. This marks the versions as deleted and will stop them from being returned from reads, but the underlying data will not be removed. A delete can be undone using the undelete path.",
+      "delete": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Soft delete encryption key",
+        "description": "softly deletes a named encryption key, allowing it to be restored later if this deletion was done in error. This doesn't depend on the value of deletion_allowed.\n\nThe following operations will not work on the :name'd key until the key is restored:\n\n- BYOK exporting, either as a source or destination key (/transit/byok-export/:dest/:name and /transit/byok-export/:name/:src),\n- Exporting (`/transit/export/:key_type/:name`),\n- Encrypting and decrypting (/transit/encrypt/:name and /transit/decrypt/:name),\n- Signing and verifying including with HMAC keys (/transit/sign/:name, /transit/hmac/:name, and /transit/verify/:name), and\n- Rotating the specified key (/transit/keys/:name/rotate).\n\nHowever, this key will still be able to be updated, backed up, read, and will appear in list operations.",
+        "operationId": "soft-delete-encryption-key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/soft-delete-restore": {
+      "description": "restores a softly deleted named encryption key, allowing it to be used again.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Restores soft-deleted encryption key",
+        "description": "Restores a softly deleted named encryption key, allowing it to be used again.",
+        "operationId": "restore-encryption-key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/datakey/{type}/{secret_key}": {
+      "description": "This endpoint decrypts the provided ciphertext using the named key.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Generate Key data",
+        "description": "Generates a new high-entropy key and the value encrypted with the named key. Optionally return the plaintext of the key as well. \nWhether plaintext is returned depends on the path; as a result, you can use OpenBao ACL policies to control whether a user is allowed to retrieve the plaintext value of a key. \nThis is useful if you want an untrusted user or operation to generate keys that are then made available to trusted users.",
+        "operationId": "generate-key-data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "associated_data": {
+                    "type": "string",
+                    "description": "Specifies base64 encoded associated data (also known as additional data or AAD) to also be authenticated with AEAD ciphers (aes128-gcm96, aes256-gcm, chacha20-poly1305, and xchacha20-poly1305)."
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded context for key derivation. This is required if key derivation is enabled for this key."
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded nonce value. The value must be exactly 96 bits (12 bytes) long and the user must ensure that for any given context (and thus, any given encryption key) this nonce value is never reused."
+                  },
+                  "bits": {
+                    "type": "integer",
+                    "description": "Specifies the number of bits in the desired key. Can be 128, 256, or 512. Defaults to 256"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ciphertext": {
+                          "type": "string"
+                        },
+                        "key_version": {
+                          "type": "integer"
+                        },
+                        "plaintext": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "ciphertext",
+                        "key_version"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "return type of generated key",
+          "name": "type",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "The key path for a stored secret in this path",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/random": {
+      "description": "Returns high-quality random bytes of the specified length..",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Generate random bytes",
+        "description": "returns high-quality random bytes of the specified length.",
+        "operationId": "generate-random-bytes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bytes": {
+                    "type": "integer",
+                    "description": "Specifies the number of bytes to return."
+                  },
+                  "format": {
+                    "type": "string",
+                    "description": "Specifies the output encoding. Valid options are hex or base64.",
+                    "enum": [
+                      "hex",
+                      "base64"
+                    ]
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Specifies the source of the requested bytes. platform, the default, sources bytes from the platform's entropy source. all mixes bytes from all available sources.",
+                    "enum": [
+                      "platform",
+                      "all"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "random_bytes": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "random_bytes"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/hash": {
+      "description": "Returns the cryptographic hash of given data using the specified algorithm.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Hash data",
+        "description": "returns the cryptographic hash of given data using the specified algorithm.",
+        "operationId": "hash-data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "algorithm": {
+                    "type": "string",
+                    "description": "Hash Algorithms. Defaults to sha2-256.\n\nImportant: In FIPS 140-2 mode, the following algorithms are not certified and thus should not be used: sha3-224, sha3-256, sha3-384, and sha3-512.",
+                    "enum": [
+                      "sha2-224",
+                      "sha2-256",
+                      "sha2-384",
+                      "sha2-512",
+                      "sha3-224",
+                      "sha3-256",
+                      "sha3-384",
+                      "sha3-512"
+                    ]
+                  },
+                  "format": {
+                    "type": "string",
+                    "description": "Specifies the output encoding. Valid options are hex or base64.",
+                    "enum": [
+                      "hex",
+                      "base64"
+                    ]
+                  },
+                  "input": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded input data."
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "sum": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "sum"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/hmac/{secret_key}": {
+      "description": "Returns the cryptographic hash of given data using the specified algorithm.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Generate HMAC",
+        "description": "returns the cryptographic hash of given data using the specified algorithm.",
+        "operationId": "generate-hmac",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "algorithm": {
+                    "type": "string",
+                    "description": "Hash Algorithms. Defaults to sha2-256.\n\nImportant: In FIPS 140-2 mode, the following algorithms are not certified and thus should not be used: sha3-224, sha3-256, sha3-384, and sha3-512.",
+                    "enum": [
+                      "sha2-224",
+                      "sha2-256",
+                      "sha2-384",
+                      "sha2-512",
+                      "sha3-224",
+                      "sha3-256",
+                      "sha3-384",
+                      "sha3-512"
+                    ]
+                  },
+                  "input": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
+                  },
+                  "key_version": {
+                    "type": "integer",
+                    "description": "Specifies the version of the key to use for the operation. If not set, uses the latest version. Must be greater than or equal to the key's min_encryption_version, if set."
+                  },
+                  "batch_input": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
+                        }
+                      },
+                      "required": [
+                        "input"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "batch_results": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "hmac": {
+                                        "type": "string"
+                                      },
+                                      "reference": {
+                                        "type": "string",
+                                        "description": "A user-supplied string"
+                                      }
+                                    },
+                                    "required": [
+                                      "hmac"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "error": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "error"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "batch_results"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "hmac": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "hmac"
+                          ]
+                        }
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the encryption key to generate hmac against.",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/sign/{secret_key}": {
+      "description": "Returns the cryptographic hash of given data using the specified algorithm.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Sign Data",
+        "description": "Returns the cryptographic signature of the given data using the named key and the specified hash algorithm. The key must be of a type that supports signing.",
+        "operationId": "sign-data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash_algorithm": {
+                    "type": "string",
+                    "description": "Hash Algorithms. Defaults to sha2-256.\n\nImportant: In FIPS 140-2 mode, the following algorithms are not certified and thus should not be used: sha3-224, sha3-256, sha3-384, and sha3-512.",
+                    "enum": [
+                      "sha2-224",
+                      "sha2-256",
+                      "sha2-384",
+                      "sha2-512",
+                      "sha3-224",
+                      "sha3-256",
+                      "sha3-384",
+                      "sha3-512",
+                      "none"
+                    ]
+                  },
+                  "input": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
+                  },
+                  "batch_input": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
+                        },
+                        "hmac": {
+                          "type": "string"
+                        },
+                        "signature": {
+                          "type": "string"
+                        },
+                        "context": {
+                          "type": "string",
+                          "description": "Base64 encoded context for key derivation. Required if key derivation is enabled; currently only available with ed25519 keys."
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
+                        }
+                      },
+                      "required": [
+                        "input"
+                      ]
+                    }
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Base64 encoded context for key derivation. Required if key derivation is enabled; currently only available with ed25519 keys."
+                  },
+                  "prehashed": {
+                    "type": "boolean",
+                    "description": "Set to true when the input is already hashed. If the key type is rsa-2048, rsa-3072 or rsa-4096, then the algorithm used to hash the input should be indicated by the hash_algorithm parameter."
+                  },
+                  "signature_algorithm": {
+                    "type": "string",
+                    "description": "When using a RSA key, specifies the RSA signature algorithm to use for signature verification. Defaults to pss",
+                    "enum": [
+                      "pss",
+                      "pkcs1v15"
+                    ]
+                  },
+                  "marshaling_algorithm": {
+                    "type": "string",
+                    "description": "Specifies the way in which the signature should be marshaled. This currently only applies to ECDSA keys. Defaults to asn1",
+                    "enum": [
+                      "asn1",
+                      "jws"
+                    ]
+                  },
+                  "salt_length": {
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "description": "Specifies the way in which the signature should be marshaled. This currently only applies to ECDSA keys. Defaults to asn1",
+                        "enum": [
+                          "auto",
+                          "hash"
+                        ]
+                      },
+                      {
+                        "type": "integer",
+                        "description": "An integer between the minimum and the maximum permissible salt lengths for the given RSA key size."
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "batch_results": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "signature": {
+                                        "type": "string"
+                                      },
+                                      "publickey": {
+                                        "type": "string"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      },
+                                      "key_version": {
+                                        "type": "integer"
+                                      }
+                                    },
+                                    "required": [
+                                      "signature"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "error": {
+                                        "type": "string"
+                                      },
+                                      "key_version": {
+                                        "type": "integer"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "error"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "batch_results"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "signature": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "signature"
+                          ]
+                        }
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the encryption key to generate the signature or hmac against.",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/verify/{secret_key}": {
+      "description": "Returns whether the provided signature is valid for the given data.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Verify Signed Data",
+        "description": "returns whether the provided signature is valid for the given data.",
+        "operationId": "verify-signed-data",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "hash_algorithm": {
+                    "type": "string",
+                    "description": "Hash Algorithms. Defaults to sha2-256.\n\nImportant: In FIPS 140-2 mode, the following algorithms are not certified and thus should not be used: sha3-224, sha3-256, sha3-384, and sha3-512.",
+                    "enum": [
+                      "sha2-224",
+                      "sha2-256",
+                      "sha2-384",
+                      "sha2-512",
+                      "sha3-224",
+                      "sha3-256",
+                      "sha3-384",
+                      "sha3-512",
+                      "none"
+                    ]
+                  },
+                  "input": {
+                    "type": "string",
+                    "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
+                  },
+                  "batch_input": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "input": {
+                          "type": "string",
+                          "description": "Specifies the base64 encoded input data. One of input or batch_input must be supplied."
+                        },
+                        "hmac": {
+                          "type": "string"
+                        },
+                        "signature": {
+                          "type": "string"
+                        },
+                        "context": {
+                          "type": "string",
+                          "description": "Base64 encoded context for key derivation. Required if key derivation is enabled; currently only available with ed25519 keys."
+                        },
+                        "reference": {
+                          "type": "string",
+                          "description": "A user-supplied string that will be present in the reference field on the corresponding batch_results item in the response, to assist in understanding which result corresponds to a particular input."
+                        }
+                      },
+                      "required": [
+                        "input"
+                      ]
+                    }
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Base64 encoded context for key derivation. Required if key derivation is enabled; currently only available with ed25519 keys."
+                  },
+                  "prehashed": {
+                    "type": "boolean",
+                    "description": "Set to true when the input is already hashed. If the key type is rsa-2048, rsa-3072 or rsa-4096, then the algorithm used to hash the input should be indicated by the hash_algorithm parameter."
+                  },
+                  "signature_algorithm": {
+                    "type": "string",
+                    "description": "When using a RSA key, specifies the RSA signature algorithm to use for signature verification. Defaults to pss",
+                    "enum": [
+                      "pss",
+                      "pkcs1v15"
+                    ]
+                  },
+                  "marshaling_algorithm": {
+                    "type": "string",
+                    "description": "Specifies the way in which the signature should be marshaled. This currently only applies to ECDSA keys. Defaults to asn1",
+                    "enum": [
+                      "asn1",
+                      "jws"
+                    ]
+                  },
+                  "salt_length": {
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "description": "Specifies the way in which the signature should be marshaled. This currently only applies to ECDSA keys. Defaults to asn1",
+                        "enum": [
+                          "auto",
+                          "hash"
+                        ]
+                      },
+                      {
+                        "type": "integer",
+                        "description": "An integer between the minimum and the maximum permissible salt lengths for the given RSA key size."
+                      }
+                    ]
+                  },
+                  "signature": {
+                    "type": "string",
+                    "description": "Specifies the signature output from the /transit/sign function. Either this must be supplied or hmac must be supplied."
+                  },
+                  "hmac": {
+                    "type": "string",
+                    "description": "Specifies the signature output from the /transit/hmac function. Either this must be supplied or signature must be supplied."
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "batch_results": {
+                              "type": "array",
+                              "items": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "valid": {
+                                        "type": "boolean"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "valid"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "error": {
+                                        "type": "string"
+                                      },
+                                      "valid": {
+                                        "type": "boolean"
+                                      },
+                                      "reference": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "error"
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "batch_results"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "valid": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "valid"
+                          ]
+                        }
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the encryption key to generate signature or hmac against.",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/backup/{secret_key}": {
+      "description": "Returns a plaintext backup of a named key. The backup contains all the configuration data and keys of all the versions along with the HMAC key.\nThe response from this endpoint can be used with the /restore endpoint to restore the key.",
+      "get": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Backup Key",
+        "description": "returns the cryptographic hash of given data using the specified algorithm.",
+        "operationId": "backup-key",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "backup": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "backup"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the encryption key to backup. It won't work if the creation policy did not allow for backup",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/restore/{secret_key}": {
+      "description": "Restores the backup as a named key. This will restore the key configurations and all the versions of the named key along with HMAC keys. The input to this endpoint should be the output of /backup endpoint.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Restore Key",
+        "description": "returns the cryptographic hash of given data using the specified algorithm.",
+        "operationId": "restore-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "backup": {
+                    "type": "string",
+                    "description": "Backed up key data to be restored. This should be the output from the /backup endpoint."
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "description": "If set, force the restore to proceed even if a key by this name already exists."
+                  }
+                },
+                "required": [
+                  "backup"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "NoContent"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Name of the restored key.",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/trim": {
+      "description": "Restores the backup as a named key. This will restore the key configurations and all the versions of the named key along with HMAC keys. The input to this endpoint should be the output of /backup endpoint.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Restore Key",
+        "description": "returns the cryptographic hash of given data using the specified algorithm.",
+        "operationId": "trim-key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "min_available_version": {
+                    "type": "integer",
+                    "description": "The minimum available version for the key ring. All versions before this version will be permanently deleted. \nThis value can at most be equal to the lesser of min_decryption_version and min_encryption_version. \nThis is not allowed to be set when either min_encryption_version or min_decryption_version is set to zero."
+                  }
+                },
+                "required": [
+                  "min_available_version"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WriteEncryptionKeyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the encryption key to trim.",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/cache-config": {
+      "description": "Retrieves configurations for the transit engine's cache.",
+      "get": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Read cache size",
+        "description": "retrieves configurations for the transit engine's cache.",
+        "operationId": "cache-size",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "size": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "size"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Configure cache",
+        "description": "configure the transit engine's cache. Note that configuration changes will not be applied until the transit plugin is reloaded which can be achieved using the [/sys/plugins/reload/backend][sys-plugin-reload-backend] endpoint.",
+        "operationId": "configure-cache-size",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "size": {
+                    "type": "integer",
+                    "description": "Specifies the size in terms of number of entries. A size of 0 means unlimited. A Least Recently Used (LRU) caching strategy is used for a non-zero cache size. \nMust be 0 (default) or a value greater or equal to 10 (minimum cache size)."
+                  }
+                },
+                "required": [
+                  "size"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "size": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "size"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/csr": {
+      "description": "Signs a CSR using the :name key, ensuring the key material stays within Transit. If no CSR is provided, it signs an empty CSR. Otherwise, it signs the provided CSR, \nreplacing its key material with the :name key material. The key in transit must be a signing key and not be derived.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Sign CSR",
+        "description": "Signs a CSR using the :name key, ensuring the key material stays within Transit",
+        "operationId": "sign-csr",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "csr": {
+                    "type": "string",
+                    "description": "Optional PEM-encoded CSR template to use as a basis for the new CSR signed by this key. If not set, an empty CSR is used."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "description": "The version of the key to use for signing. If the version is set to latest or is not set, the current key will be returned."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "csr": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "csr",
+                        "name",
+                        "type"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the encryption key to trim.",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    },
+    "/{transit_path}/keys/{secret_key}/set-certificate": {
+      "description": "Sets the certificate chain for the :name key, ensuring the key material stays within Transit and certificates are managed in one place. \nIt also allows chain updates and rotation, as it will overwrite any existing certificate chain.",
+      "post": {
+        "tags": [
+          "transit"
+        ],
+        "summary": "Sign CSR",
+        "description": "Signs a CSR using the :name key, ensuring the key material stays within Transit",
+        "operationId": "set-certificate-chain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "certificate_chain": {
+                    "type": "string",
+                    "description": "A PEM encoded certificate chain. It should be composed by one or more concatenated PEM blocks and ordered starting from the end-entity certificate."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "description": "Specifies the version of the key to import the certificate chain against. If the version is set to latest or is not set, the current key will be returned."
+                  }
+                },
+                "required": [
+                  "certificate_chain"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "request_id": {
+                      "type": "string"
+                    },
+                    "lease_id": {
+                      "type": "string"
+                    },
+                    "renewable": {
+                      "type": "boolean"
+                    },
+                    "lease_duration": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "certificate_chain": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "certificate_chain",
+                        "name",
+                        "type"
+                      ]
+                    },
+                    "wrap_info": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "description": "A list of warnings, e.g. ignored parameters",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "auth": {
+                      "type": "object"
+                    },
+                    "mount_type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "request_id",
+                    "data"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "description": "transit engine path",
+          "name": "transit_path",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "description": "Specifies the name of the encryption key to trim.",
+          "name": "secret_key",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "$ref": "#/components/parameters/VaultTokenHeader"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "WriteEncryptionKeyRequest": {
+        "type": "object",
+        "properties": {
+          "derived": {
+            "type": "boolean",
+            "description": "Specifies if key derivation is to be used. If enabled, all encrypt/decrypt requests to this named key must provide a context which is used for key derivation."
+          },
+          "exportable": {
+            "type": "boolean",
+            "description": "Enables keys to be exportable. This allows for all the valid keys in the key ring to be exported. Once set, this cannot be disabled."
+          },
+          "allow_plaintext_backup": {
+            "type": "boolean",
+            "description": "If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled."
+          },
+          "type": {
+            "type": "string",
+            "description": "Specifies the type of key to create. Defaults to aes256-gcm96",
+            "enum": [
+              "aes128-gcm96",
+              "aes256-gcm96",
+              "chacha20-poly1305",
+              "xchacha20-poly1305",
+              "ed25519",
+              "ecdsa-p256",
+              "ecdsa-p384",
+              "ecdsa-p521",
+              "rsa-2048",
+              "rsa-3072",
+              "rsa-4096",
+              "hmac"
+            ]
+          },
+          "auto_rotate_period": {
+            "type": "string",
+            "description": "The period at which this key should be rotated automatically. Setting this to '0' (the default) will disable automatic key rotation. This value cannot be shorter than one hour."
+          },
+          "convergent_encryption": {
+            "type": "boolean",
+            "description": "if enabled, the key will support convergent encryption, where the same plaintext creates the same ciphertext. This requires `derived` to be set to true. \nWhen enabled, each encryption(`/decryption/rewrap/datakey`) operation will derive a nonce value rather than randomly generate it."
+          },
+          "key_size": {
+            "type": "integer",
+            "description": "The key size in bytes for algorithms that allow variable key sizes. Currently only applicable to HMAC, where it must be between 32 and 512 bytes."
+          }
+        },
+        "required": [
+          "derived",
+          "exportable",
+          "allow_plaintext_backup",
+          "type",
+          "auto_rotate_period"
+        ]
+      },
+      "WriteEncryptionKeyResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "derived": {
+                "type": "boolean",
+                "description": "Specifies if key derivation is to be used. If enabled, all encrypt/decrypt requests to this named key must provide a context which is used for key derivation."
+              },
+              "exportable": {
+                "type": "boolean",
+                "description": "Enables keys to be exportable. This allows for all the valid keys in the key ring to be exported. Once set, this cannot be disabled."
+              },
+              "allow_plaintext_backup": {
+                "type": "boolean",
+                "description": "If set, enables taking backup of named key in the plaintext format. Once set, this cannot be disabled."
+              },
+              "type": {
+                "type": "string",
+                "description": "Specifies the type of key to create. Defaults to aes256-gcm96",
+                "enum": [
+                  "aes128-gcm96",
+                  "aes256-gcm96",
+                  "chacha20-poly1305",
+                  "xchacha20-poly1305",
+                  "ed25519",
+                  "ecdsa-p256",
+                  "ecdsa-p384",
+                  "ecdsa-p521",
+                  "rsa-2048",
+                  "rsa-3072",
+                  "rsa-4096",
+                  "hmac"
+                ]
+              },
+              "auto_rotate_period": {
+                "type": "integer",
+                "description": "The period at which this key should be rotated automatically. Setting this to '0' (the default) will disable automatic key rotation. This value cannot be shorter than one hour."
+              },
+              "deletion_allowed": {
+                "type": "boolean"
+              },
+              "imported_key": {
+                "type": "boolean"
+              },
+              "kdf": {
+                "type": "string"
+              },
+              "keys": {
+                "type": "object",
+                "format": "kvpairs",
+                "description": "lists each version of the key, and the time that key was created as seconds since the Unix epoch",
+                "additionalProperties": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "certificate_chain": {
+                          "type": "string"
+                        },
+                        "creation_time": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "public_key": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "creation_time",
+                        "name"
+                      ]
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                }
+              },
+              "latest_version": {
+                "type": "integer"
+              },
+              "min_available_version": {
+                "type": "integer"
+              },
+              "min_decryption_version": {
+                "type": "integer"
+              },
+              "min_encryption_version": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "soft_deleted": {
+                "type": "boolean"
+              },
+              "supports_decryption": {
+                "type": "boolean"
+              },
+              "supports_derivation": {
+                "type": "boolean"
+              },
+              "supports_encryption": {
+                "type": "boolean"
+              },
+              "supports_signing": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "derived",
+              "exportable",
+              "allow_plaintext_backup",
+              "type",
+              "auto_rotate_period",
+              "keys",
+              "latest_version",
+              "min_decryption_version",
+              "min_encryption_version",
+              "name",
+              "supports_encryption",
+              "supports_decryption",
+              "supports_derivation",
+              "supports_signing"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "WriteUpsertResponse": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "lease_id": {
+            "type": "string"
+          },
+          "renewable": {
+            "type": "boolean"
+          },
+          "lease_duration": {
+            "type": "integer"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "disable_upsert": {
+                "type": "boolean",
+                "description": "Specifies whether to disable upserting on encryption (automatic creation of unknown keys)."
+              }
+            },
+            "required": [
+              "disable_upsert"
+            ]
+          },
+          "wrap_info": {
+            "type": "object"
+          },
+          "warnings": {
+            "type": "array",
+            "description": "A list of warnings, e.g. ignored parameters",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth": {
+            "type": "object"
+          },
+          "mount_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "data"
+        ]
+      },
+      "EncryptionResponseBody": {
+        "type": "object",
+        "properties": {
+          "ciphertext": {
+            "type": "string"
+          },
+          "key_version": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ciphertext"
+        ]
+      },
+      "VaultErrorsResponseBody": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "List of errors",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "VaultTokenHeader": {
+        "description": "Vault Token required for authentication",
+        "name": "X-Vault-Token",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WrapTTLHeader": {
+        "description": "Use the X-Vault-Wrap-TTL header with any Vault API call where you want to wrap the response.",
+        "name": "X-Vault-Wrap-TTL",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "VaultNamespace": {
+        "description": "Namespaces enable secure multi-tenancy. Each tenant (isolated environments e.g., team, organisation, or application) operates within its namespace, isolated from others",
+        "name": "X-Vault-Namespace",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -34,7 +34,7 @@ import Utils
 ///
 /// - Note: You don't usually create this type directly, but instead use ``VaultClient/withKeyValueClient(namespace:mountPath:execute:)`` to interact with this type
 public final class KeyValueEngineClient: Sendable {
-    static var loggingDisabled: Logger { .init(label: "key-value-provider-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
+    static var loggingDisabled: Logger { .init(label: "key-value-client-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() }) }
 
     init(apiURL: URL,
          clientTransport: any ClientTransport,

@@ -37,7 +37,7 @@ extension VaultClient {
     /// - Parameter path: mount path to secret engine
     public func disableSecretEngine(path: String) async throws {
         try await withSystemBackend { systemBackend in
-            try await systemBackend.disableAuthMethod(path)
+            try await systemBackend.disableSecretEngine(path: path)
         }
     }
 }

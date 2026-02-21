@@ -353,4 +353,38 @@ extension VaultClient {
         return try await execute(client)
     }
 #endif
+
+#if TransitEngineSupport
+    /// Handler to interact with the Transit secret engine endpoints
+    ///
+    /// A Transit secret engine client is created with the current session token and middlewares
+    ///
+    /// ## Package traits
+    ///
+    /// This handler is guarded by the `TransitEngineSupport` package trait.
+    ///
+    /// - Parameter namespace: optional child namespace to add to the parent namespace.
+    /// - Parameter mountPath: path to transit secret mount
+    /// - Parameter execute: action closure to execute with the transit client
+    /// - Returns: return type of the `execute` closure
+    public func withTransitClient<ReturnType: Sendable>(
+        namespace: String? = nil,
+        mountPath: String,
+        execute: (TransitEngineClient) async throws -> ReturnType
+    ) async throws -> ReturnType {
+        let namespaceMiddleware = try self.namespace.middleware(namespace?.removeSlash())
+        let namespaceName = namespaceMiddleware.first?.name ?? "root"
+        let sessionToken = try? sessionToken()
+        let client = TransitEngineClient(
+            apiURL: apiURL,
+            clientTransport: clientTransport,
+            namespace: namespaceName,
+            mountPath: mountPath,
+            middlewares: middlewares + namespaceMiddleware,
+            token: sessionToken,
+            logger: logger
+        )
+        return try await execute(client)
+    }
+#endif
 }
