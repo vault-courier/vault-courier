@@ -65,7 +65,7 @@ public final class TransitEngineClient: Sendable {
     /// Target's namespace
     let namespace: String
 
-    /// Mount path of KeyValue secret engine
+    /// Mount path of Transit secret engine
     let mountPath: String
 
     /// Engine client

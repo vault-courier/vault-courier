@@ -13,10 +13,13 @@ Swift client for interacting with Hashicorp Vault and OpenBao.
 ### Features
 
 - Arbitrary storage of Key/Value secrets (KV-v2)
-- Manage third-party secrets: generate and revoke on-demand credentials for database systems, like PostgreSQL and Valkey.
+- Manage third-party secrets: generate and revoke on-demand credentials for database systems, like PostgreSQL and Valkey
+- Cryptography as a Service (CaaS) via Transit secret engine
 - AppRole Authentication
 - Token Authentication
-- Pkl Resource Reader (Enabled with PackageTrait `PklSupport`).
+- Namespaces: manage isolated secrets from different deployment environments, applications, or teams within a single vault instance. 
+- Tracing support
+- Pkl Resource Reader (Enabled with PackageTrait `PklSupport`)
 
 ## Usage
 
@@ -32,7 +35,7 @@ container_id=$(docker run --rm --detach -p 8200:8200 -e 'VAULT_DEV_ROOT_TOKEN_ID
 or with OpenBao
 
 ```sh
-container_id=$(docker run --rm --detach -p 8200:8200 -e 'BAO_DEV_ROOT_TOKEN_ID=education' openbao/openbao:latest)
+container_id=$(docker run --rm --detach -p 8200:8200 -e 'BAO_DEV_ROOT_TOKEN_ID=learn-vault' openbao/openbao:latest)
 ```
 
 then authenticate, write and read the secret.
