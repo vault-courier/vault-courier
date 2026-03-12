@@ -31,7 +31,7 @@ import struct Foundation.Data
 import VaultCourier
 
 @Suite(
-    VaultClientTrait.setupVaultClient()
+    .setupVaultClient()
 )
 enum IntegrationTests {}
 
@@ -88,7 +88,7 @@ extension IntegrationTests {
     static let localPklExecPath = "/opt/homebrew/bin/pkl"
 
     @Suite(
-        PklSupportTrait.setupPkl(execPath: env("PKL_EXEC") ?? Self.localPklExecPath)
+        .setupPkl(execPath: env("PKL_EXEC") ?? Self.localPklExecPath)
     ) struct Pkl {
         @Suite
         struct SecretReaders {}

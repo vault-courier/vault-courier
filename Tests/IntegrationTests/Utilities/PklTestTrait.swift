@@ -27,7 +27,7 @@ struct PklSupportTrait: SuiteTrait, TestTrait, TestScoping {
     }
 }
 
-extension SuiteTrait where Self == PklSupportTrait {
+extension Trait where Self == PklSupportTrait {
     static func setupPkl(execPath: String) -> Self {
         return Self(path: execPath)
     }

@@ -63,7 +63,7 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
     }
 }
 
-extension SuiteTrait where Self == VaultClientTrait {
+extension Trait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
                                  httpClientConfiguration: HTTPClient.Configuration = .singletonConfiguration,
