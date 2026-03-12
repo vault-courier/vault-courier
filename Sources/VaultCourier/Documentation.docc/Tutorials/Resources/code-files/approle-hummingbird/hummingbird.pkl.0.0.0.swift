@@ -15,7 +15,7 @@ let package = Package(
         .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
         .package(url: "https://github.com/vault-courier/vault-courier", .upToNextMinor(from: "0.3.0"), traits: [.defaults, "PklSupport"]),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.1.0"),
-        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0"))
+        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.8.2"))
     ],
     targets: [
         .executableTarget(

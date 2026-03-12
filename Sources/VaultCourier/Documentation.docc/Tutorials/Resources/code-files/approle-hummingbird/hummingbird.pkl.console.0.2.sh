@@ -1,1 +1,1 @@
-todos-postgres-tutorial % pkl-gen-swift --project-dir=Sources/Operations/Pkl --output-path=Sources/Operations/Gen Sources/Operations/Pkl/VaultAdminConfig.pkl
+todos-postgres-tutorial % pkl run @pkl.swift/gen.pkl --project-dir=Sources/Operations/Pkl Sources/Operations/Pkl/VaultAdminConfig.pkl -o Sources/Operations/Gen
