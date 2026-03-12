@@ -33,9 +33,9 @@ extension SuiteTrait where Self == PklSupportTrait {
     }
 }
 
-extension TestTrait where Self == PklSupportTrait {
-    static func setupPkl(execPath: String) -> Self {
-        return Self(path: execPath)
-    }
-}
+//extension TestTrait where Self == PklSupportTrait {
+//    static func setupPkl(execPath: String) -> Self {
+//        return Self(path: execPath)
+//    }
+//}
 #endif
