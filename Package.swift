@@ -99,6 +99,7 @@ let defaultTraits: Set<String> = .init([
     DatabaseEngineTrait,
     PostgresDatabasePluginTrait,
     ValkeyDatabasePluginTrait,
+    PklTrait,
 ].map(\.name))
 
 traits.insert(
@@ -119,7 +120,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.9.0"),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.3.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.30.3"),
-        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0")),
+        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.8.2")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.9.0"),
         .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.3.1"),
         .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1")),
