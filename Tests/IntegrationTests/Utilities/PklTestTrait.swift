@@ -17,7 +17,7 @@
 #if PklSupport
 import Testing
 
-struct PklSupportTrait: SuiteTrait, TestTrait, TestScoping {
+struct PklSupportTrait: SuiteTrait, TestScoping {
     let path: String
 
     func provideScope(for test: Test, testCase: Test.Case?, performing function: @Sendable () async throws -> Void) async throws {
