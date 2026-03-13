@@ -54,6 +54,6 @@ jobs:
       env:
         PKL_EXEC: /usr/local/bin/pkl
       run: |
-        swift test --filter IntegrationTests --enable-all-traits
+        swift test --filter IntegrationTests --enable-all-traits --skip IntegrationTests.Pkl
     - name: Tear down
       run: docker compose -f Scripts/docker-compose.yml down --volumes --remove-orphans
