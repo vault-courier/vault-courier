@@ -18,6 +18,7 @@
 import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
+import FoundationInternationalization
 #else
 import struct Foundation.URL
 import class Foundation.JSONDecoder
