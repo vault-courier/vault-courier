@@ -16,7 +16,7 @@
 
 
 #if canImport(Darwin)
-import Darwin
+import Darwin.C
 #elseif os(Windows)
 import CRT
 #elseif canImport(Glibc)

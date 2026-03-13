@@ -27,7 +27,7 @@ let package = Package(
         // Postgres client
         .package(url: "https://github.com/vapor/postgres-nio.git", from: "1.21.0"),
         // 🥒 Swift bindings for Pkl
-        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.6.0"))
+        .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.8.2"))
     ],
     targets: [
         .executableTarget(

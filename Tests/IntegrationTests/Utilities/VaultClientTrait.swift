@@ -63,23 +63,7 @@ struct VaultClientTrait: SuiteTrait, TestTrait, TestScoping {
     }
 }
 
-extension SuiteTrait where Self == VaultClientTrait {
-    static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
-                                 token: String = "integration_token",
-                                 httpClientConfiguration: HTTPClient.Configuration = .singletonConfiguration,
-                                 logger: @autoclosure () -> Logger? = nil,
-                                 middlewares: [any ClientMiddleware] = []
-    ) -> Self {
-        let testLogger = logger() ?? Logger(label: "test-do-not-log", factory: { _ in SwiftLogNoOpLogHandler() })
-        return Self(apiURL: apiURL,
-                    token: token,
-                    httpClientConfiguration: httpClientConfiguration,
-                    logger: testLogger,
-                    middlewares: middlewares)
-    }
-}
-
-extension TestTrait where Self == VaultClientTrait {
+extension Trait where Self == VaultClientTrait {
     static func setupVaultClient(apiURL: URL = VaultClient.Server.defaultHttpURL,
                                  token: String = "integration_token",
                                  httpClientConfiguration: HTTPClient.Configuration = .singletonConfiguration,

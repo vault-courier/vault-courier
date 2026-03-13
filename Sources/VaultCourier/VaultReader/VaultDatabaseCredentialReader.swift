@@ -112,8 +112,8 @@ public final class VaultDatabaseCredentialReader: Sendable {
 
         let mount = mountPath.replacing("_", with: "-")
                              .replacing("/", with: ".")
-
-        return "\(childNamespace?.appending(".") ?? "")vault.\(mount)"
+        let prefix = childNamespace.map { "\($0)." } ?? ""
+        return "\(prefix)vault.\(mount)"
     }
 }
 

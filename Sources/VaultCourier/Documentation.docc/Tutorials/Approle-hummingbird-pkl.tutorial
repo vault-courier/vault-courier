@@ -36,7 +36,7 @@
 
         For an introduction to its concepts and use cases, visit the official [Pkl  official website](https://pkl-lang.org/) and [blog](https://pkl-lang.org/blog/index.html).
 
-        > Important: For this tutorial we need the `pkl` and `pkl-gen-swift` binaries installed. Please visit [https://pkl-lang.org](https://pkl-lang.org/main/current/pkl-cli/index.html#installation) for instructions.
+        > Important: For this tutorial we need the `pkl` binary installed. Please visit [https://pkl-lang.org](https://pkl-lang.org/main/current/pkl-cli/index.html#installation) for instructions.
     }
     
     @Section(title: "Enable the Pkl package trait") {
@@ -70,7 +70,7 @@
             }
             
             @Step {
-                With the `TodoConfig.pkl` in the root folder, run `pkl-gen-swift` command in the listing to generate the input swift data transfer object (DTO) of TodoConfig.
+                With the `TodoConfig.pkl` in the root folder, run `pkl-gen-swift` [command](https://pkl-lang.org/swift/current/codegen.html) in the listing to generate the input swift data transfer object (DTO) of TodoConfig.
                 
                 @Code(name: "Terminal", file:  hummingbird.pkl.console.0.0.sh)
             }

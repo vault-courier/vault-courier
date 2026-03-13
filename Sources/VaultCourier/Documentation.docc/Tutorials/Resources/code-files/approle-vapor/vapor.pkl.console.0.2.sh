@@ -1,1 +1,1 @@
-approle-vapor-example % pkl-gen-swift --project-dir=Sources/Operations/Pkl --output-path=Sources/Operations/Gen Sources/Operations/Pkl/VaultAdminConfig.pkl
+approle-vapor-example % pkl run @pkl.swift/gen.pkl --project-dir=Sources/Operations/Pkl Sources/Operations/Pkl/VaultAdminConfig.pkl -o Sources/Operations/Gen

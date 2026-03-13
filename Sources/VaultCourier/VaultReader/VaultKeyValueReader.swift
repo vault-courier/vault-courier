@@ -105,7 +105,8 @@ public final class VaultKeyValueReader: Sendable {
 
         let mount = mountPath.replacing("_", with: "-")
                              .replacing("/", with: ".")
-        return "\(childNamespace?.appending(".") ?? "")vault.kv.\(mount)"
+        let prefix = childNamespace.map { "\($0)." } ?? ""
+        return "\(prefix)vault.kv.\(mount)"
     }
 }
 

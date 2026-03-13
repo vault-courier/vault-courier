@@ -12,4 +12,7 @@ dependencies {
   ["pkl.vault"] { 
     uri = "package://pkg.pkl-lang.org/github.com/vault-courier/vault-courier-pkl/vault-courier-pkl@0.2.0"
   }
+  ["pkl.swift"] {
+    uri = "package://pkg.pkl-lang.org/pkl-swift/pkl.swift@0.8.2"
+  }
 }

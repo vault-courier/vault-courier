@@ -39,14 +39,14 @@ jobs:
       POSTGRES_HOST_AUTH_METHOD: 'scram-sha-256'
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Check Docker Compose
       run: docker compose version
     - name: Start Vault and Postgres
       run: docker compose -f Scripts/docker-compose.yml up -d
     - name: Install Pkl
       run: |
-        curl -L -o /usr/local/bin/pkl 'https://github.com/apple/pkl/releases/download/0.28.2/pkl-alpine-linux-amd64'
+        curl -L -o /usr/local/bin/pkl 'https://github.com/apple/pkl/releases/download/0.31.0/pkl-alpine-linux-amd64'
         chmod 755 /usr/local/bin/pkl
         pkl --version
         echo $(which pkl)
@@ -54,6 +54,6 @@ jobs:
       env:
         PKL_EXEC: /usr/local/bin/pkl
       run: |
-        swift test --filter IntegrationTests
+        swift test --filter IntegrationTests --enable-all-traits --skip IntegrationTests.Pkl
     - name: Tear down
       run: docker compose -f Scripts/docker-compose.yml down --volumes --remove-orphans
