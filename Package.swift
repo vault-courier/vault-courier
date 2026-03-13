@@ -286,11 +286,13 @@ let package = Package(
             name: "IntegrationTests",
             dependencies: [
                 .target(name: "VaultCourier"),
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Configuration", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
-                .product(name: "ConfigurationTesting", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name]))
+                .product(name: "ConfigurationTesting", package: "swift-configuration", condition: .when(traits: [ConfigProviderTrait.name])),
+                .product(name: "PklSwift", package: "pkl-swift", condition: .when(traits: [PklTrait.name])),
             ],
             exclude: [
                 "Fixtures"
