@@ -99,7 +99,6 @@ let defaultTraits: Set<String> = .init([
     DatabaseEngineTrait,
     PostgresDatabasePluginTrait,
     ValkeyDatabasePluginTrait,
-    PklTrait,
 ].map(\.name))
 
 traits.insert(
