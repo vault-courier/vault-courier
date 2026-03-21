@@ -122,7 +122,7 @@ let package = Package(
         .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.8.2")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.9.0"),
         .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.3.1"),
-        .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1")),
+        .package(url: "https://github.com/apple/swift-configuration.git", .upToNextMinor(from: "0.1.1"), traits: ["JSONSupport"]),
     ],
     targets: [
         .target(
