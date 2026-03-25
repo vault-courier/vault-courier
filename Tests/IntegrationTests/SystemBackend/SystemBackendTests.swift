@@ -48,20 +48,6 @@ extension IntegrationTests.System.Wrapping {
 
 #if AppRoleSupport
 extension IntegrationTests.System.Wrapping {
-    struct AppRoleSecretID: Decodable, Sendable {
-        let secretID: String
-        let secretIDAccessor: String
-        let secretIDTimeToLive: Int
-        let secretIDNumberOfUses: Int
-
-        enum CodingKeys: String, CodingKey {
-            case secretID = "secret_id"
-            case secretIDAccessor = "secret_id_accessor"
-            case secretIDTimeToLive = "secret_id_ttl"
-            case secretIDNumberOfUses = "secret_id_num_uses"
-        }
-    }
-
     var randomMount: String {
         let suffix = "abcdefghijklmnopqrstuvwxyz".randomSample(count: 10).map { String($0) }.joined()
         let path = "approle_\(suffix)"

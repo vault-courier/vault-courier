@@ -42,11 +42,12 @@ public final class VaultSecretProvider: Sendable {
     /// In memory configuration values. This cache is updated when a fetch call succeeds.
     let cache: MutableInMemoryProvider
 
-    public typealias ApiOperation = @Sendable (VaultClient) async throws -> [UInt8]?
+    /// An arbitrary closure on a VaultClient that returns the bytes of a secret.
+    ///
+    /// See ``keyValueSecret(mount:namespace:key:version:)`` and ``databaseCredentials(mount:namespace:role:)`` for predefined operations
+    public typealias VaultClientOperation = @Sendable (VaultClient) async throws -> [UInt8]?
 
-    let _evaluationMap: Mutex<[AbsoluteConfigKey: ApiOperation]>
-
-    public static let keyEncoder: SeparatorKeyEncoder = .dotSeparated
+    let _evaluationMap: Mutex<[AbsoluteConfigKey: VaultClientOperation]>
 
     /// Creates a new vault secret provider with the specified configuration values.
     ///
@@ -74,7 +75,7 @@ public final class VaultSecretProvider: Sendable {
     ///   - initialValues: initial values in memory
     public init(
         vaultClient: VaultClient,
-        evaluationMap: [AbsoluteConfigKey: ApiOperation] = [:],
+        evaluationMap: [AbsoluteConfigKey: VaultClientOperation] = [:],
         initialValues: [AbsoluteConfigKey: ConfigValue] = [:]
     ) {
         self.client = vaultClient
@@ -84,11 +85,13 @@ public final class VaultSecretProvider: Sendable {
 }
 
 extension VaultSecretProvider {
-    public func getEvaluation(for key: AbsoluteConfigKey) -> VaultSecretProvider.ApiOperation? {
+    /// Get the associated VaultClient byte closure for the given key
+    public func getEvaluation(for key: AbsoluteConfigKey) -> VaultSecretProvider.VaultClientOperation? {
         self._evaluationMap.withLock{ $0[key] }
     }
 
-    public func updateEvaluation(_ key: AbsoluteConfigKey, with action: @escaping VaultSecretProvider.ApiOperation) {
+    /// Updates the ConfigKey/VaultClient closure mapping
+    public func updateEvaluation(_ key: AbsoluteConfigKey, with action: @escaping VaultSecretProvider.VaultClientOperation) {
         self._evaluationMap.withLock {
             $0[key] = action
         }
@@ -108,24 +111,54 @@ extension VaultSecretProvider: CustomDebugStringConvertible {
     }
 }
 
-extension VaultSecretProvider {
-    /// Secret engines are Vault components for storing and generating secrets.
-    public enum SecretEngine: String {
-        case keyValue
-
-        #if DatabaseEngineSupport
-        case database
-        #endif
+extension VaultSecretProvider {    
+    /// Operation to read a kv secret
+    /// - Parameters:
+    ///   - mount: mount path of the kv secret engine
+    ///   - namespace: optional child namespace
+    ///   - key: name of the secret key
+    ///   - version: version of the secret
+    /// - Returns: closure to read a kv secret from a Vault
+    public static func keyValueSecret(
+        mount: String,
+        namespace: String? = nil,
+        key: String,
+        version: Int? = nil
+    ) async throws -> VaultClientOperation {
+        {
+            client in
+            let data = try await client.withKeyValueClient(namespace: namespace, mountPath: mount) { kvClient in
+                try await kvClient.readKeyValueSecretData(key: key, version: version)
+            }
+            return Array(data)
+        }
     }
 
-    package static let versionContextKey = "version"
-
-    public static func keyValueSecret(mount: String, key: String, version: Int? = nil) async throws -> ApiOperation {
-        { Array(try await $0.readKeyValueSecretData(mountPath: mount, key: key, version: version)) }
+    /// Operation to read a static secret which was response-wrapped
+    /// - Parameters:
+    ///   - as: Wrapping type
+    ///   - token: wrapping-token
+    ///   - namespace: optional child namespace
+    /// - Returns: closure to read a wrapped secret from a Vault
+    public static func unwrapSecret<WrappedType: Codable & Sendable>(
+        as: WrappedType.Type,
+        token: String,
+        namespace: String? = nil,
+    ) async throws -> VaultClientOperation {
+        { client in
+            try await client.withSystemBackend(namespace: namespace) { systemClient in
+                let response: VaultResponse<WrappedType,Never> = try await systemClient.unwrapResponse(token: token)
+                guard let unwrapped = response.data,
+                      let data = try? JSONEncoder().encode(unwrapped) else {
+                    return []
+                }
+                return Array(data)
+            }
+        }
     }
 }
 
-extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
+extension VaultSecretProvider: ConfigProvider {
     /// Reads secret value from memory cache if it was previously fetched from the Vault
     ///
     /// - Note: the secret value might be outdated. For retrieving latest secret see ``fetchValue(forKey:type:)``
@@ -141,7 +174,7 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
     /// Example:
     ///
     /// ```swift
-    /// try await sut.fetchValue(
+    /// try await provider.fetchValue(
     ///     forKey: .init(["database", "postgres", "credentials"])
     ///     type: .string
     /// )
@@ -156,7 +189,7 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
         type: ConfigType
     ) async throws -> LookupResult {
         return try await withSpan("fetch-secret-value") { span in
-            let encodedKey = Self.keyEncoder.encode(key)
+            let encodedKey = key.description
 
             do {
                 guard let execute = getEvaluation(for: key),
@@ -216,7 +249,7 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
                 }
 
                 let value = ConfigValue(content, isSecret: true)
-                self.cache.setValue(value, forKey: encodedKey, context: key.context)
+                self.cache.setValue(value, forKey: key)
                 return .init(encodedKey: encodedKey, value: value)
             } catch let error as VaultServerError {
                 TracingSupport.handleResponse(error: error, span)
@@ -228,29 +261,29 @@ extension VaultSecretProvider: ConfigProvider, ConfigSnapshotProtocol {
         }
     }
 
-    public func watchValue<Return>(
-        forKey key: AbsoluteConfigKey,
-        type: ConfigType,
-        updatesHandler: (ConfigUpdatesAsyncSequence<Result<LookupResult, any Error>, Never>) async throws -> Return
-    ) async throws -> Return {
-        try await watchValueFromValue(forKey: key, type: type, updatesHandler: updatesHandler)
+    public func snapshot() -> any ConfigSnapshot {
+        cache.snapshot()
     }
 
-    public func snapshot() -> any ConfigSnapshotProtocol {
-        self
-    }
-
-    public func watchSnapshot<Return>(
-        updatesHandler: (ConfigUpdatesAsyncSequence<any ConfigSnapshotProtocol, Never>) async throws -> Return
+    public func watchSnapshot<Return: ~Copyable >(
+        updatesHandler: nonisolated(nonsending) (ConfigUpdatesAsyncSequence<any ConfigSnapshot, Never>) async throws -> Return
     ) async throws -> Return {
         try await watchSnapshotFromSnapshot(updatesHandler: updatesHandler)
+    }
+
+    public func watchValue<Return: ~Copyable >(
+        forKey key: AbsoluteConfigKey,
+        type: ConfigType,
+        updatesHandler: nonisolated(nonsending) (ConfigUpdatesAsyncSequence<Result<LookupResult, any Error>, Never>) async throws -> Return
+    ) async throws -> Return {
+        try await watchValueFromValue(forKey: key, type: type, updatesHandler: updatesHandler)
     }
 }
 
 #if DatabaseEngineSupport
 extension VaultSecretProvider {
     static func fetchDatabaseCredential(
-        client: VaultClient,
+        client: DatabaseEngineClient,
         mount: String,
         role: DatabaseRole
     ) async throws -> Data {
@@ -264,11 +297,11 @@ extension VaultSecretProvider {
             let credentials: DatabaseCredentials
             switch role {
                 case .static(let name):
-                    let response = try await client.databaseCredentials(staticRole: name, mountPath: mount)
+                    let response = try await client.databaseCredentials(staticRole: name)
                     credentials = DatabaseCredentials(username: response.username, password: response.password)
 
                 case .dynamic(let name):
-                    let response = try await client.databaseCredentials(dynamicRole: name, mountPath: mount)
+                    let response = try await client.databaseCredentials(dynamicRole: name)
                     credentials = DatabaseCredentials(username: response.username, password: response.password)
             }
             let data = try JSONEncoder().encode(credentials)
@@ -276,8 +309,23 @@ extension VaultSecretProvider {
         }
     }
 
-    public static func databaseCredentials(mount: String, role: DatabaseRole) async throws -> ApiOperation {
-        { Array(try await self.fetchDatabaseCredential(client: $0, mount: mount, role: role)) }
+    /// Operation to read a database secret
+    /// - Parameters:
+    ///   - mount: mount path of database secret engine
+    ///   - namespace: optional child namespace to add to the request
+    ///   - role: static or dynamic database role
+    /// - Returns: closure to read a database secret from Vault
+    public static func databaseCredentials(
+        mount: String,
+        namespace: String? = nil,
+        role: DatabaseRole
+    ) async throws -> VaultClientOperation {
+        { client in
+            let data = try await client.withDatabaseClient(namespace: namespace, mountPath: mount) { databaseClient in
+                try await self.fetchDatabaseCredential(client: databaseClient, mount: mount, role: role)
+            }
+            return Array(data)
+        }
     }
 }
 #endif
