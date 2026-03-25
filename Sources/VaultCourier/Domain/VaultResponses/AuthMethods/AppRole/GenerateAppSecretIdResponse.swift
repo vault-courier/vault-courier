@@ -39,13 +39,13 @@ public struct GenerateAppSecretIdResponse: Sendable {
     }
 }
 
-struct AppRoleSecretID: Codable, Sendable {
-    let secretID: String
-    let secretIDAccessor: String
-    let secretIDTimeToLive: Int
-    let secretIDNumberOfUses: Int
+package struct AppRoleSecretID: Codable, Sendable {
+    package let secretID: String
+    package let secretIDAccessor: String
+    package let secretIDTimeToLive: Int
+    package let secretIDNumberOfUses: Int
 
-    enum CodingKeys: String, CodingKey {
+    package enum CodingKeys: String, CodingKey {
         case secretID = "secret_id"
         case secretIDAccessor = "secret_id_accessor"
         case secretIDTimeToLive = "secret_id_ttl"

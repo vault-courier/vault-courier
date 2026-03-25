@@ -28,6 +28,7 @@ import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
 import SystemPackage
+import Algorithms
 
 extension IntegrationTests.VaultConfigProvider {
     struct ServiceSecret: Decodable, ExpressibleByConfigString {
@@ -46,6 +47,32 @@ extension IntegrationTests.VaultConfigProvider {
 
         public var description: String {
             "apiKey=<REDACTED>"
+        }
+    }
+
+    struct ApiKeys: Decodable, Equatable, ExpressibleByConfigString {
+        var serviceA: String
+        var serviceB: String
+
+        enum CodingKeys: String, CodingKey {
+            case serviceA = "service_a"
+            case serviceB = "service_b"
+        }
+
+        public init?(configString: String) {
+            guard let data = configString.data(using: .utf8),
+                  let apiKeys = try? JSONDecoder().decode(ApiKeys.self, from: data)
+            else { return nil }
+            self = apiKeys
+        }
+
+        init(apiKeyServiceA: String, apiKeyServiceB: String) {
+            self.serviceA = apiKeyServiceA
+            self.serviceB = apiKeyServiceB
+        }
+
+        public var description: String {
+            "apiKeyServiceA=<REDACTED>,apiKeyServiceB=<REDACTED>"
         }
     }
 
@@ -114,6 +141,64 @@ extension IntegrationTests.VaultConfigProvider {
     }
 
     @Test
+    func fetch_wrapped_response() async throws {
+        let vaultClient = VaultClient.current
+        let wrapResponse = try await vaultClient.wrap(secrets: ["service_a": "1234", "service_b": "5678"], wrapTimeToLive: .seconds(60))
+
+        let key = AbsoluteConfigKey(["third_party", "api_keys"])
+        let provider = VaultSecretProvider(
+            vaultClient: vaultClient,
+            evaluationMap: [
+                key: try await VaultSecretProvider.unwrapSecret(as: [String: String].self, token: wrapResponse.token)
+            ]
+        )
+
+        let sut = ConfigReader(provider: provider)
+
+        let readerValue = try await sut.fetchRequiredString(forKey: .init(key.components), as: ApiKeys.self)
+        #expect(readerValue == ApiKeys(apiKeyServiceA: "1234", apiKeyServiceB: "5678"))
+    }
+
+    @Test
+    func fetch_wrapped_approle_secret_id() async throws {
+        let vaultClient = VaultClient.current
+
+        let suffix = "abcdefghijklmnopqrstuvwxyz".randomSample(count: 10).map { String($0) }.joined()
+        let path = "approle_\(suffix)"
+        try await vaultClient.enableAuthMethod(configuration: .init(path: path, type: "approle"))
+
+        let appRoleName = "test_app_role"
+        try await vaultClient.createAppRole(.init(name: appRoleName,
+                                                  tokenPolicies: [],
+                                                  tokenTimeToLive: .seconds(120),
+                                                  tokenType: .batch),
+                                            mountPath: path)
+        let secretIDResponse = try await vaultClient.generateAppSecretID(capabilities: .init(roleName: appRoleName, wrapTimeToLive: .seconds(120)),
+                                                                         mountPath: path)
+
+        switch secretIDResponse {
+            case .wrapped(let wrappedResponse):
+                let key = AbsoluteConfigKey(["app_roles", "server"])
+                let provider = VaultSecretProvider(
+                    vaultClient: vaultClient,
+                    evaluationMap: [
+                        key: try await VaultSecretProvider.unwrapSecret(as: AppRoleSecretID.self, token: wrappedResponse.token)
+                    ]
+                )
+                let sut = ConfigReader(provider: provider)
+
+                let readerValue = try #require(try? await sut.fetchRequiredString(forKey: .init(key.components), as: AppRoleSecretID.self))
+            case .secretId(let response):
+                Issue.record("Receive unexpected response: \(response)")
+        }
+
+        // Clean up
+        try await vaultClient.deleteAppRole(name: appRoleName, mountPath: path)
+
+        try await vaultClient.disableAuthMethod(path)
+    }
+
+    @Test
     func config_reader() async throws {
         let kvMount = "secret"
         let secretKeyPath = "local_test"
@@ -138,7 +223,7 @@ extension IntegrationTests.VaultConfigProvider {
 
         let sut = ConfigReader(provider: provider)
 
-        let readerValue = try await sut.fetchRequiredString(forKey: "third_party.service.api_key", context: context)
+        let readerValue = try await sut.fetchRequiredString(forKey: .init("third_party.service.api_key", context: context))
         #expect(readerValue == #"{"api_key":"secret_api_key"}"#)
     }
 
@@ -276,12 +361,11 @@ extension IntegrationTests.VaultConfigProvider {
 
         let sut = ConfigReader(providers: [
             secretProvider,
-            try await JSONProvider(filePath: .init(fixtureUrl(for: "/SwiftConfiguration/config.json").relativePath)),
+            try await FileProvider<JSONSnapshot>(filePath: .init(fixtureUrl(for: "/SwiftConfiguration/config.json").relativePath)),
         ])
 
         let secret = try await sut.fetchRequiredString(
-            forKey: "third_party.service.api_key",
-            context: ["version": 2],
+            forKey: .init("third_party.service.api_key", context: ["version": 2]),
             as: ServiceSecret.self
         )
         #expect(secret.apiKey == "secret_api_key")
@@ -295,8 +379,7 @@ extension IntegrationTests.VaultConfigProvider {
 
         // This ConfigKey has not been registered in VaultSecretProvider
         let absoluteKey4 = AbsoluteConfigKey(["job", "database", "credentials"])
-        let databaseKey: String = absoluteKey4.components.joined(separator: ".")
-        var credentials = try await sut.fetchRequiredString(forKey: databaseKey, as: DatabaseCredentials.self)
+        var credentials = try await sut.fetchRequiredString(forKey: .init(absoluteKey4.components), as: DatabaseCredentials.self)
         #expect(credentials.username == "username_dev_local")
         #expect(credentials.password == "password_local_dev")
 
@@ -309,7 +392,7 @@ extension IntegrationTests.VaultConfigProvider {
         )
 
         // Register ConfigKey
-        credentials = try await sut.fetchRequiredString(forKey: databaseKey, as: DatabaseCredentials.self)
+        credentials = try await sut.fetchRequiredString(forKey: .init(absoluteKey4.components), as: DatabaseCredentials.self)
         #expect(credentials.username != "username_dev_local")
         #expect(credentials.password == dynamicRolePassword)
     }
@@ -404,7 +487,7 @@ extension IntegrationTests.VaultConfigProvider {
 
         let sut = ConfigReader(provider: provider)
         let credentials = try await sut.fetchRequiredString(
-            forKey: VaultSecretProvider.keyEncoder.encode(absKey),
+            forKey: .init(absKey.components),
             as: DatabaseCredentials.self
         )
         #expect(credentials.password == Self.dynamicRoleDatabasePassword)
@@ -472,7 +555,20 @@ extension IntegrationTests.VaultConfigProvider {
             provider: provider,
             configuration: .init()
         )
-        try await test.run()
+        try await test.runTest()
+    }
+}
+
+extension AppRoleSecretID: ExpressibleByConfigString {
+    package init?(configString: String) {
+        guard let data = configString.data(using: .utf8),
+              let appRoleSecretID = try? JSONDecoder().decode(AppRoleSecretID.self, from: data)
+        else { return nil }
+        self = appRoleSecretID
+    }
+    
+    package var description: String {
+        "secretID=<REDACTED>"
     }
 }
 
