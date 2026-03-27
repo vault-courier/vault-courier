@@ -110,7 +110,14 @@ traits.insert(
 
 let package = Package(
     name: "vault-courier",
-    platforms: [.macOS(.v15)],
+    platforms: [
+        .macOS(.v15),
+        // Experimental platforms
+        .iOS(.v18),
+        .tvOS(.v16),
+        .watchOS(.v9),
+        .visionOS(.v1),
+    ],
     products: [
         .library(name: "VaultCourier", targets: ["VaultCourier"]),
     ],
