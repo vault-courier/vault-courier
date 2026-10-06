@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if TransitEngineSupport
-import OpenAPIRuntime
+package import OpenAPIRuntime
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 import FoundationInternationalization

@@ -14,7 +14,6 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
 import SystemNamespaces
 import Logging
 import Tracing

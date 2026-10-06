@@ -14,14 +14,15 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
+package import protocol OpenAPIRuntime.ClientTransport
+package import protocol OpenAPIRuntime.ClientMiddleware
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+package import FoundationEssentials
 #else
-import struct Foundation.URL
+package import struct Foundation.URL
 #endif
 import Synchronization
-import Logging
+package import Logging
 import SystemWrapping
 import SystemAuth
 import SystemPolicies

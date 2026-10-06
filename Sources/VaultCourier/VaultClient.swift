@@ -15,14 +15,15 @@
 //===----------------------------------------------------------------------===//
 
 import Synchronization
-import OpenAPIRuntime
-import Logging
+public import protocol OpenAPIRuntime.ClientTransport
+public import protocol OpenAPIRuntime.ClientMiddleware
+public import Logging
 import Tracing
 import Utils
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.URL
+public import struct Foundation.URL
 #endif
 #if AppRoleSupport
 import AppRoleAuth

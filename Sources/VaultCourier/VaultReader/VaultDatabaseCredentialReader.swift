@@ -15,16 +15,16 @@
 //===----------------------------------------------------------------------===//
 
 #if PklSupport && DatabaseEngineSupport
-import PklSwift
+public import PklSwift
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.URL
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
+public import struct Foundation.URL
+public import class Foundation.JSONDecoder
+public import class Foundation.JSONEncoder
+public import struct Foundation.Data
 #endif
-import Logging
+public import Logging
 import Tracing
 import Utils
 

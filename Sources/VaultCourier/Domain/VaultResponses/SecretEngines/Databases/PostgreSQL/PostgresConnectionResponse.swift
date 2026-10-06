@@ -17,9 +17,9 @@
 #if PostgresPluginSupport
 
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.URL
+public import struct Foundation.URL
 #endif
 
 public struct PostgresConnectionResponse: Sendable {

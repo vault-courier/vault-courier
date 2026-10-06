@@ -14,12 +14,13 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
-import HTTPTypes
+public import class OpenAPIRuntime.HTTPBody
+public import protocol OpenAPIRuntime.ClientMiddleware
+public import HTTPTypes
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.URL
+public import struct Foundation.URL
 #endif
 
 public struct ResponseWrappingMiddleware: ClientMiddleware {

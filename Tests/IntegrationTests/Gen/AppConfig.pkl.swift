@@ -1,6 +1,6 @@
 #if PklSupport
 // Code generated from Pkl module `AppConfig`. DO NOT EDIT.
-import PklSwift
+public import PklSwift
 
 public enum AppConfig {}
 

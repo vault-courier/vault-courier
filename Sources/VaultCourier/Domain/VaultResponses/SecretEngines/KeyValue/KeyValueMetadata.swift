@@ -15,9 +15,9 @@
 //===----------------------------------------------------------------------===//
 
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.Date
+public import struct Foundation.Date
 #endif
 
 public struct KeyValueMetadata: Sendable {

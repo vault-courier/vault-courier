@@ -16,9 +16,9 @@
 
 import KeyValue
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.URL
+public import struct Foundation.URL
 #endif
 
 extension VaultClient {

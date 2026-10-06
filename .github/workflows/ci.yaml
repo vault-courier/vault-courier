@@ -33,7 +33,7 @@ jobs:
     strategy:
       matrix:
         image: 
-          - "swift:6.2"
+          - "swift:6.4"
           - "swift:6.3"
           # - "swiftlang/swift:nightly-main"
     container:

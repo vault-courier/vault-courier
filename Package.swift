@@ -1,4 +1,4 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 6.3
 //  Copyright (c) 2025 Javier Cuesta
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
@@ -123,13 +123,13 @@ let package = Package(
     ],
     traits: traits,
     dependencies: [
-        .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.10.4"),
-        .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.9.0"),
-        .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.3.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.30.3"),
+        .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.14.0"),
+        .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.13.0"),
+        .package(url: "https://github.com/swift-server/swift-openapi-async-http-client.git", from: "1.5.0"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.36.2"),
         .package(url: "https://github.com/apple/pkl-swift", .upToNextMinor(from: "0.8.2")),
-        .package(url: "https://github.com/apple/swift-log.git", from: "1.9.0"),
-        .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.3.1"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.15.1"),
+        .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.5.0"),
         .package(url: "https://github.com/apple/swift-configuration.git", from: "1.2.0", traits: [.defaults]),
     ],
     targets: [
@@ -328,9 +328,8 @@ for target in package.targets {
     // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0444-member-import-visibility.md
     settings.append(.enableUpcomingFeature("MemberImportVisibility"))
 
-    // ---- Not possible until swift-openapi supports it -----------------------------------------------
     // https://github.com/swiftlang/swift-evolution/blob/main/proposals/0409-access-level-on-imports.md
-//    settings.append(.enableUpcomingFeature("InternalImportsByDefault"))
+    settings.append(.enableUpcomingFeature("InternalImportsByDefault"))
     // -------------------------------------------------------------------------------------------------
 
     target.swiftSettings = settings

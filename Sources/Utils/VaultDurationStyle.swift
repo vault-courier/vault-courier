@@ -15,10 +15,11 @@
 //===----------------------------------------------------------------------===//
 
 #if canImport(FoundationEssentials)
-import FoundationEssentials
-import FoundationInternationalization
+package import FoundationEssentials
+package import FoundationInternationalization
 #else
-import Foundation
+package import struct Foundation.Locale
+package import protocol Foundation.FormatStyle
 #endif
 
 extension Duration {

@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
+internal import struct OpenAPIRuntime.OpenAPIObjectContainer
 import SystemAuth
 import Logging
 

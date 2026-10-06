@@ -14,11 +14,10 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import struct OpenAPIRuntime.OpenAPIObjectContainer
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.Data
+public import struct Foundation.Data
 #endif
 
 extension VaultClient {
