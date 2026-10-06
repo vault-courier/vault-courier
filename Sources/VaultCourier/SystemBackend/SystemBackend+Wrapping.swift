@@ -22,7 +22,7 @@ import class Foundation.JSONDecoder
 import class Foundation.JSONEncoder
 import struct Foundation.Data
 #endif
-import OpenAPIRuntime
+internal import struct OpenAPIRuntime.OpenAPIObjectContainer
 import SystemWrapping
 import Logging
 import Tracing

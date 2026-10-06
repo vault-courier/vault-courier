@@ -15,11 +15,10 @@
 //===----------------------------------------------------------------------===//
 
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.URL
+public import struct Foundation.URL
 #endif
-import OpenAPIRuntime
 import SystemPolicies
 import Logging
 import Tracing

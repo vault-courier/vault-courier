@@ -14,11 +14,11 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import OpenAPIRuntime
+package import protocol OpenAPIRuntime.DateTranscoder
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+package import FoundationEssentials
 #else
-import struct Foundation.Date
+package import struct Foundation.Date
 #endif
 
 /// A transcoder for dates encoded as an ISO-8601 string (in RFC 3339 format) which first

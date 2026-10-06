@@ -1,6 +1,6 @@
 #if PklSupport
 // Code generated from Pkl module `PostgresStaticRole`. DO NOT EDIT.
-import PklSwift
+public import PklSwift
 
 public enum PostgresStaticRole {}
 

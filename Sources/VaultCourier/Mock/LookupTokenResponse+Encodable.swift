@@ -17,11 +17,10 @@
 #if MockSupport
 
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.Date
+public import struct Foundation.Date
 #endif
-import OpenAPIRuntime
 
 extension LookupTokenResponse: Encodable {
     enum CodingKeys: String, CodingKey {

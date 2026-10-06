@@ -1,6 +1,6 @@
 #if PklSupport
 // Code generated from Pkl module `VaultAppRole`. DO NOT EDIT.
-import PklSwift
+public import PklSwift
 
 public enum VaultAppRole {}
 

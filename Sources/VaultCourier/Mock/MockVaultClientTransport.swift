@@ -15,16 +15,17 @@
 //===----------------------------------------------------------------------===//
 
 #if MockSupport
-import HTTPTypes
+public import HTTPTypes
 #if canImport(FoundationEssentials)
-import FoundationEssentials
+public import FoundationEssentials
 #else
-import struct Foundation.URL
-import class Foundation.JSONDecoder
-import class Foundation.JSONEncoder
-import struct Foundation.Data
+public import struct Foundation.URL
+public import class Foundation.JSONDecoder
+public import class Foundation.JSONEncoder
+public import struct Foundation.Data
 #endif
-import OpenAPIRuntime
+public import protocol OpenAPIRuntime.ClientTransport
+public import class OpenAPIRuntime.HTTPBody
 import Utils
 
 public struct MockVaultClientTransport: ClientTransport {

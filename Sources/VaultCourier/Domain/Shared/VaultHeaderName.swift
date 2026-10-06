@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import HTTPTypes
+public import struct HTTPTypes.HTTPField
 
 extension HTTPField.Name {
     static let wrapTTL = Self("X-VAULT-WRAP-TTL")!

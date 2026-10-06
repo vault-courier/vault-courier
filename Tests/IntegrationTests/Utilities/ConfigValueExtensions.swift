@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #if ConfigProviderSupport
-import Configuration
+package import Configuration
 
 extension [UInt8] {
     package static var magic: Self {

@@ -14,7 +14,7 @@
 //  limitations under the License.
 //===----------------------------------------------------------------------===//
 
-import Tracing
+package import Tracing
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 import FoundationInternationalization

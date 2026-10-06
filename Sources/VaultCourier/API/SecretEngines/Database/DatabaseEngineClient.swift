@@ -16,7 +16,8 @@
 
 #if DatabaseEngineSupport
 
-import OpenAPIRuntime
+internal import protocol OpenAPIRuntime.ClientTransport
+internal import protocol OpenAPIRuntime.ClientMiddleware
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 #else

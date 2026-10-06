@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #if DatabaseEngineSupport
-import OpenAPIRuntime
+internal import struct OpenAPIRuntime.OpenAPIObjectContainer
 #if canImport(FoundationEssentials)
 import FoundationEssentials
 import FoundationInternationalization
